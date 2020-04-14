@@ -34,6 +34,13 @@ pub fn generate_network(nodes: usize) -> Network {
             network.get_mut(neighbour).unwrap().insert(node);
         }
     }
+
+    let last = nodes - 1;
+    if network[&last].is_empty() {
+        let neighbour = rng.gen_range(0, last);
+        network.get_mut(&last).unwrap().insert(neighbour);
+        network.get_mut(&neighbour).unwrap().insert(last);
+    }
     network
 }
 
@@ -44,10 +51,11 @@ mod test {
     #[test]
     fn generate_network_test() {
         let nodes = 10;
-        let network = generate_network(10);
+        let network = generate_network(nodes);
         println!("{:?}", network);
         assert_eq!(network.len(), nodes);
         for (node, neighborhood) in &network {
+            assert!(!neighborhood.is_empty());
             assert!(!neighborhood.contains(node));
             for neighbour in neighborhood {
                 assert!(network[neighbour].contains(node));

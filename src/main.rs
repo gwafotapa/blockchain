@@ -1,4 +1,5 @@
 // use log::info;
+use itertools::Itertools;
 use rand::Rng;
 use std::{
     sync::{
@@ -29,11 +30,15 @@ impl Handler {
     ) -> Self {
         let thread = Some(thread::spawn(move || {
             let message = Arc::new(id.to_string());
-            println!("Starting thread #{}", id);
-            for i in 0..tx.len() {
-                tx[i].1.send(Arc::clone(&message)).unwrap();
-                println!("Thread #{} sending {} to thread {}", id, message, tx[i].0);
-            }
+            println!(
+                "Starting thread #{} (neighbours: {})",
+                id,
+                tx.iter().map(|x| &x.0).format(" ")
+            );
+            // for i in 0..tx.len() {
+            //     tx[i].1.send(Arc::clone(&message)).unwrap();
+            //     println!("Thread #{} sending {} to thread {}", id, message, tx[i].0);
+            // }
             loop {
                 match rx.try_recv() {
                     Ok(message) => println!("Thread #{} receiving {}", id, message),
