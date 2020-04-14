@@ -1,7 +1,9 @@
 use generic_array::{typenum::U32, GenericArray};
-use merkle_cbt::merkle_tree::{Merge, CBMT};
+use merkle_cbt::merkle_tree::CBMT;
 use rand::{distributions::Alphanumeric, Rng};
 use sha2::{Digest, Sha256};
+
+use merkle_tree::MergeHash;
 
 type Hash = GenericArray<u8, U32>;
 
@@ -26,9 +28,9 @@ impl Transaction {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        bytes.extend_from_slice(self.sender.as_bytes());
-        bytes.extend_from_slice(self.receiver.as_bytes());
-        bytes.extend_from_slice(&self.amount.to_be_bytes());
+        bytes.extend(self.sender.bytes());
+        bytes.extend(self.receiver.bytes());
+        bytes.extend(&self.amount.to_be_bytes());
         bytes
     }
 
@@ -45,16 +47,4 @@ impl Transaction {
     }
 }
 
-pub struct MergeHash {}
-
-impl Merge for MergeHash {
-    type Item = Hash;
-
-    fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {
-        let mut concat = Vec::from(left.as_slice());
-        concat.extend_from_slice(right.as_slice());
-        let mut hasher = Sha256::new();
-        hasher.input(concat);
-        hasher.result()
-    }
-}
+pub mod merkle_tree;

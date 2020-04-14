@@ -1,0 +1,57 @@
+
+network.rs,161
+pub fn generate_network(nodes: usize) -> Network {generate_network8,177
+mod test {test41,1125
+    fn generate_network_test() {generate_network_test45,1167
+
+main.rs,247
+const MAX_NODES: usize = 10;MAX_NODES14,219
+const SHUT_DOWN: &str = "Shut down";SHUT_DOWN15,248
+const NODES: usize = 0;NODES16,285
+struct Handler {Handler18,310
+impl Handler {Handler23,381
+    fn new(new24,396
+fn main() {main58,1743
+
+chain.rs,261
+pub struct Blockchain {Blockchain7,112
+impl Blockchain {Blockchain11,162
+    pub fn new() -> Self {new12,180
+    pub fn push(&mut self, block: Block) {push18,282
+    pub fn len(&self) -> usize {len22,364
+    pub fn last(&self) -> &Block {last26,429
+
+transaction/mod.rs,357
+pub struct Transaction {Transaction10,224
+impl Transaction {Transaction16,311
+    pub fn random() -> Self {random17,330
+    pub fn to_bytes(&self) -> Vec<u8> {to_bytes29,701
+    pub fn hash(&self) -> Hash {hash37,936
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root43,1079
+pub mod merkle_tree;merkle_tree50,1327
+
+transaction/merkle_tree.rs,164
+pub struct MergeHash {}MergeHash7,150
+impl Merge for MergeHash {MergeHash9,175
+    fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {merge12,225
+
+lib.rs,123
+pub mod block;block3,32
+// pub mod chain;chain4,47
+pub mod network;network5,65
+pub mod transaction;transaction6,82
+
+block.rs,794
+const GENESIS_BLOCK_HASH_PREV_BLOCK: &[u8; 32] =GENESIS_BLOCK_HASH_PREV_BLOCK9,174
+const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =GENESIS_BLOCK_HASH_MERKLE_ROOT11,302
+pub struct Block {Block14,432
+pub struct BlockHeader {BlockHeader20,534
+impl Block {Block26,636
+    pub fn genesis() -> Self {genesis27,649
+    pub fn new(height: usize, hash_prev_block: Hash, transactions: Vec<Transaction>) -> Self {new38,990
+    pub fn height(&self) -> usize {height49,1325
+    pub fn hash_prev_block(&self) -> Hash {hash_prev_block53,1388
+    pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root57,1475
+    pub fn transactions(&self) -> &Vec<Transaction> {transactions61,1564
+    pub fn hash(&self) -> Hash {hash65,1652
+    pub fn to_bytes(&self) -> Vec<u8> {to_bytes71,1795

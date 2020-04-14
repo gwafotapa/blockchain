@@ -2,7 +2,7 @@ use generic_array::{typenum::U32, GenericArray};
 use hex_literal::hex;
 use sha2::{Digest, Sha256};
 
-// use crate::transaction::Transactions;
+use crate::transaction::Transaction;
 
 type Hash = GenericArray<u8, U32>;
 
@@ -14,7 +14,7 @@ const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =
 pub struct Block {
     height: usize,
     header: BlockHeader,
-    // transactions: Transactions,
+    transactions: Vec<Transaction>,
 }
 
 pub struct BlockHeader {
@@ -31,16 +31,22 @@ impl Block {
                 hash_prev_block: *Hash::from_slice(GENESIS_BLOCK_HASH_PREV_BLOCK),
                 hash_merkle_root: *Hash::from_slice(GENESIS_BLOCK_HASH_MERKLE_ROOT),
             },
+            transactions: Vec::new(),
         }
     }
 
-    pub fn new(height: usize, hash_prev_block: Hash, hash_merkle_root: Hash) -> Self {
+    pub fn new(height: usize, hash_prev_block: Hash, transactions: Vec<Transaction>) -> Self {
+        assert!(
+            transactions.len().is_power_of_two(),
+            "Number of transactions is not a power of 2"
+        );
         Self {
             height,
             header: BlockHeader {
                 hash_prev_block,
-                hash_merkle_root,
+                hash_merkle_root: Transaction::hash_merkle_root(&transactions),
             },
+            transactions,
         }
     }
 
@@ -56,6 +62,10 @@ impl Block {
         self.header.hash_merkle_root
     }
 
+    pub fn transactions(&self) -> &Vec<Transaction> {
+        &self.transactions
+    }
+
     pub fn hash(&self) -> Hash {
         let mut hasher = Sha256::new();
         hasher.input(self.to_bytes());
@@ -64,9 +74,12 @@ impl Block {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        bytes.extend_from_slice(&self.height.to_be_bytes());
-        bytes.extend_from_slice(self.hash_prev_block().as_slice());
-        bytes.extend_from_slice(self.hash_merkle_root().as_slice());
+        bytes.extend(&self.height.to_be_bytes());
+        bytes.extend(self.hash_prev_block().as_slice());
+        bytes.extend(self.hash_merkle_root().as_slice());
+        for transaction in &self.transactions {
+            bytes.extend(transaction.to_bytes());
+        }
         bytes
     }
 }
