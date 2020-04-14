@@ -63,10 +63,10 @@ impl Block {
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        buf.extend_from_slice(&self.height.to_be_bytes());
-        buf.extend_from_slice(self.hash_prev_block().as_slice());
-        buf.extend_from_slice(self.hash_merkle_root().as_slice());
-        buf
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&self.height.to_be_bytes());
+        bytes.extend_from_slice(self.hash_prev_block().as_slice());
+        bytes.extend_from_slice(self.hash_merkle_root().as_slice());
+        bytes
     }
 }
