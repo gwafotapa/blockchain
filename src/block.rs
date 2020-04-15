@@ -74,6 +74,7 @@ impl Block {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
+        bytes.extend(b"b"); // 'b' stands for 'block'
         bytes.extend(&self.height.to_be_bytes());
         bytes.extend(self.hash_prev_block().as_slice());
         bytes.extend(self.hash_merkle_root().as_slice());

@@ -7,6 +7,7 @@ use merkle_tree::MergeHash;
 
 type Hash = GenericArray<u8, U32>;
 
+#[derive(Clone)]
 pub struct Transaction {
     sender: String,
     receiver: String,
@@ -28,6 +29,7 @@ impl Transaction {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
+        bytes.extend(b"t"); // 't' stands for 'transaction'
         bytes.extend(self.sender.bytes());
         bytes.extend(self.receiver.bytes());
         bytes.extend(&self.amount.to_be_bytes());
@@ -44,6 +46,14 @@ impl Transaction {
         let hashes = transactions.iter().map(|x| x.hash()).collect();
         let merkle_tree = CBMT::<Hash, MergeHash>::build_merkle_tree(hashes);
         merkle_tree.root()
+    }
+
+    pub fn find(probability: f64) -> Option<Self> {
+        let mut rng = rand::thread_rng();
+        match rng.gen_bool(probability) {
+            false => None,
+            true => Some(Transaction::random()),
+        }
     }
 }
 

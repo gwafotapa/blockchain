@@ -1,45 +1,76 @@
 
 network.rs,161
 pub fn generate_network(nodes: usize) -> Network {generate_network8,177
-mod test {test41,1125
-    fn generate_network_test() {generate_network_test45,1167
+mod test {test48,1359
+    fn generate_network_test() {generate_network_test52,1401
 
-main.rs,247
-const MAX_NODES: usize = 10;MAX_NODES14,219
-const SHUT_DOWN: &str = "Shut down";SHUT_DOWN15,248
-const NODES: usize = 0;NODES16,285
-struct Handler {Handler18,310
-impl Handler {Handler23,381
-    fn new(new24,396
-fn main() {main58,1743
+node.rs,521
+const PROBABILITY_NEW_BLOCK: f64 = 1.0 / 1000000.0;PROBABILITY_NEW_BLOCK9,185
+pub struct Node {Node11,238
+impl Node {Node20,444
+    pub fn new(new21,456
+    pub fn ledger(&self) -> &Ledger {ledger37,817
+    pub fn ledger_mut(&mut self) -> &mut Ledger {ledger_mut41,883
+    pub fn blockchain(&self) -> &Blockchain {blockchain45,965
+    pub fn propagate<B>(&self, bytes: B)propagate49,1043
+    pub fn mine(&mut self) -> Option<Vec<u8>> {mine59,1266
+    pub fn synchronize(&mut self) {synchronize73,1838
 
-chain.rs,261
-pub struct Blockchain {Blockchain7,112
-impl Blockchain {Blockchain11,162
-    pub fn new() -> Self {new12,180
-    pub fn push(&mut self, block: Block) {push18,282
-    pub fn len(&self) -> usize {len22,364
-    pub fn last(&self) -> &Block {last26,429
+main.rs,325
+const MAX_NODES: usize = 10;MAX_NODES15,301
+const SHUT_DOWN: &str = "Shut down";SHUT_DOWN16,330
+const NODES: usize = 0;NODES17,367
+const PROBA_NEW_TRANSACTION: f64 = 1.0 / 1000.0;PROBA_NEW_TRANSACTION18,391
+struct Handler {Handler20,441
+impl Handler {Handler25,512
+    fn new(new26,527
+fn main() {main84,2885
 
-transaction/mod.rs,357
-pub struct Transaction {Transaction10,224
-impl Transaction {Transaction16,311
-    pub fn random() -> Self {random17,330
-    pub fn to_bytes(&self) -> Vec<u8> {to_bytes29,701
-    pub fn hash(&self) -> Hash {hash37,936
-    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root43,1079
-pub mod merkle_tree;merkle_tree50,1327
+chain.rs,492
+pub struct Blockchain {Blockchain7,140
+impl Blockchain {Blockchain12,222
+    pub fn new() -> Self {new13,240
+    pub fn push(&mut self, block: Block) {push20,373
+    pub fn len(&self) -> usize {len24,455
+    pub fn last(&self) -> &Block {last28,520
+    pub fn mined_block(&self) -> Option<&Block> {mined_block32,597
+    pub fn has_mined_block(&self) -> bool {has_mined_block36,688
+    pub fn set_mined_block(&mut self, transactions: Vec<Transaction>) {set_mined_block40,774
+
+transaction/mod.rs,423
+pub struct Transaction {Transaction11,241
+impl Transaction {Transaction17,328
+    pub fn random() -> Self {random18,347
+    pub fn to_bytes(&self) -> Vec<u8> {to_bytes30,718
+    pub fn hash(&self) -> Hash {hash39,1013
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root45,1156
+    pub fn find(probability: f64) -> Option<Self> {find51,1402
+pub mod merkle_tree;merkle_tree60,1633
 
 transaction/merkle_tree.rs,164
 pub struct MergeHash {}MergeHash7,150
 impl Merge for MergeHash {MergeHash9,175
     fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {merge12,225
 
-lib.rs,123
+ledger.rs,579
+const PROBABILITY_NEW_TRANSACTION: f64 = 1.0 / 1000000.0;PROBABILITY_NEW_TRANSACTION5,75
+const SEND: usize = 1 << 6;SEND6,133
+pub struct Ledger {Ledger8,162
+impl Ledger {Ledger13,303
+    pub fn new() -> Self {new14,317
+    pub fn update(&mut self) -> Option<Vec<u8>> {update21,435
+    pub fn send(&mut self, txs: &[(usize, Sender<Arc<Vec<u8>>>)]) {send31,741
+    pub fn add(&mut self, list: Vec<Transaction>) {add46,1227
+    pub fn next_batch(&self) -> Option<&[Transaction]> {next_batch50,1326
+    pub fn has_next_batch(&self) -> bool {has_next_batch58,1540
+
+lib.rs,173
 pub mod block;block3,32
-// pub mod chain;chain4,47
-pub mod network;network5,65
-pub mod transaction;transaction6,82
+pub mod chain;chain4,47
+pub mod ledger;ledger5,62
+pub mod network;network6,78
+pub mod node;node7,95
+pub mod transaction;transaction8,109
 
 block.rs,794
 const GENESIS_BLOCK_HASH_PREV_BLOCK: &[u8; 32] =GENESIS_BLOCK_HASH_PREV_BLOCK9,174
@@ -49,9 +80,9 @@ pub struct BlockHeader {BlockHeader20,534
 impl Block {Block26,636
     pub fn genesis() -> Self {genesis27,649
     pub fn new(height: usize, hash_prev_block: Hash, transactions: Vec<Transaction>) -> Self {new38,990
-    pub fn height(&self) -> usize {height49,1325
-    pub fn hash_prev_block(&self) -> Hash {hash_prev_block53,1388
-    pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root57,1475
-    pub fn transactions(&self) -> &Vec<Transaction> {transactions61,1564
-    pub fn hash(&self) -> Hash {hash65,1652
-    pub fn to_bytes(&self) -> Vec<u8> {to_bytes71,1795
+    pub fn height(&self) -> usize {height53,1460
+    pub fn hash_prev_block(&self) -> Hash {hash_prev_block57,1523
+    pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root61,1610
+    pub fn transactions(&self) -> &Vec<Transaction> {transactions65,1699
+    pub fn hash(&self) -> Hash {hash69,1787
+    pub fn to_bytes(&self) -> Vec<u8> {to_bytes75,1930
