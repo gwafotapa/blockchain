@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::chain::Blockchain;
 use crate::ledger::Ledger;
+use crate::transaction::Transaction;
 
 const PROBABILITY_NEW_BLOCK: f64 = 1.0 / 1000000.0;
 
@@ -78,24 +79,16 @@ impl Node {
 
     pub fn synchronize(&mut self) {
         match self.rx.try_recv() {
-            Ok(data) => match &data[0..1] {
-                b"b" => {
+            Ok(data) => match data[0] {
+                b'b' => {
                     let height = usize::from_be_bytes(data[1..9].try_into().unwrap());
                     println!("Thread {} received block {}", self.id, height);
                     // TODO2: add block if longer chain
                 }
-                b"t" => {
-                    let sender = unsafe { String::from_utf8_unchecked(data[1..11].to_vec()) };
-                    let receiver = unsafe { String::from_utf8_unchecked(data[11..21].to_vec()) };
-                    let amount = u32::from_be_bytes(data[21..25].try_into().unwrap());
-                    println!(
-                        "Thread {} received transaction:\n\
-                              sender:   {}\n\
-                              receiver: {}\n\
-                              amount:   {}\n",
-                        self.id, sender, receiver, amount
-                    );
-                    // TODO1: add transaction
+                b't' => {
+                    let transaction = Transaction::from(&data[1..]);
+                    println!("Thread {} received {:?}", self.id, transaction);
+                    self.ledger.add(vec![transaction]);
                 }
                 _ => panic!("Thread {} received invalid data: '{:?}'", self.id, data),
             },
