@@ -14,7 +14,7 @@ impl Node {Node20,444
     pub fn blockchain(&self) -> &Blockchain {blockchain45,965
     pub fn propagate<B>(&self, bytes: B)propagate49,1043
     pub fn mine(&mut self) -> Option<Vec<u8>> {mine59,1266
-    pub fn synchronize(&mut self) {synchronize73,1838
+    pub fn synchronize(&mut self) {synchronize79,2039
 
 main.rs,325
 const MAX_NODES: usize = 10;MAX_NODES15,301
@@ -26,43 +26,45 @@ impl Handler {Handler25,512
     fn new(new26,527
 fn main() {main84,2885
 
-chain.rs,492
+chain.rs,566
 pub struct Blockchain {Blockchain7,140
 impl Blockchain {Blockchain12,222
     pub fn new() -> Self {new13,240
     pub fn push(&mut self, block: Block) {push20,373
-    pub fn len(&self) -> usize {len24,455
-    pub fn last(&self) -> &Block {last28,520
-    pub fn mined_block(&self) -> Option<&Block> {mined_block32,597
-    pub fn has_mined_block(&self) -> bool {has_mined_block36,688
-    pub fn set_mined_block(&mut self, transactions: Vec<Transaction>) {set_mined_block40,774
+    pub fn len(&self) -> usize {len25,488
+    pub fn last(&self) -> &Block {last29,553
+    pub fn mined_block(&self) -> Option<&Block> {mined_block33,630
+    pub fn has_mined_block(&self) -> bool {has_mined_block37,721
+    pub fn take_mined_block(&mut self) -> Block {take_mined_block41,807
+    pub fn set_mined_block(&mut self, transactions: Vec<Transaction>) {set_mined_block45,905
 
 transaction/mod.rs,423
-pub struct Transaction {Transaction11,241
-impl Transaction {Transaction17,328
-    pub fn random() -> Self {random18,347
-    pub fn to_bytes(&self) -> Vec<u8> {to_bytes30,718
-    pub fn hash(&self) -> Hash {hash39,1013
-    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root45,1156
-    pub fn find(probability: f64) -> Option<Self> {find51,1402
-pub mod merkle_tree;merkle_tree60,1633
+pub struct Transaction {Transaction11,256
+impl Transaction {Transaction17,343
+    pub fn random() -> Self {random18,362
+    pub fn to_bytes(&self) -> Vec<u8> {to_bytes30,733
+    pub fn hash(&self) -> Hash {hash39,1028
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root45,1171
+    pub fn find(probability: f64) -> Option<Self> {find51,1417
+pub mod merkle_tree;merkle_tree60,1648
 
 transaction/merkle_tree.rs,164
 pub struct MergeHash {}MergeHash7,150
 impl Merge for MergeHash {MergeHash9,175
     fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {merge12,225
 
-ledger.rs,579
+ledger.rs,654
 const PROBABILITY_NEW_TRANSACTION: f64 = 1.0 / 1000000.0;PROBABILITY_NEW_TRANSACTION5,75
-const SEND: usize = 1 << 6;SEND6,133
+const SEND: usize = 1 << 2;SEND6,133
 pub struct Ledger {Ledger8,162
-impl Ledger {Ledger13,303
-    pub fn new() -> Self {new14,317
-    pub fn update(&mut self) -> Option<Vec<u8>> {update21,435
-    pub fn send(&mut self, txs: &[(usize, Sender<Arc<Vec<u8>>>)]) {send31,741
-    pub fn add(&mut self, list: Vec<Transaction>) {add46,1227
-    pub fn next_batch(&self) -> Option<&[Transaction]> {next_batch50,1326
-    pub fn has_next_batch(&self) -> bool {has_next_batch58,1540
+impl Ledger {Ledger13,244
+    pub fn new() -> Self {new14,258
+    pub fn update(&mut self) -> Option<Vec<u8>> {update21,382
+    pub fn send(&mut self, txs: &[(usize, Sender<Arc<Vec<u8>>>)]) {send31,688
+    pub fn add(&mut self, new: Vec<Transaction>) {add46,1192
+    pub fn next_batch(&self) -> Option<&[Transaction]> {next_batch50,1289
+    pub fn has_next_batch(&self) -> bool {has_next_batch58,1515
+    pub fn archive(&mut self, records: &Vec<Transaction>) {archive64,1708
 
 lib.rs,173
 pub mod block;block3,32

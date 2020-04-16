@@ -66,7 +66,13 @@ impl Node {
         }
         match rng.gen_bool(PROBABILITY_NEW_BLOCK) {
             false => None,
-            true => Some(self.blockchain.mined_block().unwrap().to_bytes()),
+            true => {
+                let block = self.blockchain.take_mined_block();
+                let bytes = block.to_bytes();
+                self.ledger.archive(block.transactions());
+                self.blockchain.push(block);
+                Some(bytes)
+            }
         }
     }
 

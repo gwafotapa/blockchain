@@ -19,6 +19,7 @@ impl Blockchain {
 
     pub fn push(&mut self, block: Block) {
         self.chain.push(block);
+        self.mined_block = None;
     }
 
     pub fn len(&self) -> usize {
@@ -35,6 +36,10 @@ impl Blockchain {
 
     pub fn has_mined_block(&self) -> bool {
         self.mined_block.is_some()
+    }
+
+    pub fn take_mined_block(&mut self) -> Block {
+        self.mined_block.take().unwrap()
     }
 
     pub fn set_mined_block(&mut self, transactions: Vec<Transaction>) {

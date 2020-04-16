@@ -7,7 +7,7 @@ use merkle_tree::MergeHash;
 
 type Hash = GenericArray<u8, U32>;
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Transaction {
     sender: String,
     receiver: String,
