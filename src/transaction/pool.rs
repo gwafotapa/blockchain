@@ -28,7 +28,7 @@ impl TransactionPool {
         let mut bytes = Vec::new();
         bytes.push(b't'); // 't' stands for 'transaction'
         for transaction in &self.transactions[self.propagated..] {
-            bytes.extend(transaction.to_bytes());
+            bytes.extend(transaction.serialize());
         }
         self.propagated = self.transactions.len();
         Some(bytes)

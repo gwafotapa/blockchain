@@ -86,7 +86,7 @@ impl Node {
                 }
                 b't' => {
                     for bytes in data[1..].chunks(24) {
-                        let transaction = Transaction::from(bytes);
+                        let transaction = Transaction::deserialize(bytes);
                         println!("Thread {} received {:?}", self.id, transaction);
                         self.transaction_pool.add(transaction);
                     }

@@ -45,27 +45,25 @@ pub struct TransactionPool {TransactionPool6,125
 impl TransactionPool {TransactionPool11,216
     pub fn new() -> Self {new12,239
     pub fn update(&mut self) -> Option<Vec<u8>> {update19,363
-    pub fn add(&mut self, transaction: Transaction) {add37,954
-    pub fn next_batch(&self) -> Option<&[Transaction]> {next_batch41,1060
-    pub fn has_next_batch(&self) -> bool {has_next_batch49,1286
-    pub fn remove(&mut self, records: &Vec<Transaction>) {remove55,1479
+    pub fn add(&mut self, transaction: Transaction) {add37,955
+    pub fn next_batch(&self) -> Option<&[Transaction]> {next_batch41,1061
+    pub fn has_next_batch(&self) -> bool {has_next_batch49,1287
+    pub fn remove(&mut self, records: &Vec<Transaction>) {remove55,1480
 
-transaction/mod.rs,797
+transaction/mod.rs,693
 pub struct Transaction {Transaction14,322
 impl From<&[u8]> for Transaction {Transaction20,409
     fn from(data: &[u8]) -> Self {from21,444
-// impl Into<Vec<u8>> for Transaction {Into33,795
-//     fn into(self) -> Vec<u8> {into34,835
-impl Transaction {Transaction45,1119
-    pub fn new<S>(sender: S, receiver: S, amount: u32) -> Selfnew46,1138
-    pub fn random() -> Self {random57,1368
-    pub fn to_bytes(&self) -> Vec<u8> {to_bytes69,1739
-    // pub fn from_bytes(data: &[u8]) -> Self {from_bytes79,2026
-    pub fn hash(&self) -> Hash {hash90,2415
-    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root96,2558
-    pub fn find(probability: f64) -> Option<Self> {find102,2804
-pub mod merkle_tree;merkle_tree111,3035
-pub mod pool;pool112,3056
+impl Transaction {Transaction33,795
+    pub fn new<S>(sender: S, receiver: S, amount: u32) -> Selfnew34,814
+    pub fn random() -> Self {random45,1044
+    pub fn serialize(&self) -> Vec<u8> {serialize57,1415
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize65,1631
+    pub fn hash(&self) -> Hash {hash72,1764
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root78,1908
+    pub fn find(probability: f64) -> Option<Self> {find84,2154
+pub mod merkle_tree;merkle_tree93,2385
+pub mod pool;pool94,2406
 
 transaction/merkle_tree.rs,164
 pub struct MergeHash {}MergeHash7,150

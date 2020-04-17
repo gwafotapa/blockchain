@@ -79,7 +79,7 @@ impl Block {
         bytes.extend(self.hash_prev_block().as_slice());
         bytes.extend(self.hash_merkle_root().as_slice());
         for transaction in &self.transactions {
-            bytes.extend(transaction.to_bytes());
+            bytes.extend(transaction.serialize());
         }
         bytes
     }
