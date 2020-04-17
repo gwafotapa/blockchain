@@ -6,6 +6,8 @@ use std::convert::TryInto;
 
 use merkle_tree::MergeHash;
 
+pub use pool::TransactionPool;
+
 type Hash = GenericArray<u8, U32>;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -17,7 +19,6 @@ pub struct Transaction {
 
 impl From<&[u8]> for Transaction {
     fn from(data: &[u8]) -> Self {
-        // TODO: rewrite with iterators ?
         let sender = String::from_utf8(data[0..10].to_vec()).unwrap();
         let receiver = String::from_utf8(data[10..20].to_vec()).unwrap();
         let amount = u32::from_be_bytes(data[20..24].try_into().unwrap());
@@ -66,8 +67,10 @@ impl Transaction {
     }
 
     pub fn to_bytes(&self) -> Vec<u8> {
-        std::iter::once(b't')
-            .chain(self.sender.bytes())
+        // std::iter::once(b't')
+        // .chain(self.sender.bytes())
+        self.sender
+            .bytes()
             .chain(self.receiver.bytes())
             .chain(self.amount.to_be_bytes().iter().copied())
             .collect()
@@ -106,3 +109,4 @@ impl Transaction {
 }
 
 pub mod merkle_tree;
+pub mod pool;

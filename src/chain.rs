@@ -1,8 +1,4 @@
-use generic_array::{typenum::U32, GenericArray};
-
 use crate::{block::Block, transaction::Transaction};
-
-type Hash = GenericArray<u8, U32>;
 
 pub struct Blockchain {
     chain: Vec<Block>,

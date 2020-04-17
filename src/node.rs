@@ -4,8 +4,7 @@ use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::sync::{Arc, Mutex};
 
 use crate::chain::Blockchain;
-use crate::ledger::Ledger;
-use crate::transaction::Transaction;
+use crate::transaction::{Transaction, TransactionPool};
 
 const PROBABILITY_NEW_BLOCK: f64 = 1.0 / 1000000.0;
 
@@ -14,7 +13,7 @@ pub struct Node {
     rx0: Arc<Mutex<Receiver<&'static str>>>,
     txs: Vec<(usize, Sender<Arc<Vec<u8>>>)>,
     rx: Receiver<Arc<Vec<u8>>>,
-    ledger: Ledger,
+    transaction_pool: TransactionPool,
     blockchain: Blockchain,
 }
 
@@ -30,17 +29,17 @@ impl Node {
             rx0,
             txs,
             rx,
-            ledger: Ledger::new(),
+            transaction_pool: TransactionPool::new(),
             blockchain: Blockchain::new(),
         }
     }
 
-    pub fn ledger(&self) -> &Ledger {
-        &self.ledger
+    pub fn transaction_pool(&self) -> &TransactionPool {
+        &self.transaction_pool
     }
 
-    pub fn ledger_mut(&mut self) -> &mut Ledger {
-        &mut self.ledger
+    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {
+        &mut self.transaction_pool
     }
 
     pub fn blockchain(&self) -> &Blockchain {
@@ -53,24 +52,24 @@ impl Node {
     {
         let bytes = Arc::new(bytes.into());
         for tx in self.txs.iter() {
-            tx.1.send(Arc::clone(&bytes));
+            tx.1.send(Arc::clone(&bytes)).unwrap();
         }
     }
 
     pub fn mine(&mut self) -> Option<Vec<u8>> {
         let mut rng = rand::thread_rng();
-        if !self.blockchain.has_mined_block() && !self.ledger.has_next_batch() {
+        if !self.blockchain.has_mined_block() && !self.transaction_pool.has_next_batch() {
             return None;
-        } else if !self.blockchain.has_mined_block() && self.ledger.has_next_batch() {
+        } else if !self.blockchain.has_mined_block() && self.transaction_pool.has_next_batch() {
             self.blockchain
-                .set_mined_block(self.ledger.next_batch().unwrap().to_vec());
+                .set_mined_block(self.transaction_pool.next_batch().unwrap().to_vec());
         }
         match rng.gen_bool(PROBABILITY_NEW_BLOCK) {
             false => None,
             true => {
                 let block = self.blockchain.take_mined_block();
                 let bytes = block.to_bytes();
-                self.ledger.archive(block.transactions());
+                self.transaction_pool.remove(block.transactions());
                 self.blockchain.push(block);
                 Some(bytes)
             }
@@ -83,12 +82,14 @@ impl Node {
                 b'b' => {
                     let height = usize::from_be_bytes(data[1..9].try_into().unwrap());
                     println!("Thread {} received block {}", self.id, height);
-                    // TODO2: add block if longer chain
+                    // TODO: add block if longer chain
                 }
                 b't' => {
-                    let transaction = Transaction::from(&data[1..]);
-                    println!("Thread {} received {:?}", self.id, transaction);
-                    self.ledger.add(vec![transaction]);
+                    for bytes in data[1..].chunks(24) {
+                        let transaction = Transaction::from(bytes);
+                        println!("Thread {} received {:?}", self.id, transaction);
+                        self.transaction_pool.add(transaction);
+                    }
                 }
                 _ => panic!("Thread {} received invalid data: '{:?}'", self.id, data),
             },

@@ -1,16 +1,15 @@
 // use log::info;
-use itertools::Itertools;
 use rand::Rng;
 use std::{
     sync::{
-        mpsc::{self, Receiver, Sender, TryRecvError},
+        mpsc::{self, Receiver, Sender},
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
     time::Duration,
 };
 
-use blockchain::{ledger::Ledger, network, node::Node, transaction::Transaction};
+use blockchain::{network, node::Node};
 
 const MAX_NODES: usize = 10;
 const SHUT_DOWN: &str = "Shut down";
@@ -49,7 +48,7 @@ impl Handler {
             loop {
                 // ledger.update(PROBA_NEW_TRANSACTION);
                 // ledger.send(&tx);
-                if let Some(transactions) = node.ledger_mut().update() {
+                if let Some(transactions) = node.transaction_pool_mut().update() {
                     // if let Some(transactions) = node.update_ledger() {
                     node.propagate(transactions);
                 }
