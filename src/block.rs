@@ -68,13 +68,14 @@ impl Block {
 
     pub fn hash(&self) -> Hash {
         let mut hasher = Sha256::new();
-        hasher.input(self.to_bytes());
+        // hasher.input(self.to_bytes());
+        hasher.input(self.serialize());
         hasher.result()
     }
 
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn serialize(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        bytes.extend(b"b"); // 'b' stands for 'block'
+        // bytes.extend(b"b"); // 'b' stands for 'block'
         bytes.extend(&self.height.to_be_bytes());
         bytes.extend(self.hash_prev_block().as_slice());
         bytes.extend(self.hash_merkle_root().as_slice());
