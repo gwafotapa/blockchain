@@ -1,45 +1,82 @@
 use rand::{seq::SliceRandom, Rng};
 use std::collections::{HashMap, HashSet};
+use std::sync::mpsc;
 
-type Node = usize;
-type Neighborhood = HashSet<Node>;
-type Network = HashMap<Node, Neighborhood>;
+use crate::node::Node;
 
-pub fn generate_network(nodes: usize) -> Network {
-    assert!(nodes > 0, "Network has no nodes");
-    let mut network = Network::with_capacity(nodes);
-    for node in 0..nodes {
-        network.insert(node, HashSet::new());
+type Vertex = usize;
+type Neighborhood = HashSet<Vertex>;
+type Graph = HashMap<Vertex, Neighborhood>;
+
+pub struct Network(pub HashSet<Node>);
+
+impl Network {
+    pub fn with_capacity(n: usize) -> Network {
+        Self(HashSet::with_capacity(n))
     }
-    if nodes == 1 {
-        return network;
+
+    pub fn insert(&mut self, node: Node) {
+        self.0.insert(node);
+    }
+}
+
+pub fn generate_graph(vertices: usize) -> Graph {
+    assert!(vertices > 0, "Graph has no vertices");
+    let mut graph = Graph::with_capacity(vertices);
+    for vertex in 0..vertices {
+        graph.insert(vertex, HashSet::new());
+    }
+    if vertices == 1 {
+        return graph;
     }
 
     let mut rng = rand::thread_rng();
-    let mut candidates = Vec::with_capacity(nodes);
-    for i in 0..nodes {
+    let mut candidates = Vec::with_capacity(vertices);
+    for i in 0..vertices {
         candidates.push(i);
     }
-    for node in 0..nodes - 1 {
-        let neighbours = rng.gen_range(1, nodes + 1);
-        let current_neighbours = network[&node].len();
+    for vertex in 0..vertices - 1 {
+        let neighbours = rng.gen_range(1, vertices + 1);
+        let current_neighbours = graph[&vertex].len();
         if current_neighbours >= neighbours {
             continue;
         }
 
         for neighbour in
-            candidates[node + 1..].choose_multiple(&mut rng, neighbours - current_neighbours)
+            candidates[vertex + 1..].choose_multiple(&mut rng, neighbours - current_neighbours)
         {
-            network.get_mut(&node).unwrap().insert(*neighbour);
-            network.get_mut(neighbour).unwrap().insert(node);
+            graph.get_mut(&vertex).unwrap().insert(*neighbour);
+            graph.get_mut(neighbour).unwrap().insert(vertex);
         }
     }
 
-    let last = nodes - 1;
-    if network[&last].is_empty() {
+    let last = vertices - 1;
+    if graph[&last].is_empty() {
         let neighbour = rng.gen_range(0, last);
-        network.get_mut(&last).unwrap().insert(neighbour);
-        network.get_mut(&neighbour).unwrap().insert(last);
+        graph.get_mut(&last).unwrap().insert(neighbour);
+        graph.get_mut(&neighbour).unwrap().insert(last);
+    }
+    graph
+}
+
+pub fn generate_network(nodes: usize) -> Network {
+    let graph = generate_graph(nodes);
+    let mut senders = Vec::with_capacity(nodes);
+    let mut receivers = Vec::with_capacity(nodes);
+    for _node in 0..nodes {
+        let (sender, receiver) = mpsc::channel();
+        senders.push(sender);
+        receivers.push(receiver);
+    }
+    let mut network = Network::with_capacity(nodes);
+    for node in (0..nodes).rev() {
+        let neighbours = graph[&node]
+            .iter()
+            .map(|x| (*x, senders[*x].clone()))
+            .collect();
+        let listener = receivers.pop().unwrap();
+        let node = Node::new(node, neighbours, listener);
+        network.insert(node);
     }
     network
 }
@@ -49,16 +86,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn generate_network_test() {
-        let nodes = 10;
-        let network = generate_network(nodes);
-        println!("{:?}", network);
-        assert_eq!(network.len(), nodes);
-        for (node, neighborhood) in &network {
+    fn generate_graph_test() {
+        let vertices = 10;
+        let graph = generate_graph(vertices);
+        println!("{:?}", graph);
+        assert_eq!(graph.len(), vertices);
+        for (vertex, neighborhood) in &graph {
             assert!(!neighborhood.is_empty());
-            assert!(!neighborhood.contains(node));
+            assert!(!neighborhood.contains(vertex));
             for neighbour in neighborhood {
-                assert!(network[neighbour].contains(node));
+                assert!(graph[neighbour].contains(vertex));
             }
         }
     }

@@ -1,15 +1,18 @@
+use log::info;
 // use rand::Rng;
 // use std::convert::TryInto;
+use std::hash::{Hash, Hasher};
 use std::iter;
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
-use std::sync::{Arc, Mutex};
+use std::ops::Deref;
+use std::sync::mpsc::{Receiver, Sender};
+use std::sync::Arc;
 
 // use crate::block::Block;
 // use crate::chain::Blockchain;
 // use crate::common::Data;
 use crate::common::{Data, NODES};
-use crate::transaction::{Transaction, TransactionPool};
-use crate::utxo::{Utxo, UtxoPool};
+use crate::transaction::TransactionPool;
+use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
 
 // const PROBABILITY_NEW_BLOCK: f64 = 1.0 / 1000000.0;
@@ -25,6 +28,20 @@ pub struct Node {
     wallet: Wallet,
     // blockchain: Blockchain,
     // rx0: Arc<Mutex<Receiver<&'static str>>>,
+}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Node) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for Node {}
+
+impl Hash for Node {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
 }
 
 impl Node {
@@ -45,6 +62,53 @@ impl Node {
             wallet,
             // blockchain: Blockchain::new(),
             // rx0,
+        }
+    }
+
+    pub fn run(&mut self) {
+        loop {
+            if let Some(transaction) = self.wallet_mut().manage() {
+                self.utxo_pool_mut().process(transaction).unwrap();
+                self.transaction_pool_mut().add(transaction);
+                info!(
+                    "Node #{} --- New transaction:\n{}\n",
+                    self.id(),
+                    transaction
+                );
+                self.propagate(Data::Transaction(transaction));
+            }
+            // if let Some(block) = self.blockchain().mine() {
+            //     self.propagate(Data::Block(&block));
+            //     self.blockchain.add(block);
+            // }
+            while let Ok(bytes) = self.listener().try_recv() {
+                match Data::from(bytes.deref()) {
+                    Data::Transaction(transaction) => {
+                        if !self.transaction_pool().contains(transaction) {
+                            info!(
+                                "Node #{} --- Received transaction:\n{}\n",
+                                self.id(),
+                                transaction
+                            );
+                            self.utxo_pool_mut().process(transaction).unwrap();
+                            self.transaction_pool_mut().add(transaction);
+                            self.propagate(Data::Transaction(transaction));
+                        }
+                    } //         Data::Block(block) => {
+                      //             self.propagate(Data::Block(&block));
+                      //             self.blockchain.add(block);
+                      //         }
+                }
+            }
+            // match rx0.lock().unwrap().try_recv() {
+            //     Ok(SHUT_DOWN) => {
+            //         println!("Thread #{} shutting down", id);
+            //         break;
+            //     }
+            //     Ok(message) => panic!("Received unexpected message: \"{}\"", message),
+            //     Err(TryRecvError::Empty) => {}
+            //     Err(TryRecvError::Disconnected) => panic!("Channel disconnected"),
+            // }
         }
     }
 

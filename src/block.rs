@@ -2,9 +2,8 @@ use generic_array::{typenum::U32, GenericArray};
 use hex_literal::hex;
 use sha2::{Digest, Sha256};
 
+use crate::common::Hash;
 use crate::transaction::Transaction;
-
-type Hash = GenericArray<u8, U32>;
 
 const GENESIS_BLOCK_HASH_PREV_BLOCK: &[u8; 32] =
     &hex!("0000000000000000000000000000000000000000000000000000000000000000");

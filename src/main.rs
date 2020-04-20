@@ -2,7 +2,7 @@ use log::info;
 // use rand::Rng;
 use std::ops::Deref;
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
@@ -101,27 +101,31 @@ fn main() {
     // };
     let nodes = NODES;
     let network = network::generate_network(nodes);
-    println!("Network: {:?}", network);
+    // println!("Network: {:?}", network);
 
-    let mut handlers = Vec::with_capacity(nodes);
-    // let (tx0, rx0) = mpsc::channel();
-    // let rx0 = Arc::new(Mutex::new(rx0));
+    // let mut handlers = Vec::with_capacity(nodes);
+    // // let (tx0, rx0) = mpsc::channel();
+    // // let rx0 = Arc::new(Mutex::new(rx0));
 
-    let mut senders = Vec::with_capacity(nodes);
-    let mut receivers = Vec::with_capacity(nodes);
-    for _node in 0..nodes {
-        let (sender, receiver) = mpsc::channel();
-        senders.push(sender);
-        receivers.push(receiver);
-    }
-    for node in (0..nodes).rev() {
-        let neighbours = network[&node]
-            .iter()
-            .map(|x| (*x, senders[*x].clone())) // TODO: Do I need *x ?
-            .collect();
-        let listener = receivers.pop().unwrap();
-        // handlers.push(Handler::new(node, Arc::clone(&rx0), senders, receiver));
-        handlers.push(Handler::new(node, neighbours, listener));
+    // let mut senders = Vec::with_capacity(nodes);
+    // let mut receivers = Vec::with_capacity(nodes);
+    // for _node in 0..nodes {
+    //     let (sender, receiver) = mpsc::channel();
+    //     senders.push(sender);
+    //     receivers.push(receiver);
+    // }
+    // for node in (0..nodes).rev() {
+    //     let neighbours = network[&node]
+    //         .iter()
+    //         .map(|x| (*x, senders[*x].clone())) // TODO: Do I need *x ?
+    //         .collect();
+    //     let listener = receivers.pop().unwrap();
+    //     // handlers.push(Handler::new(node, Arc::clone(&rx0), senders, receiver));
+    //     handlers.push(Handler::new(node, neighbours, listener));
+    // }
+
+    for mut node in network.0 {
+        let thread = Some(thread::spawn(move || node.run()));
     }
 
     thread::sleep(Duration::from_secs(3));

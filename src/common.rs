@@ -3,7 +3,7 @@ use generic_array::{typenum::U32, GenericArray};
 // use crate::block::Block;
 use crate::transaction::Transaction;
 
-type Hash = GenericArray<u8, U32>;
+pub type Hash = GenericArray<u8, U32>;
 
 pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;

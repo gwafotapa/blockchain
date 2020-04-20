@@ -1,8 +1,7 @@
-use generic_array::{typenum::U32, GenericArray};
 use merkle_cbt::merkle_tree::Merge;
 use sha2::{Digest, Sha256};
 
-type Hash = GenericArray<u8, U32>;
+use crate::common::Hash;
 
 pub struct MergeHash {}
 

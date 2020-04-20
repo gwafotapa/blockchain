@@ -1,16 +1,14 @@
-use generic_array::{typenum::U32, GenericArray};
 use merkle_cbt::merkle_tree::CBMT;
 // use rand::Rng;
 use sha2::{Digest, Sha256};
 // use std::convert::TryInto;
-use std::{fmt, result};
+use std::fmt;
 
 use self::merkle_tree::MergeHash;
-use crate::utxo::{Utxo, UtxoPool};
+use crate::common::Hash;
+use crate::utxo::Utxo;
 
 pub use pool::TransactionPool;
-
-type Hash = GenericArray<u8, U32>;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Transaction {
