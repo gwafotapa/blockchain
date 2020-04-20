@@ -1,4 +1,4 @@
-// use log::info;
+use log::info;
 // use rand::Rng;
 use std::ops::Deref;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -45,8 +45,14 @@ impl Handler {
             let mut node = Node::new(id, neighbours, listener);
             loop {
                 if let Some(transaction) = node.wallet_mut().manage() {
-                    node.propagate(Data::Transaction(transaction));
+                    node.utxo_pool_mut().process(transaction).unwrap();
                     node.transaction_pool_mut().add(transaction);
+                    info!(
+                        "Node #{} --- New transaction:\n{}\n",
+                        node.id(),
+                        transaction
+                    );
+                    node.propagate(Data::Transaction(transaction));
                 }
                 // if let Some(block) = node.blockchain().mine() {
                 //     node.propagate(Data::Block(&block));
@@ -55,8 +61,16 @@ impl Handler {
                 while let Ok(bytes) = node.listener().try_recv() {
                     match Data::from(bytes.deref()) {
                         Data::Transaction(transaction) => {
-                            node.propagate(Data::Transaction(transaction));
-                            node.transaction_pool_mut().add(transaction);
+                            if !node.transaction_pool().contains(transaction) {
+                                info!(
+                                    "Node #{} --- Received transaction:\n{}\n",
+                                    node.id(),
+                                    transaction
+                                );
+                                node.utxo_pool_mut().process(transaction).unwrap();
+                                node.transaction_pool_mut().add(transaction);
+                                node.propagate(Data::Transaction(transaction));
+                            }
                         } //         Data::Block(block) => {
                           //             node.propagate(Data::Block(&block));
                           //             node.blockchain.add(block);
@@ -79,6 +93,7 @@ impl Handler {
 }
 
 fn main() {
+    env_logger::init();
     // let mut rng = rand::thread_rng();
     // let nodes = match NODES {
     //     0 => rng.gen_range(2, MAX_NODES + 1),
@@ -109,7 +124,7 @@ fn main() {
         handlers.push(Handler::new(node, neighbours, listener));
     }
 
-    // thread::sleep(Duration::from_secs(1));
+    thread::sleep(Duration::from_secs(3));
 
     // for _ in &mut handlers {
     //     tx0.send(SHUT_DOWN).unwrap();

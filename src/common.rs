@@ -1,12 +1,11 @@
 use generic_array::{typenum::U32, GenericArray};
-use std::borrow::Borrow;
 
 // use crate::block::Block;
 use crate::transaction::Transaction;
 
 type Hash = GenericArray<u8, U32>;
 
-pub const NODES: usize = 10;
+pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
 
 pub enum Data {

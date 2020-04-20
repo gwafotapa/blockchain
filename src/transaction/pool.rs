@@ -54,6 +54,10 @@ impl TransactionPool {
         self.transactions.push(transaction);
     }
 
+    pub fn contains(&self, transaction: Transaction) -> bool {
+        self.transactions.contains(&transaction)
+    }
+
     // pub fn next_batch(&self) -> Option<&[Transaction]> {
     //     if self.transactions.len() < self.propagated + SEND {
     //         None

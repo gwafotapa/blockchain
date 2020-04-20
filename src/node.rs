@@ -1,5 +1,5 @@
-use rand::Rng;
-use std::convert::TryInto;
+// use rand::Rng;
+// use std::convert::TryInto;
 use std::iter;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::sync::{Arc, Mutex};
@@ -48,17 +48,21 @@ impl Node {
         }
     }
 
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
     pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {
         &self.listener
     }
 
-    // pub fn utxo_pool(&self) -> &UtxoPool {
-    //     &self.utxo_pool
-    // }
+    pub fn utxo_pool(&self) -> &UtxoPool {
+        &self.utxo_pool
+    }
 
-    // pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {
-    //     &mut self.utxo_pool
-    // }
+    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {
+        &mut self.utxo_pool
+    }
 
     pub fn transaction_pool(&self) -> &TransactionPool {
         &self.transaction_pool

@@ -1,12 +1,32 @@
-use rand::Rng;
+// use rand::Rng;
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::error::Error;
+use std::{fmt, result};
+
+use crate::transaction::Transaction;
+
+#[derive(Debug, Clone)]
+pub struct InvalidTransaction;
+
+impl fmt::Display for InvalidTransaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Invalid transaction")
+    }
+}
+
+impl Error for InvalidTransaction {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
 
 /// Amount of initial utxos
 const INIT_AMOUNT: u32 = 10;
 
 /// For now, a utxo has an owner (instead of a script that someone has the unlocking key for)
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Utxo {
     amount: u32,
     puzzle: usize, // for now this is just a node number (supposedly having the unlocking key)
@@ -70,13 +90,14 @@ impl UtxoPool {
     }
 
     pub fn add(&mut self, utxo: Utxo) {
-        self.data.entry(utxo.puzzle).and_modify(|v| v.push(utxo));
+        self.data.get_mut(&utxo.puzzle).unwrap().push(utxo);
     }
 
-    pub fn remove(&mut self, utxo: Utxo) {
-        self.data.entry(utxo.puzzle).and_modify(|v| {
-            v.remove(v.iter().position(|x| x.puzzle == utxo.puzzle).unwrap());
-        });
+    pub fn remove(&mut self, utxo: Utxo) -> bool {
+        self.data
+            .get_mut(&utxo.puzzle)
+            .and_then(|v| Some(v.remove(v.iter().position(|x| x.puzzle == utxo.puzzle).unwrap())))
+            .is_some()
     }
 
     // pub fn contains(&self, utxo: &Utxo) -> bool {
@@ -91,5 +112,12 @@ impl UtxoPool {
     //     Utxo { amount, puzzle }
     // }
 
-    // pub fn process(&mut self, transaction: Transaction) {}
+    pub fn process(&mut self, transaction: Transaction) -> result::Result<(), InvalidTransaction> {
+        if self.remove(transaction.input()) {
+            self.add(transaction.output());
+            Ok(())
+        } else {
+            Err(InvalidTransaction)
+        }
+    }
 }

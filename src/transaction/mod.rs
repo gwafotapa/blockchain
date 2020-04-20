@@ -1,8 +1,9 @@
 use generic_array::{typenum::U32, GenericArray};
 use merkle_cbt::merkle_tree::CBMT;
-use rand::Rng;
+// use rand::Rng;
 use sha2::{Digest, Sha256};
-use std::convert::TryInto;
+// use std::convert::TryInto;
+use std::{fmt, result};
 
 use self::merkle_tree::MergeHash;
 use crate::utxo::{Utxo, UtxoPool};
@@ -11,7 +12,7 @@ pub use pool::TransactionPool;
 
 type Hash = GenericArray<u8, U32>;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Transaction {
     input: Utxo,
     output: Utxo,
@@ -25,6 +26,20 @@ impl From<&[u8]> for Transaction {
     }
 }
 
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Sender:    {}\n\
+             Recipient: {}\n\
+             Amount:    {} satoshis",
+            self.input.puzzle(),
+            self.output.puzzle(),
+            self.input.amount()
+        )
+    }
+}
+
 impl Transaction {
     pub fn new(input: Utxo, output: Utxo) -> Self {
         Self { input, output }
@@ -35,6 +50,14 @@ impl Transaction {
     //     let output = Utxo::new(input.amount(), utxo_pool.total());
     //     Self { input, output }
     // }
+
+    pub fn input(&self) -> Utxo {
+        self.input
+    }
+
+    pub fn output(&self) -> Utxo {
+        self.output
+    }
 
     pub fn serialize(&self) -> Vec<u8> {
         self.input
