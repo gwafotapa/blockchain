@@ -21,8 +21,9 @@ use crate::wallet::Wallet;
 
 pub struct Node {
     id: usize,
-    neighbours: Vec<(usize, Sender<Arc<Vec<u8>>>)>,
+    sender: Sender<Arc<Vec<u8>>>,
     listener: Receiver<Arc<Vec<u8>>>,
+    neighbours: Vec<(usize, Sender<Arc<Vec<u8>>>)>,
     utxo_pool: UtxoPool,
     transaction_pool: TransactionPool,
     wallet: Wallet,
@@ -47,16 +48,18 @@ impl Hash for Node {
 impl Node {
     pub fn new(
         id: usize,
-        neighbours: Vec<(usize, Sender<Arc<Vec<u8>>>)>,
+        sender: Sender<Arc<Vec<u8>>>,
         listener: Receiver<Arc<Vec<u8>>>,
+        neighbours: Vec<(usize, Sender<Arc<Vec<u8>>>)>,
         // rx0: Arc<Mutex<Receiver<&'static str>>>,
     ) -> Self {
         let utxo_pool = UtxoPool::new(NODES);
         let wallet = Wallet::new(utxo_pool.node(id).to_vec());
         Self {
             id,
-            neighbours,
+            sender,
             listener,
+            neighbours,
             utxo_pool,
             transaction_pool: TransactionPool::new(),
             wallet,
@@ -94,10 +97,16 @@ impl Node {
                             self.transaction_pool_mut().add(transaction);
                             self.propagate(Data::Transaction(transaction));
                         }
-                    } //         Data::Block(block) => {
-                      //             self.propagate(Data::Block(&block));
-                      //             self.blockchain.add(block);
-                      //         }
+                    }
+                    Data::ShutDown => {
+                        info!("Node {} shutting down", self.id());
+                        return;
+                    }
+                    _ => panic!("Unexpected data"),
+                    //         Data::Block(block) => {
+                    //             self.propagate(Data::Block(&block));
+                    //             self.blockchain.add(block);
+                    //         }
                 }
             }
             // match rx0.lock().unwrap().try_recv() {
@@ -116,12 +125,16 @@ impl Node {
         self.id
     }
 
-    pub fn neighbours(&self) -> &[(usize, Sender<Arc<Vec<u8>>>)] {
-        self.neighbours.as_ref()
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {
+        &self.sender
     }
 
     pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {
         &self.listener
+    }
+
+    pub fn neighbours(&self) -> &[(usize, Sender<Arc<Vec<u8>>>)] {
+        self.neighbours.as_ref()
     }
 
     pub fn utxo_pool(&self) -> &UtxoPool {
@@ -193,7 +206,8 @@ impl Node {
                 for neighbour in self.neighbours.iter() {
                     neighbour.1.send(Arc::clone(&bytes)).unwrap();
                 }
-            } // Data::Block(block) => block.serialize(),
+            }
+            Data::ShutDown => {} // Data::Block(block) => block.serialize(),
         }
     }
 

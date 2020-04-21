@@ -1,37 +1,74 @@
 use rand::{seq::SliceRandom, Rng};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::sync::mpsc;
+use std::sync::mpsc::Sender;
+use std::sync::{mpsc, Arc};
 
+use crate::common::Data;
 use crate::node::Node;
 
 type Vertex = usize;
 type Neighborhood = HashSet<Vertex>;
 type Graph = HashMap<Vertex, Neighborhood>;
 
-pub struct Network(pub HashSet<Node>);
+pub struct Network {
+    nodes: Option<HashSet<Node>>,
+    senders: Vec<Sender<Arc<Vec<u8>>>>,
+}
 
 impl Network {
     pub fn with_capacity(n: usize) -> Network {
-        Self(HashSet::with_capacity(n))
+        Self {
+            nodes: Some(HashSet::with_capacity(n)),
+            senders: Vec::with_capacity(n),
+        }
     }
 
     pub fn insert(&mut self, node: Node) {
-        self.0.insert(node);
+        self.senders.push(node.sender().clone());
+        self.nodes.as_mut().unwrap().insert(node);
     }
-}
 
-impl fmt::Debug for Network {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for node in &self.0 {
-            let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
-            write!(f, "{:?}: {:?}\n", node.id(), neighborhood)?
+    pub fn random(nodes: usize) -> Network {
+        let graph = random_graph(nodes);
+        let mut senders = Vec::with_capacity(nodes);
+        let mut listeners = Vec::with_capacity(nodes);
+        for _node in 0..nodes {
+            let (sender, listener) = mpsc::channel();
+            senders.push(sender);
+            listeners.push(listener);
         }
-        Ok(())
+        let mut network = Network::with_capacity(nodes);
+        for node in (0..nodes).rev() {
+            let sender = senders[node].clone();
+            let listener = listeners.pop().unwrap();
+            let neighbours = graph[&node]
+                .iter()
+                .map(|x| (*x, senders[*x].clone()))
+                .collect();
+            let node = Node::new(node, sender, listener, neighbours);
+            network.insert(node);
+        }
+        network
+    }
+
+    // pub fn senders(&self) -> &[Sender<Arc<Vec<u8>>>] {
+    //     &self.senders
+    // }
+
+    pub fn take_nodes(&mut self) -> Option<HashSet<Node>> {
+        self.nodes.take()
+    }
+
+    pub fn broadcast(&self, data: Data) {
+        let bytes = Arc::new(data.serialize());
+        for sender in &self.senders {
+            sender.send(Arc::clone(&bytes)).unwrap();
+        }
     }
 }
 
-pub fn generate_graph(vertices: usize) -> Graph {
+fn random_graph(vertices: usize) -> Graph {
     assert!(vertices > 0, "Graph has no vertices");
     let mut graph = Graph::with_capacity(vertices);
     for vertex in 0..vertices {
@@ -70,26 +107,14 @@ pub fn generate_graph(vertices: usize) -> Graph {
     graph
 }
 
-pub fn generate_network(nodes: usize) -> Network {
-    let graph = generate_graph(nodes);
-    let mut senders = Vec::with_capacity(nodes);
-    let mut receivers = Vec::with_capacity(nodes);
-    for _node in 0..nodes {
-        let (sender, receiver) = mpsc::channel();
-        senders.push(sender);
-        receivers.push(receiver);
+impl fmt::Debug for Network {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for node in self.nodes.as_ref().unwrap() {
+            let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
+            write!(f, "{:?}: {:?}\n", node.id(), neighborhood)?
+        }
+        Ok(())
     }
-    let mut network = Network::with_capacity(nodes);
-    for node in (0..nodes).rev() {
-        let neighbours = graph[&node]
-            .iter()
-            .map(|x| (*x, senders[*x].clone()))
-            .collect();
-        let listener = receivers.pop().unwrap();
-        let node = Node::new(node, neighbours, listener);
-        network.insert(node);
-    }
-    network
 }
 
 #[cfg(test)]
@@ -97,9 +122,9 @@ mod test {
     use super::*;
 
     #[test]
-    fn generate_graph_test() {
+    fn test_random_graph() {
         let vertices = 10;
-        let graph = generate_graph(vertices);
+        let graph = random_graph(vertices);
         println!("{:?}", graph);
         assert_eq!(graph.len(), vertices);
         for (vertex, neighborhood) in &graph {
