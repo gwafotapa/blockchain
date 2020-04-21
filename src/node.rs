@@ -116,6 +116,10 @@ impl Node {
         self.id
     }
 
+    pub fn neighbours(&self) -> &[(usize, Sender<Arc<Vec<u8>>>)] {
+        self.neighbours.as_ref()
+    }
+
     pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {
         &self.listener
     }

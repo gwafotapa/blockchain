@@ -1,5 +1,6 @@
 use rand::{seq::SliceRandom, Rng};
 use std::collections::{HashMap, HashSet};
+use std::fmt;
 use std::sync::mpsc;
 
 use crate::node::Node;
@@ -17,6 +18,16 @@ impl Network {
 
     pub fn insert(&mut self, node: Node) {
         self.0.insert(node);
+    }
+}
+
+impl fmt::Debug for Network {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for node in &self.0 {
+            let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
+            write!(f, "{:?}: {:?}\n", node.id(), neighborhood)?
+        }
+        Ok(())
     }
 }
 

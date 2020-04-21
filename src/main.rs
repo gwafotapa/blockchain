@@ -101,7 +101,7 @@ fn main() {
     // };
     let nodes = NODES;
     let network = network::generate_network(nodes);
-    // println!("Network: {:?}", network);
+    info!("Network:\n{:?}", network);
 
     // let mut handlers = Vec::with_capacity(nodes);
     // // let (tx0, rx0) = mpsc::channel();
