@@ -1,6 +1,7 @@
 use log::info;
 // use rand::Rng;
 // use std::convert::TryInto;
+use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use std::iter;
 use std::ops::Deref;
@@ -71,14 +72,14 @@ impl Node {
     pub fn run(&mut self) {
         loop {
             if let Some(transaction) = self.wallet_mut().manage() {
-                self.utxo_pool_mut().process(transaction).unwrap();
-                self.transaction_pool_mut().add(transaction);
+                self.utxo_pool_mut().process(&transaction).unwrap();
                 info!(
                     "Node #{} --- New transaction:\n{}\n",
                     self.id(),
                     transaction
                 );
-                self.propagate(Message::Transaction(transaction));
+                self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+                self.transaction_pool_mut().add(transaction);
             }
             // if let Some(block) = self.blockchain().mine() {
             //     self.propagate(Message::Block(&block));
@@ -87,15 +88,15 @@ impl Node {
             while let Ok(bytes) = self.listener().try_recv() {
                 match Message::from(bytes.deref()) {
                     Message::Transaction(transaction) => {
-                        if !self.transaction_pool().contains(transaction) {
+                        if !self.transaction_pool().contains(&transaction) {
                             info!(
                                 "Node #{} --- Received transaction:\n{}\n",
                                 self.id(),
                                 transaction
                             );
-                            self.utxo_pool_mut().process(transaction).unwrap();
-                            self.transaction_pool_mut().add(transaction);
-                            self.propagate(Message::Transaction(transaction));
+                            self.utxo_pool_mut().process(&transaction).unwrap();
+                            self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+                            self.transaction_pool_mut().add(transaction.into_owned());
                         }
                     }
                     Message::ShutDown => {

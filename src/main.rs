@@ -21,5 +21,5 @@ fn main() {
     let mut network = Network::random(nodes);
     info!("Network:\n{:?}", network);
     network.run();
-    thread::sleep(Duration::from_secs(3));
+    thread::sleep(Duration::from_secs(30));
 }

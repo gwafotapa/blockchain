@@ -10,59 +10,32 @@ use crate::utxo::Utxo;
 
 pub use pool::TransactionPool;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+const SIZE_BYTES: usize = 12;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Transaction {
     input: Utxo,
-    output: Utxo,
-}
-
-impl From<&[u8]> for Transaction {
-    fn from(bytes: &[u8]) -> Self {
-        let input = Utxo::from(&bytes[0..12]);
-        let output = Utxo::from(&bytes[12..24]);
-        Self { input, output }
-    }
-}
-
-impl fmt::Display for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Sender:    {}\n\
-             Recipient: {}\n\
-             Amount:    {} satoshis",
-            self.input.puzzle(),
-            self.output.puzzle(),
-            self.input.amount()
-        )
-    }
+    outputs: Vec<Utxo>,
 }
 
 impl Transaction {
-    pub fn new(input: Utxo, output: Utxo) -> Self {
-        Self { input, output }
+    pub fn new(input: Utxo, outputs: Vec<Utxo>) -> Self {
+        Self { input, outputs }
     }
-
-    // pub fn random(utxo_pool: &UtxoPool) -> Self {
-    //     let input = utxo_pool.random();
-    //     let output = Utxo::new(input.amount(), utxo_pool.total());
-    //     Self { input, output }
-    // }
 
     pub fn input(&self) -> Utxo {
         self.input
     }
 
-    pub fn output(&self) -> Utxo {
-        self.output
+    pub fn outputs(&self) -> &[Utxo] {
+        &self.outputs
     }
 
     pub fn serialize(&self) -> Vec<u8> {
         self.input
             .serialize()
-            .iter()
-            .chain(self.output.serialize().iter())
-            .copied()
+            .into_iter()
+            .chain(self.outputs.iter().flat_map(|o| o.serialize()))
             .collect()
     }
 
@@ -84,14 +57,40 @@ impl Transaction {
         let merkle_tree = CBMT::<Hash, MergeHash>::build_merkle_tree(hashes);
         merkle_tree.root()
     }
+}
 
-    // pub fn find(probability: f64, utxo_pool: &UtxoPool) -> Option<Self> {
-    //     let mut rng = rand::thread_rng();
-    //     match rng.gen_bool(probability) {
-    //         false => None,
-    //         true => Some(Transaction::random(utxo_pool)),
-    //     }
-    // }
+impl From<&[u8]> for Transaction {
+    fn from(bytes: &[u8]) -> Self {
+        let input = Utxo::from(&bytes[0..SIZE_BYTES]);
+        let outputs = bytes[SIZE_BYTES..]
+            .chunks_exact(SIZE_BYTES)
+            .map(|c| Utxo::from(c))
+            .collect();
+        Self { input, outputs }
+    }
+}
+
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Sender:     {:>2}\tAmount: {:>3} satoshis\n\
+             Recipients: {:>2}\tAmount: {:>3} satoshis\n",
+            self.input.puzzle(),
+            self.input.amount(),
+            self.outputs[0].puzzle(),
+            self.outputs[0].amount()
+        )?;
+        for output in &self.outputs[1..] {
+            write!(
+                f,
+                "\t\t{:>2}\tAmount: {:>3} satoshis\n",
+                output.puzzle(),
+                output.amount()
+            )?;
+        }
+        Ok(())
+    }
 }
 
 pub mod merkle_tree;

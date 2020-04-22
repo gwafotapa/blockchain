@@ -111,9 +111,11 @@ impl UtxoPool {
     //     Utxo { amount, puzzle }
     // }
 
-    pub fn process(&mut self, transaction: Transaction) -> result::Result<(), InvalidTransaction> {
+    pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
         if self.remove(transaction.input()) {
-            self.add(transaction.output());
+            for output in transaction.outputs() {
+                self.add(*output);
+            }
             Ok(())
         } else {
             Err(InvalidTransaction)

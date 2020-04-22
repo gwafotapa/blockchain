@@ -23,15 +23,25 @@ impl Wallet {
             true => {
                 let index = rng.gen_range(0, self.utxos.len());
                 let input = self.utxos.remove(index);
-                let mut recipient;
+                let mut amount = input.amount();
+                let mut outputs = Vec::new();
                 loop {
-                    recipient = rng.gen_range(0, NODES);
-                    if recipient != input.puzzle() {
+                    let amountp = rng.gen_range(1, amount + 1);
+                    let mut recipient;
+                    loop {
+                        recipient = rng.gen_range(0, NODES);
+                        if recipient != input.puzzle() {
+                            break;
+                        }
+                    }
+                    let output = Utxo::new(amountp, recipient);
+                    outputs.push(output);
+                    amount -= amountp;
+                    if amount == 0 {
                         break;
                     }
                 }
-                let output = Utxo::new(input.amount(), recipient);
-                let transaction = Transaction::new(input, output);
+                let transaction = Transaction::new(input, outputs);
                 Some(transaction)
             }
         }
