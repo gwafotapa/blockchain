@@ -55,7 +55,7 @@ impl Node {
         // rx0: Arc<Mutex<Receiver<&'static str>>>,
     ) -> Self {
         let utxo_pool = UtxoPool::new(NODES);
-        let wallet = Wallet::new(utxo_pool.node(id).to_vec());
+        let wallet = Wallet::new(id, utxo_pool.node(id).to_vec());
         Self {
             id,
             sender,
@@ -95,12 +95,13 @@ impl Node {
                                 transaction
                             );
                             self.utxo_pool_mut().process(&transaction).unwrap();
+                            self.wallet_mut().process(&transaction).unwrap();
                             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                             self.transaction_pool_mut().add(transaction.into_owned());
                         }
                     }
                     Message::ShutDown => {
-                        info!("Node {} shutting down", self.id());
+                        info!("Node {} shutting down\n{}", self.id(), self.utxo_pool());
                         return;
                     } //         Message::Block(block) => {
                       //             self.propagate(Message::Block(&block));

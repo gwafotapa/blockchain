@@ -2,6 +2,7 @@ use merkle_cbt::merkle_tree::CBMT;
 // use rand::Rng;
 use sha2::{Digest, Sha256};
 // use std::convert::TryInto;
+use std::error::Error;
 use std::fmt;
 
 use self::merkle_tree::MergeHash;
@@ -11,6 +12,21 @@ use crate::utxo::Utxo;
 pub use pool::TransactionPool;
 
 const SIZE_BYTES: usize = 12;
+
+#[derive(Debug, Clone)]
+pub struct InvalidTransaction;
+
+impl fmt::Display for InvalidTransaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Invalid transaction")
+    }
+}
+
+impl Error for InvalidTransaction {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Transaction {

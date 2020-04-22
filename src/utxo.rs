@@ -1,25 +1,9 @@
 // use rand::Rng;
 use std::collections::HashMap;
 use std::convert::TryInto;
-use std::error::Error;
 use std::{fmt, result};
 
-use crate::transaction::Transaction;
-
-#[derive(Debug, Clone)]
-pub struct InvalidTransaction;
-
-impl fmt::Display for InvalidTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Invalid transaction")
-    }
-}
-
-impl Error for InvalidTransaction {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
-}
+use crate::transaction::{InvalidTransaction, Transaction};
 
 /// Amount of initial utxos
 const INIT_AMOUNT: u32 = 10;
@@ -65,6 +49,12 @@ impl Utxo {
             .chain(self.puzzle.to_be_bytes().iter())
             .copied()
             .collect()
+    }
+}
+
+impl fmt::Display for Utxo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Amount: {:>3}\tOwner: {:>2}", self.amount, self.puzzle)
     }
 }
 
@@ -120,5 +110,19 @@ impl UtxoPool {
         } else {
             Err(InvalidTransaction)
         }
+    }
+}
+
+impl fmt::Display for UtxoPool {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Utxo pool:\n")?;
+        for (node, utxos) in &self.data {
+            write!(f, "Node #{:>2}:", node)?;
+            for utxo in utxos {
+                write!(f, " {:>3}", utxo.amount())?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
     }
 }
