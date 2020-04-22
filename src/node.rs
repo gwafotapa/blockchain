@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 // use crate::block::Block;
 // use crate::chain::Blockchain;
-// use crate::common::Data;
-use crate::common::{Data, NODES};
+// use crate::common::Message;
+use crate::common::{Message, NODES};
 use crate::transaction::TransactionPool;
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
@@ -78,15 +78,15 @@ impl Node {
                     self.id(),
                     transaction
                 );
-                self.propagate(Data::Transaction(transaction));
+                self.propagate(Message::Transaction(transaction));
             }
             // if let Some(block) = self.blockchain().mine() {
-            //     self.propagate(Data::Block(&block));
+            //     self.propagate(Message::Block(&block));
             //     self.blockchain.add(block);
             // }
             while let Ok(bytes) = self.listener().try_recv() {
-                match Data::from(bytes.deref()) {
-                    Data::Transaction(transaction) => {
+                match Message::from(bytes.deref()) {
+                    Message::Transaction(transaction) => {
                         if !self.transaction_pool().contains(transaction) {
                             info!(
                                 "Node #{} --- Received transaction:\n{}\n",
@@ -95,18 +95,16 @@ impl Node {
                             );
                             self.utxo_pool_mut().process(transaction).unwrap();
                             self.transaction_pool_mut().add(transaction);
-                            self.propagate(Data::Transaction(transaction));
+                            self.propagate(Message::Transaction(transaction));
                         }
                     }
-                    Data::ShutDown => {
+                    Message::ShutDown => {
                         info!("Node {} shutting down", self.id());
                         return;
-                    }
-                    _ => panic!("Unexpected data"),
-                    //         Data::Block(block) => {
-                    //             self.propagate(Data::Block(&block));
-                    //             self.blockchain.add(block);
-                    //         }
+                    } //         Message::Block(block) => {
+                      //             self.propagate(Message::Block(&block));
+                      //             self.blockchain.add(block);
+                      //         }
                 }
             }
             // match rx0.lock().unwrap().try_recv() {
@@ -198,16 +196,16 @@ impl Node {
     //     }
     // }
 
-    pub fn propagate(&self, data: Data) {
-        match data {
-            Data::Transaction(transaction) => {
+    pub fn propagate(&self, message: Message) {
+        match message {
+            Message::Transaction(transaction) => {
                 let bytes = iter::once(b't').chain(transaction.serialize()).collect();
                 let bytes = Arc::new(bytes);
                 for neighbour in self.neighbours.iter() {
                     neighbour.1.send(Arc::clone(&bytes)).unwrap();
                 }
             }
-            Data::ShutDown => {} // Data::Block(block) => block.serialize(),
+            Message::ShutDown => {} // Message::Block(block) => block.serialize(),
         }
     }
 
@@ -233,20 +231,20 @@ impl Node {
 
     // pub fn synchronize(&mut self) {
     //     match self.listener.try_recv() {
-    //         Ok(data) => match data[0] {
+    //         Ok(message) => match message[0] {
     //             b'b' => {
-    //                 let height = usize::from_be_bytes(data[1..9].try_into().unwrap());
+    //                 let height = usize::from_be_bytes(message[1..9].try_into().unwrap());
     //                 println!("Thread {} received block {}", self.id, height);
     //                 // TODO: add block if longer chain
     //             }
     //             b't' => {
-    //                 for bytes in data[1..].chunks(24) {
+    //                 for bytes in message[1..].chunks(24) {
     //                     let transaction = Transaction::deserialize(bytes);
     //                     println!("Thread {} received {:?}", self.id, transaction);
     //                     self.transaction_pool.add(transaction);
     //                 }
     //             }
-    //             _ => panic!("Thread {} received invalid data: '{:?}'", self.id, data),
+    //             _ => panic!("Thread {} received invalid message: '{:?}'", self.id, message),
     //         },
     //         Err(TryRecvError::Empty) => {}
     //         Err(TryRecvError::Disconnected) => panic!("Channel disconnected"),

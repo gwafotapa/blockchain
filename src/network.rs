@@ -1,10 +1,12 @@
+use log::info;
 use rand::{seq::SliceRandom, Rng};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc};
+use std::thread::{self, JoinHandle};
 
-use crate::common::Data;
+use crate::common::Message;
 use crate::node::Node;
 
 type Vertex = usize;
@@ -12,21 +14,23 @@ type Neighborhood = HashSet<Vertex>;
 type Graph = HashMap<Vertex, Neighborhood>;
 
 pub struct Network {
-    nodes: Option<HashSet<Node>>,
+    nodes: Vec<Option<Node>>,
+    threads: Vec<Option<JoinHandle<()>>>,
     senders: Vec<Sender<Arc<Vec<u8>>>>,
 }
 
 impl Network {
     pub fn with_capacity(n: usize) -> Network {
         Self {
-            nodes: Some(HashSet::with_capacity(n)),
+            nodes: Vec::with_capacity(n),
+            threads: Vec::with_capacity(n),
             senders: Vec::with_capacity(n),
         }
     }
 
-    pub fn insert(&mut self, node: Node) {
+    pub fn add(&mut self, node: Node) {
         self.senders.push(node.sender().clone());
-        self.nodes.as_mut().unwrap().insert(node);
+        self.nodes.push(Some(node));
     }
 
     pub fn random(nodes: usize) -> Network {
@@ -44,24 +48,23 @@ impl Network {
             let listener = listeners.pop().unwrap();
             let neighbours = graph[&node]
                 .iter()
-                .map(|x| (*x, senders[*x].clone()))
+                .map(|&x| (x, senders[x].clone()))
                 .collect();
             let node = Node::new(node, sender, listener, neighbours);
-            network.insert(node);
+            network.add(node);
         }
         network
     }
 
-    // pub fn senders(&self) -> &[Sender<Arc<Vec<u8>>>] {
-    //     &self.senders
-    // }
-
-    pub fn take_nodes(&mut self) -> Option<HashSet<Node>> {
-        self.nodes.take()
+    pub fn run(&mut self) {
+        for node in &mut self.nodes {
+            let mut node = node.take().unwrap();
+            self.threads.push(Some(thread::spawn(move || node.run())));
+        }
     }
 
-    pub fn broadcast(&self, data: Data) {
-        let bytes = Arc::new(data.serialize());
+    pub fn broadcast(&self, message: Message) {
+        let bytes = Arc::new(message.serialize());
         for sender in &self.senders {
             sender.send(Arc::clone(&bytes)).unwrap();
         }
@@ -107,9 +110,22 @@ fn random_graph(vertices: usize) -> Graph {
     graph
 }
 
+impl Drop for Network {
+    fn drop(&mut self) {
+        info!("Network shutting down");
+        self.broadcast(Message::ShutDown);
+        for option in &mut self.threads {
+            if let Some(thread) = option.take() {
+                thread.join().unwrap();
+            }
+        }
+    }
+}
+
 impl fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for node in self.nodes.as_ref().unwrap() {
+        for node in &self.nodes {
+            let node = node.as_ref().unwrap();
             let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
             write!(f, "{:?}: {:?}\n", node.id(), neighborhood)?
         }

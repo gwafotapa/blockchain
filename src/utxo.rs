@@ -38,9 +38,9 @@ pub struct Utxo {
 // }
 
 impl From<&[u8]> for Utxo {
-    fn from(data: &[u8]) -> Self {
-        let amount = u32::from_be_bytes(data[0..4].try_into().unwrap());
-        let puzzle = usize::from_be_bytes(data[4..12].try_into().unwrap());
+    fn from(bytes: &[u8]) -> Self {
+        let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
+        let puzzle = usize::from_be_bytes(bytes[4..12].try_into().unwrap());
         Self { amount, puzzle }
     }
 }

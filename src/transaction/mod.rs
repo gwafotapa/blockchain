@@ -17,9 +17,9 @@ pub struct Transaction {
 }
 
 impl From<&[u8]> for Transaction {
-    fn from(data: &[u8]) -> Self {
-        let input = Utxo::from(&data[0..12]);
-        let output = Utxo::from(&data[12..24]);
+    fn from(bytes: &[u8]) -> Self {
+        let input = Utxo::from(&bytes[0..12]);
+        let output = Utxo::from(&bytes[12..24]);
         Self { input, output }
     }
 }

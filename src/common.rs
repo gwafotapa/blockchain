@@ -7,34 +7,35 @@ pub type Hash = GenericArray<u8, U32>;
 
 pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
+const SHUT_DOWN: &[u8] = b"Shut down";
 
-pub enum Data {
+pub enum Message {
     Transaction(Transaction),
     // Block(Block),
     ShutDown,
 }
 
-impl<T> From<T> for Data
+impl<T> From<T> for Message
 where
     T: AsRef<[u8]>,
 {
     fn from(bytes: T) -> Self {
         let bytes = bytes.as_ref();
-        if &bytes[..] == b"Shut down" {
-            return Data::ShutDown;
+        if &bytes[..] == SHUT_DOWN {
+            return Message::ShutDown;
         }
         match bytes[0] {
-            b't' => Data::Transaction(Transaction::from(&bytes[1..])),
-            _ => panic!("Unexpected data"),
+            b't' => Message::Transaction(Transaction::from(&bytes[1..])),
+            _ => panic!("Unexpected message"),
         }
     }
 }
 
-impl Data {
+impl Message {
     pub fn serialize(&self) -> Vec<u8> {
         match *self {
-            Data::Transaction(transaction) => transaction.serialize(),
-            Data::ShutDown => b"Shut down".to_vec(),
+            Message::Transaction(transaction) => transaction.serialize(),
+            Message::ShutDown => SHUT_DOWN.to_vec(),
         }
     }
 }
