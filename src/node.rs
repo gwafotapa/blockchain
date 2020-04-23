@@ -101,7 +101,12 @@ impl Node {
                         }
                     }
                     Message::ShutDown => {
-                        info!("Node {} shutting down\n{}", self.id(), self.utxo_pool());
+                        info!(
+                            "Node {} shutting down\nTransactions: {}\nUtxo pool: {}",
+                            self.id(),
+                            self.transaction_pool().size(),
+                            self.utxo_pool(),
+                        );
                         return;
                     } //         Message::Block(block) => {
                       //             self.propagate(Message::Block(&block));

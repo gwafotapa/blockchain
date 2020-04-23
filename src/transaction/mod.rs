@@ -1,7 +1,7 @@
 use merkle_cbt::merkle_tree::CBMT;
 // use rand::Rng;
 use sha2::{Digest, Sha256};
-// use std::convert::TryInto;
+use std::convert::TryInto;
 use std::error::Error;
 use std::fmt;
 
@@ -30,17 +30,17 @@ impl Error for InvalidTransaction {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Transaction {
-    input: Utxo,
+    inputs: Vec<Utxo>,
     outputs: Vec<Utxo>,
 }
 
 impl Transaction {
-    pub fn new(input: Utxo, outputs: Vec<Utxo>) -> Self {
-        Self { input, outputs }
+    pub fn new(inputs: Vec<Utxo>, outputs: Vec<Utxo>) -> Self {
+        Self { inputs, outputs }
     }
 
-    pub fn input(&self) -> Utxo {
-        self.input
+    pub fn inputs(&self) -> &[Utxo] {
+        &self.inputs
     }
 
     pub fn outputs(&self) -> &[Utxo] {
@@ -48,9 +48,12 @@ impl Transaction {
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        self.input
-            .serialize()
-            .into_iter()
+        self.inputs
+            .len()
+            .to_be_bytes()
+            .iter()
+            .copied()
+            .chain(self.inputs.iter().flat_map(|o| o.serialize()))
             .chain(self.outputs.iter().flat_map(|o| o.serialize()))
             .collect()
     }
@@ -77,30 +80,35 @@ impl Transaction {
 
 impl From<&[u8]> for Transaction {
     fn from(bytes: &[u8]) -> Self {
-        let input = Utxo::from(&bytes[0..SIZE_BYTES]);
-        let outputs = bytes[SIZE_BYTES..]
+        let len_inputs = usize::from_be_bytes(bytes[0..8].try_into().unwrap());
+        let inputs = bytes[8..]
             .chunks_exact(SIZE_BYTES)
+            .take(len_inputs)
             .map(|c| Utxo::from(c))
             .collect();
-        Self { input, outputs }
+        let outputs = bytes[8..]
+            .chunks_exact(SIZE_BYTES)
+            .skip(len_inputs)
+            .map(|c| Utxo::from(c))
+            .collect();
+        Self { inputs, outputs }
     }
 }
 
 impl fmt::Display for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Sender:     {:>2}\tAmount: {:>3} satoshis\n\
-             Recipients: {:>2}\tAmount: {:>3} satoshis\n",
-            self.input.puzzle(),
-            self.input.amount(),
-            self.outputs[0].puzzle(),
-            self.outputs[0].amount()
-        )?;
-        for output in &self.outputs[1..] {
+        for input in &self.inputs {
             write!(
                 f,
-                "\t\t{:>2}\tAmount: {:>3} satoshis\n",
+                "Sender:    {:>2}\tAmount: {:>3} satoshis\n",
+                input.puzzle(),
+                input.amount()
+            )?;
+        }
+        for output in &self.outputs {
+            write!(
+                f,
+                "Recipient: {:>2}\tAmount: {:>3} satoshis\n",
                 output.puzzle(),
                 output.amount()
             )?;

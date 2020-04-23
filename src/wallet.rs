@@ -1,3 +1,4 @@
+use rand::seq::IteratorRandom;
 use rand::Rng;
 use std::result;
 
@@ -30,16 +31,23 @@ impl Wallet {
         match rng.gen_bool(PROBABILITY_SPEND) {
             false => None,
             true => {
-                let index = rng.gen_range(0, self.utxos.len());
-                let input = self.utxos.remove(index);
-                let mut amount = input.amount();
+                let len_inputs = rng.gen_range(1, self.utxos.len() + 1);
+                let mut inputs = Vec::with_capacity(len_inputs);
+                let mut indices = (0..self.utxos.len()).choose_multiple(&mut rng, len_inputs);
+                indices.sort_by(|a, b| b.cmp(a));
+                let mut amount = 0;
+                for index in indices {
+                    let input = self.utxos.remove(index);
+                    amount += input.amount();
+                    inputs.push(input);
+                }
                 let mut outputs = Vec::new();
                 loop {
                     let amountp = rng.gen_range(1, amount + 1);
                     let mut recipient;
                     loop {
                         recipient = rng.gen_range(0, NODES);
-                        if recipient != input.puzzle() {
+                        if recipient != self.id {
                             break;
                         }
                     }
@@ -50,25 +58,26 @@ impl Wallet {
                         break;
                     }
                 }
-                let transaction = Transaction::new(input, outputs);
+                let transaction = Transaction::new(inputs, outputs);
                 Some(transaction)
             }
         }
     }
 
     pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
-        if transaction.input().puzzle() == self.id {
-            match self
-                .utxos
-                .iter()
-                .position(|utxo| *utxo == transaction.input())
-            {
-                Some(index) => {
-                    self.utxos.remove(index);
-                    Ok(())
+        if transaction.inputs()[0].puzzle() == self.id {
+            for utxo in transaction.inputs() {
+                if utxo.puzzle() != self.id {
+                    return Err(InvalidTransaction);
                 }
-                None => Err(InvalidTransaction),
+                match self.utxos.iter().position(|u| *u == *utxo) {
+                    Some(index) => {
+                        self.utxos.remove(index);
+                    }
+                    None => return Err(InvalidTransaction),
+                }
             }
+            Ok(())
         } else {
             for utxo in transaction.outputs() {
                 if utxo.puzzle() == self.id {

@@ -1,5 +1,5 @@
 // use rand::Rng;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
 use std::{fmt, result};
 
@@ -9,7 +9,7 @@ use crate::transaction::{InvalidTransaction, Transaction};
 const INIT_AMOUNT: u32 = 10;
 
 /// For now, a utxo has an owner (instead of a script that someone has the unlocking key for)
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Utxo {
     amount: u32,
     puzzle: usize, // for now this is just a node number (supposedly having the unlocking key)
@@ -85,7 +85,7 @@ impl UtxoPool {
     pub fn remove(&mut self, utxo: Utxo) -> bool {
         self.data
             .get_mut(&utxo.puzzle)
-            .and_then(|v| Some(v.remove(v.iter().position(|x| x.puzzle == utxo.puzzle).unwrap())))
+            .and_then(|v| Some(v.remove(v.iter().position(|x| x.amount == utxo.amount).unwrap())))
             .is_some()
     }
 
@@ -102,14 +102,19 @@ impl UtxoPool {
     // }
 
     pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
-        if self.remove(transaction.input()) {
-            for output in transaction.outputs() {
-                self.add(*output);
-            }
-            Ok(())
-        } else {
-            Err(InvalidTransaction)
+        let id = transaction.inputs()[0].puzzle();
+        let utxos: HashSet<Utxo> = self.data[&id].iter().copied().collect();
+        let inputs: HashSet<Utxo> = transaction.inputs().iter().copied().collect();
+        if !inputs.is_subset(&utxos) {
+            return Err(InvalidTransaction);
         }
+        for input in transaction.inputs() {
+            self.remove(*input);
+        }
+        for output in transaction.outputs() {
+            self.add(*output);
+        }
+        Ok(())
     }
 }
 
