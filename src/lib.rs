@@ -7,4 +7,4 @@ pub mod common;
 // pub mod node;
 pub mod transaction;
 pub mod utxo;
-// pub mod wallet;
+pub mod wallet;

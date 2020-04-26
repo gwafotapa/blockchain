@@ -1,9 +1,8 @@
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use std::result;
 
 use crate::common::{NODES, PROBABILITY_SPEND};
-use crate::transaction::{InvalidTransaction, Transaction};
+use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
 use crate::utxo::Utxo;
 
 pub struct Wallet {
@@ -23,7 +22,16 @@ impl Wallet {
         self.utxos.push(utxo);
     }
 
-    pub fn manage(&mut self) -> Option<Transaction> {
+    pub fn remove(&mut self, input: &TransactionInput) {
+        let index = self
+            .utxos
+            .iter()
+            .position(|utxo| *utxo.input() == *input)
+            .unwrap();
+        self.utxos.remove(index);
+    }
+
+    pub fn initiate(&mut self) -> Option<Transaction> {
         if self.utxos.is_empty() {
             return None;
         }
@@ -33,27 +41,33 @@ impl Wallet {
             true => {
                 let inputs_len = rng.gen_range(1, self.utxos.len() + 1);
                 let mut inputs = Vec::with_capacity(inputs_len);
-                let mut indices = (0..self.utxos.len()).choose_multiple(&mut rng, inputs_len);
-                indices.sort_by(|a, b| b.cmp(a));
+                let indices = (0..self.utxos.len()).choose_multiple(&mut rng, inputs_len);
+                // indices.sort_by(|a, b| b.cmp(a));
                 let mut amount = 0;
+                // for index in indices {
+                //     let input = self.utxos.remove(index);
+                //     amount += input.amount();
+                //     inputs.push(input);
+                // }
                 for index in indices {
-                    let input = self.utxos.remove(index);
-                    amount += input.amount();
-                    inputs.push(input);
+                    let utxo = &self.utxos[index];
+                    amount += utxo.amount();
+                    inputs.push(*utxo.input());
                 }
                 let mut outputs = Vec::new();
                 loop {
-                    let amountp = rng.gen_range(1, amount + 1);
-                    let mut recipient;
-                    loop {
-                        recipient = rng.gen_range(0, NODES);
-                        if recipient != self.id {
-                            break;
-                        }
-                    }
-                    let output = Utxo::new(amountp, recipient);
+                    let amount1 = rng.gen_range(1, amount + 1);
+                    // let mut recipient;
+                    // loop {
+                    //     recipient = rng.gen_range(0, NODES);
+                    //     if recipient != self.id {
+                    //         break;
+                    //     }
+                    // }
+                    let recipient = rng.gen_range(0, NODES);
+                    let output = TransactionOutput::new(amount1, recipient);
                     outputs.push(output);
-                    amount -= amountp;
+                    amount -= amount1;
                     if amount == 0 {
                         break;
                     }
@@ -64,27 +78,42 @@ impl Wallet {
         }
     }
 
-    pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
-        if transaction.inputs()[0].puzzle() == self.id {
-            for utxo in transaction.inputs() {
-                if utxo.puzzle() != self.id {
-                    return Err(InvalidTransaction);
-                }
-                match self.utxos.iter().position(|u| *u == *utxo) {
-                    Some(index) => {
-                        self.utxos.remove(index);
-                    }
-                    None => return Err(InvalidTransaction),
-                }
+    pub fn process(&mut self, transaction: &Transaction) {
+        // TODO: rewrite ?
+        let wallet_inputs = self.utxos.iter().map(|u| *u.input()).collect::<Vec<_>>();
+        for input in transaction.inputs() {
+            if !wallet_inputs.contains(input) {
+                return;
             }
-            Ok(())
-        } else {
-            for utxo in transaction.outputs() {
-                if utxo.puzzle() == self.id {
-                    self.add(*utxo)
-                }
-            }
-            Ok(())
         }
+        for input in transaction.inputs() {
+            self.remove(input)
+        }
+        for (vout, &output) in transaction.outputs().iter().enumerate() {
+            let input = TransactionInput::new(transaction.id(), vout);
+            let utxo = Utxo::new(input, output);
+            self.add(utxo);
+        }
+        // if transaction.inputs()[0].puzzle() == self.id {
+        //     for utxo in transaction.inputs() {
+        //         if utxo.puzzle() != self.id {
+        //             return Err(InvalidTransaction);
+        //         }
+        //         match self.utxos.iter().position(|u| *u == *utxo) {
+        //             Some(index) => {
+        //                 self.utxos.remove(index);
+        //             }
+        //             None => return Err(InvalidTransaction),
+        //         }
+        //     }
+        //     Ok(())
+        // } else {
+        //     for utxo in transaction.outputs() {
+        //         if utxo.puzzle() == self.id {
+        //             self.add(*utxo)
+        //         }
+        //     }
+        // Ok(())
+        // }
     }
 }
