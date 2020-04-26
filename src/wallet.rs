@@ -31,9 +31,9 @@ impl Wallet {
         match rng.gen_bool(PROBABILITY_SPEND) {
             false => None,
             true => {
-                let len_inputs = rng.gen_range(1, self.utxos.len() + 1);
-                let mut inputs = Vec::with_capacity(len_inputs);
-                let mut indices = (0..self.utxos.len()).choose_multiple(&mut rng, len_inputs);
+                let inputs_len = rng.gen_range(1, self.utxos.len() + 1);
+                let mut inputs = Vec::with_capacity(inputs_len);
+                let mut indices = (0..self.utxos.len()).choose_multiple(&mut rng, inputs_len);
                 indices.sort_by(|a, b| b.cmp(a));
                 let mut amount = 0;
                 for index in indices {

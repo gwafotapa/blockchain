@@ -1,59 +1,46 @@
 use merkle_cbt::merkle_tree::CBMT;
-// use rand::Rng;
 use sha2::{Digest, Sha256};
 use std::convert::TryInto;
-use std::error::Error;
 use std::fmt;
+use std::iter;
 
+use self::input::TransactionInput;
 use self::merkle_tree::MergeHash;
+use self::output::TransactionOutput;
 use crate::common::Hash;
-use crate::utxo::Utxo;
 
-pub use pool::TransactionPool;
+const INPUT_SIZE_BYTES: usize = 32 + 8;
+const OUTPUT_SIZE_BYTES: usize = 12;
 
-const SIZE_BYTES: usize = 12;
-
-#[derive(Debug, Clone)]
-pub struct InvalidTransaction;
-
-impl fmt::Display for InvalidTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Invalid transaction")
-    }
-}
-
-impl Error for InvalidTransaction {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq)]
 pub struct Transaction {
-    inputs: Vec<Utxo>,
-    outputs: Vec<Utxo>,
+    id: Hash,
+    inputs: Vec<TransactionInput>,
+    outputs: Vec<TransactionOutput>,
 }
 
 impl Transaction {
-    pub fn new(inputs: Vec<Utxo>, outputs: Vec<Utxo>) -> Self {
-        Self { inputs, outputs }
-    }
-
-    pub fn inputs(&self) -> &[Utxo] {
-        &self.inputs
-    }
-
-    pub fn outputs(&self) -> &[Utxo] {
-        &self.outputs
+    pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {
+        let mut hasher = Sha256::new();
+        let bytes = inputs
+            .iter()
+            .flat_map(|i| i.serialize())
+            .chain(outputs.iter().flat_map(|o| o.serialize()))
+            .collect::<Vec<_>>();
+        hasher.input(bytes);
+        let id = hasher.result();
+        Self {
+            id,
+            inputs,
+            outputs,
+        }
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        self.inputs
-            .len()
-            .to_be_bytes()
-            .iter()
-            .copied()
-            .chain(self.inputs.iter().flat_map(|o| o.serialize()))
+        iter::once(b't')
+            .chain(self.inputs.len().to_be_bytes().iter().copied())
+            .chain(self.inputs.iter().flat_map(|i| i.serialize()))
+            .chain(self.outputs.len().to_be_bytes().iter().copied())
             .chain(self.outputs.iter().flat_map(|o| o.serialize()))
             .collect()
     }
@@ -62,60 +49,67 @@ impl Transaction {
     where
         B: AsRef<[u8]>,
     {
-        Transaction::from(bytes.as_ref())
-    }
-
-    pub fn hash(&self) -> Hash {
-        let mut hasher = Sha256::new();
-        hasher.input(self.serialize());
-        hasher.result()
+        Self::from(bytes.as_ref())
     }
 
     pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {
-        let hashes = transactions.iter().map(|x| x.hash()).collect();
+        let hashes = transactions.iter().map(|x| x.id).collect();
         let merkle_tree = CBMT::<Hash, MergeHash>::build_merkle_tree(hashes);
         merkle_tree.root()
+    }
+
+    pub fn id(&self) -> Hash {
+        self.id
+    }
+
+    pub fn inputs(&self) -> &[TransactionInput] {
+        &self.inputs
+    }
+
+    pub fn outputs(&self) -> &[TransactionOutput] {
+        &self.outputs
     }
 }
 
 impl From<&[u8]> for Transaction {
     fn from(bytes: &[u8]) -> Self {
-        let len_inputs = usize::from_be_bytes(bytes[0..8].try_into().unwrap());
-        let inputs = bytes[8..]
-            .chunks_exact(SIZE_BYTES)
-            .take(len_inputs)
-            .map(|c| Utxo::from(c))
+        let inputs_len = usize::from_be_bytes(bytes[8..16].try_into().unwrap());
+        let inputs = bytes[16..]
+            .chunks_exact(INPUT_SIZE_BYTES)
+            .take(inputs_len)
+            .map(|c| TransactionInput::from(c))
             .collect();
-        let outputs = bytes[8..]
-            .chunks_exact(SIZE_BYTES)
-            .skip(len_inputs)
-            .map(|c| Utxo::from(c))
+        let i = 16 + inputs_len * INPUT_SIZE_BYTES;
+        let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+        let outputs = bytes[i + 8..]
+            .chunks_exact(OUTPUT_SIZE_BYTES)
+            .take(outputs_len)
+            .map(|c| TransactionOutput::from(c))
             .collect();
-        Self { inputs, outputs }
+        Self::new(inputs, outputs)
+    }
+}
+
+impl PartialEq for Transaction {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
     }
 }
 
 impl fmt::Display for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for input in &self.inputs {
-            write!(
-                f,
-                "Sender:    {:>2}\tAmount: {:>3} satoshis\n",
-                input.puzzle(),
-                input.amount()
-            )?;
+            write!(f, "{:?}\n", input)?;
         }
         for output in &self.outputs {
-            write!(
-                f,
-                "Recipient: {:>2}\tAmount: {:>3} satoshis\n",
-                output.puzzle(),
-                output.amount()
-            )?;
+            write!(f, "{:?}\n", output)?;
         }
         Ok(())
     }
 }
 
+pub mod error;
+pub mod input;
 pub mod merkle_tree;
+pub mod output;
 pub mod pool;

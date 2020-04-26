@@ -7,10 +7,13 @@ use crate::transaction::{InvalidTransaction, Transaction};
 
 /// Amount of initial utxos
 const INIT_AMOUNT: u32 = 10;
+const INIT_HASH: Hash = Hash::from([0u8; 32]);
 
 /// For now, a utxo has an owner (instead of a script that someone has the unlocking key for)
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+// #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Utxo {
+    txid: Hash,
+    vout: usize,
     amount: u32,
     puzzle: usize, // for now this is just a node number (supposedly having the unlocking key)
 }
@@ -21,17 +24,30 @@ pub struct Utxo {
 //     }
 // }
 
-impl From<&[u8]> for Utxo {
-    fn from(bytes: &[u8]) -> Self {
-        let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
-        let puzzle = usize::from_be_bytes(bytes[4..12].try_into().unwrap());
-        Self { amount, puzzle }
-    }
-}
+// impl From<&[u8]> for Utxo {
+//     fn from(bytes: &[u8]) -> Self {
+//         let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
+//         let puzzle = usize::from_be_bytes(bytes[4..12].try_into().unwrap());
+//         Self { amount, puzzle }
+//     }
+// }
 
 impl Utxo {
-    pub fn new(amount: u32, puzzle: usize) -> Self {
-        Self { amount, puzzle }
+    pub fn new(txid: Hash, vout: usize, amount: u32, puzzle: usize) -> Self {
+        Self {
+            txid,
+            vout,
+            amount,
+            puzzle,
+        }
+    }
+
+    pub fn txid(&self) -> Hash {
+        self.txid
+    }
+
+    pub fn vout(&self) -> usize {
+        self.vout
     }
 
     pub fn amount(&self) -> u32 {
@@ -42,26 +58,31 @@ impl Utxo {
         self.puzzle
     }
 
-    pub fn serialize(&self) -> Vec<u8> {
-        self.amount
-            .to_be_bytes()
-            .iter()
-            .chain(self.puzzle.to_be_bytes().iter())
-            .copied()
-            .collect()
-    }
+    // pub fn serialize(&self) -> Vec<u8> {
+    //     self.amount
+    //         .to_be_bytes()
+    //         .iter()
+    //         .chain(self.puzzle.to_be_bytes().iter())
+    //         .copied()
+    //         .collect()
+    // }
 }
 
 impl fmt::Display for Utxo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Amount: {:>3}\tOwner: {:>2}", self.amount, self.puzzle)
+        write!(
+            f,
+            "txid: {}\n\
+             vout: {}\n\
+             amount: {}\n\
+             puzzle: {}",
+            self.txid, self.vout, self.amount, self.puzzle
+        )
     }
 }
 
-type Node = usize;
-
 pub struct UtxoPool {
-    data: HashMap<Node, Vec<Utxo>>,
+    data: HashMap<TransactionInput, TransactionOutput>,
 }
 
 impl UtxoPool {
@@ -69,7 +90,7 @@ impl UtxoPool {
         Self {
             data: (0..nodes)
                 .into_iter()
-                .map(|x| (x, vec![Utxo::new(INIT_AMOUNT, x)]))
+                .map(|x| (x, vec![TransactionInput::new(INIT_HASH, x), INIT_AMOUNT, x)]))
                 .collect(),
         }
     }
@@ -102,6 +123,13 @@ impl UtxoPool {
     // }
 
     pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
+        // TODO: rewrite
+        let indices = Vec::new();
+        for input in transaction.inputs() {
+            match self.find(input) {
+                None => return InvalidTransaction,
+                Some(utxo) => 
+            
         let id = transaction.inputs()[0].puzzle();
         let utxos: HashSet<Utxo> = self.data[&id].iter().copied().collect();
         let inputs: HashSet<Utxo> = transaction.inputs().iter().copied().collect();

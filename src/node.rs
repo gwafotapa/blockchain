@@ -3,7 +3,6 @@ use log::info;
 // use std::convert::TryInto;
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
-use std::iter;
 use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
@@ -85,33 +84,37 @@ impl Node {
             //     self.propagate(Message::Block(&block));
             //     self.blockchain.add(block);
             // }
-            while let Ok(bytes) = self.listener().try_recv() {
-                match Message::from(bytes.deref()) {
-                    Message::Transaction(transaction) => {
-                        if !self.transaction_pool().contains(&transaction) {
-                            info!(
-                                "Node #{} --- Received transaction:\n{}\n",
-                                self.id(),
-                                transaction
-                            );
-                            self.utxo_pool_mut().process(&transaction).unwrap();
-                            self.wallet_mut().process(&transaction).unwrap();
-                            self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                            self.transaction_pool_mut().add(transaction.into_owned());
+            if let Ok(bytes) = self.listener().try_recv() {
+                for message in Message::from(bytes.deref()) {
+                    match message {
+                        Message::Transaction(transaction) => {
+                            if !self.transaction_pool().contains(&transaction) {
+                                info!(
+                                    "Node #{} --- Received transaction:\n{}\n",
+                                    self.id(),
+                                    transaction
+                                );
+                                self.utxo_pool_mut().process(&transaction).unwrap();
+                                self.wallet_mut().process(&transaction).unwrap();
+                                self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+                                self.transaction_pool_mut().add(transaction.into_owned());
+                            } else {
+                                info!("Transaction already in the pool");
+                            }
                         }
+                        Message::ShutDown => {
+                            info!(
+                                "Node {} shutting down\nTransactions: {}\nUtxo pool: {}",
+                                self.id(),
+                                self.transaction_pool().size(),
+                                self.utxo_pool(),
+                            );
+                            return;
+                        } //         Message::Block(block) => {
+                          //             self.propagate(Message::Block(&block));
+                          //             self.blockchain.add(block);
+                          //         }
                     }
-                    Message::ShutDown => {
-                        info!(
-                            "Node {} shutting down\nTransactions: {}\nUtxo pool: {}",
-                            self.id(),
-                            self.transaction_pool().size(),
-                            self.utxo_pool(),
-                        );
-                        return;
-                    } //         Message::Block(block) => {
-                      //             self.propagate(Message::Block(&block));
-                      //             self.blockchain.add(block);
-                      //         }
                 }
             }
             // match rx0.lock().unwrap().try_recv() {
@@ -204,15 +207,9 @@ impl Node {
     // }
 
     pub fn propagate(&self, message: Message) {
-        match message {
-            Message::Transaction(transaction) => {
-                let bytes = iter::once(b't').chain(transaction.serialize()).collect();
-                let bytes = Arc::new(bytes);
-                for neighbour in self.neighbours.iter() {
-                    neighbour.1.send(Arc::clone(&bytes)).unwrap();
-                }
-            }
-            Message::ShutDown => {} // Message::Block(block) => block.serialize(),
+        let bytes = Arc::new(message.serialize());
+        for neighbour in self.neighbours.iter() {
+            neighbour.1.send(Arc::clone(&bytes)).unwrap();
         }
     }
 

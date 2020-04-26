@@ -1,18 +1,16 @@
-use crate::transaction::Transaction;
+use std::ops::Index;
 
-// const PROBABILITY_NEW_TRANSACTION: f64 = 1.0 / 1000000.0;
-// const SEND: usize = 1 << 2;
+use crate::transaction::Transaction;
+// use crate::utxo::Utxo;
 
 pub struct TransactionPool {
     transactions: Vec<Transaction>,
-    // propagated: usize,
 }
 
 impl TransactionPool {
     pub fn new() -> Self {
         Self {
             transactions: Vec::new(),
-            // propagated: 0,
         }
     }
 
@@ -34,45 +32,40 @@ impl TransactionPool {
     //     Some(bytes)
     // }
 
-    pub fn transactions(&self) -> &[Transaction] {
-        &self.transactions
-    }
-
-    // pub fn propagated(&self) -> usize {
-    //     self.propagated
-    // }
-
     pub fn size(&self) -> usize {
         self.transactions.len()
     }
 
-    // pub fn set_propagated(&mut self, propagated: usize) {
-    //     self.propagated = propagated;
-    // }
-
     pub fn add(&mut self, transaction: Transaction) {
         self.transactions.push(transaction);
+    }
+
+    pub fn remove(&mut self, transaction: &Transaction) -> Option<Transaction> {
+        self.position(transaction)
+            .map(|i| self.transactions.remove(i))
     }
 
     pub fn contains(&self, transaction: &Transaction) -> bool {
         self.transactions.contains(transaction)
     }
 
-    // pub fn next_batch(&self) -> Option<&[Transaction]> {
-    //     if self.transactions.len() < self.propagated + SEND {
-    //         None
-    //     } else {
-    //         Some(&self.transactions[self.propagated..])
-    //     }
-    // }
+    pub fn position(&self, transaction: &Transaction) -> Option<usize> {
+        self.transactions.iter().position(|tx| tx == transaction)
+    }
 
-    // pub fn has_next_batch(&self) -> bool {
-    //     self.next_batch().is_some()
-    // }
+    pub fn transactions(&self) -> &[Transaction] {
+        &self.transactions
+    }
 
-    // TODO: better algorithmic ? Use HashSet for difference ?
-    // What about propagated transactions ?
-    // pub fn remove(&mut self, records: &Vec<Transaction>) {
-    //     self.transactions.retain(|x| !records.contains(x));
+    // pub fn utxo(&self, input: TransactionInput) -> Option<Utxo> {
+    //     input.utxo(self)
     // }
+}
+
+impl Index<usize> for TransactionPool {
+    type Output = Transaction;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.transactions[index]
+    }
 }
