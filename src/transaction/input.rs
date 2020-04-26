@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use crate::common::Hash;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct TransactionInput {
     txid: Hash,
     vout: usize,

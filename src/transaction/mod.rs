@@ -4,10 +4,12 @@ use std::convert::TryInto;
 use std::fmt;
 use std::iter;
 
-use self::input::TransactionInput;
 use self::merkle_tree::MergeHash;
-use self::output::TransactionOutput;
 use crate::common::Hash;
+
+pub use self::error::InvalidTransaction;
+pub use self::input::TransactionInput;
+pub use self::output::TransactionOutput;
 
 const INPUT_SIZE_BYTES: usize = 32 + 8;
 const OUTPUT_SIZE_BYTES: usize = 12;
