@@ -5,14 +5,12 @@ use std::fmt;
 use std::iter;
 
 use self::merkle_tree::MergeHash;
-use crate::common::Hash;
+use crate::common::{Hash, INPUT_SIZE_BYTES, OUTPUT_SIZE_BYTES};
 
 pub use self::error::InvalidTransaction;
 pub use self::input::TransactionInput;
 pub use self::output::TransactionOutput;
-
-const INPUT_SIZE_BYTES: usize = 32 + 8;
-const OUTPUT_SIZE_BYTES: usize = 12;
+pub use self::pool::TransactionPool;
 
 #[derive(Clone, Debug, Eq)]
 pub struct Transaction {
@@ -75,13 +73,14 @@ impl Transaction {
 
 impl From<&[u8]> for Transaction {
     fn from(bytes: &[u8]) -> Self {
-        let inputs_len = usize::from_be_bytes(bytes[8..16].try_into().unwrap());
-        let inputs = bytes[16..]
+        let mut i = 1;
+        let inputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+        let inputs = bytes[i + 8..]
             .chunks_exact(INPUT_SIZE_BYTES)
             .take(inputs_len)
             .map(|c| TransactionInput::from(c))
             .collect();
-        let i = 16 + inputs_len * INPUT_SIZE_BYTES;
+        i += 8 + inputs_len * INPUT_SIZE_BYTES;
         let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
         let outputs = bytes[i + 8..]
             .chunks_exact(OUTPUT_SIZE_BYTES)

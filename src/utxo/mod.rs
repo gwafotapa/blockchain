@@ -3,6 +3,8 @@ use std::fmt;
 use crate::common::Hash;
 use crate::transaction::{TransactionInput, TransactionOutput};
 
+pub use self::pool::UtxoPool;
+
 /// For now, a utxo has an owner (instead of a script that someone has the unlocking key for)
 // #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Utxo {

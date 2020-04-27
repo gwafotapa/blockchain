@@ -23,12 +23,10 @@ impl Wallet {
     }
 
     pub fn remove(&mut self, input: &TransactionInput) {
-        let index = self
-            .utxos
+        self.utxos
             .iter()
             .position(|utxo| *utxo.input() == *input)
-            .unwrap();
-        self.utxos.remove(index);
+            .and_then(|i| Some(self.utxos.remove(i)));
     }
 
     pub fn initiate(&mut self) -> Option<Transaction> {
@@ -79,17 +77,19 @@ impl Wallet {
     }
 
     pub fn process(&mut self, transaction: &Transaction) {
-        // TODO: rewrite ?
-        let wallet_inputs = self.utxos.iter().map(|u| *u.input()).collect::<Vec<_>>();
-        for input in transaction.inputs() {
-            if !wallet_inputs.contains(input) {
-                return;
-            }
-        }
+        // let wallet_inputs = self.utxos.iter().map(|u| *u.input()).collect::<Vec<_>>();
+        // for input in transaction.inputs() {
+        //     if !wallet_inputs.contains(input) {
+        //         return;
+        //     }
+        // }
         for input in transaction.inputs() {
             self.remove(input)
         }
         for (vout, &output) in transaction.outputs().iter().enumerate() {
+            if output.puzzle() != self.id {
+                continue;
+            }
             let input = TransactionInput::new(transaction.id(), vout);
             let utxo = Utxo::new(input, output);
             self.add(utxo);

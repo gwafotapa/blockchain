@@ -54,14 +54,15 @@ impl Node {
         // rx0: Arc<Mutex<Receiver<&'static str>>>,
     ) -> Self {
         let utxo_pool = UtxoPool::new(NODES);
-        let wallet = Wallet::new(id, utxo_pool.node(id).to_vec());
+        let transaction_pool = TransactionPool::new();
+        let wallet = Wallet::new(id, utxo_pool.node(id));
         Self {
             id,
             sender,
             listener,
             neighbours,
             utxo_pool,
-            transaction_pool: TransactionPool::new(),
+            transaction_pool,
             wallet,
             // blockchain: Blockchain::new(),
             // rx0,
@@ -70,13 +71,14 @@ impl Node {
 
     pub fn run(&mut self) {
         loop {
-            if let Some(transaction) = self.wallet_mut().manage() {
-                self.utxo_pool_mut().process(&transaction).unwrap();
+            if let Some(transaction) = self.wallet_mut().initiate() {
                 info!(
                     "Node #{} --- New transaction:\n{}\n",
                     self.id(),
                     transaction
                 );
+                self.utxo_pool_mut().process(&transaction).unwrap();
+                self.wallet_mut().process(&transaction);
                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                 self.transaction_pool_mut().add(transaction);
             }
@@ -84,6 +86,9 @@ impl Node {
             //     self.propagate(Message::Block(&block));
             //     self.blockchain.add(block);
             // }
+
+            // TODO: do I need to check for multiple messages ?
+            // Use a test module ?
             if let Ok(bytes) = self.listener().try_recv() {
                 for message in Message::from(bytes.deref()) {
                     match message {
@@ -95,11 +100,11 @@ impl Node {
                                     transaction
                                 );
                                 self.utxo_pool_mut().process(&transaction).unwrap();
-                                self.wallet_mut().process(&transaction).unwrap();
+                                self.wallet_mut().process(&transaction);
                                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                                 self.transaction_pool_mut().add(transaction.into_owned());
-                            } else {
-                                info!("Transaction already in the pool");
+                                // } else {
+                                //     info!("Transaction already in the pool");
                             }
                         }
                         Message::ShutDown => {

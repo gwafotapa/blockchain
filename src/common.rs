@@ -9,7 +9,8 @@ pub type Hash = GenericArray<u8, U32>;
 pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
 const SHUT_DOWN: &[u8] = b"Shut down";
-const UTXO_SIZE_BYTES: usize = 12;
+pub const INPUT_SIZE_BYTES: usize = 32 + 8;
+pub const OUTPUT_SIZE_BYTES: usize = 4 + 8;
 
 pub enum Message<'a> {
     Transaction(Cow<'a, Transaction>),
@@ -41,6 +42,7 @@ impl<'a> Message<'a> {
         }
     }
 
+    // TODO: use from trait ?
     pub fn from<T>(bytes: T) -> Vec<Self>
     where
         T: AsRef<[u8]>,
@@ -55,11 +57,12 @@ impl<'a> Message<'a> {
             } else {
                 match bytes[0] {
                     b't' => {
-                        let transaction = Transaction::from(&bytes[1..]);
+                        let transaction = Transaction::from(&bytes[..]);
                         let len = 1
-                            + 2 * 8
-                            + (transaction.inputs().len() + transaction.outputs().len())
-                                * UTXO_SIZE_BYTES;
+                            + 8
+                            + transaction.inputs().len() * INPUT_SIZE_BYTES
+                            + 8
+                            + transaction.outputs().len() * OUTPUT_SIZE_BYTES;
                         bytes = &bytes[len..];
                         let message = Message::Transaction(Cow::Owned(transaction));
                         vec.push(message);

@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use crate::common::Hash;
+use crate::common::{Hash, INPUT_SIZE_BYTES};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct TransactionInput {
@@ -14,7 +14,7 @@ impl TransactionInput {
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(32 + 8);
+        let mut bytes = Vec::with_capacity(INPUT_SIZE_BYTES);
         bytes.extend(self.txid.as_slice());
         bytes.extend(&self.vout.to_be_bytes());
         bytes

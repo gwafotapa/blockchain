@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::result;
 
 use super::Utxo;
@@ -28,10 +29,6 @@ impl UtxoPool {
         }
     }
 
-    // pub fn node(&self, node: usize) -> &[Utxo] {
-    //     &self.data[&node]
-    // }
-
     pub fn add(&mut self, utxo: Utxo) {
         // self.data.get_mut(&utxo.puzzle).unwrap().push(utxo);
         self.data.insert(*utxo.input(), *utxo.output());
@@ -60,6 +57,14 @@ impl UtxoPool {
     //     let amount = *self.data.get(&puzzle).unwrap();
     //     Utxo { amount, puzzle }
     // }
+
+    pub fn node(&self, node: usize) -> Vec<Utxo> {
+        self.data
+            .iter()
+            .filter(|(_i, o)| o.puzzle() == node)
+            .map(|(i, o)| Utxo::new(*i, *o))
+            .collect()
+    }
 
     pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
         for input in transaction.inputs() {
@@ -98,16 +103,11 @@ impl UtxoPool {
     }
 }
 
-// impl fmt::Display for UtxoPool {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "Utxo pool:\n")?;
-//         for (node, utxos) in &self.data {
-//             write!(f, "Node #{:>2}:", node)?;
-//             for utxo in utxos {
-//                 write!(f, " {:>3}", utxo.amount())?;
-//             }
-//             write!(f, "\n")?;
-//         }
-//         Ok(())
-//     }
-// }
+impl fmt::Display for UtxoPool {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (_input, output) in &self.data {
+            write!(f, " ({}, {}) ", output.puzzle(), output.amount())?;
+        }
+        Ok(())
+    }
+}
