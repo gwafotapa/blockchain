@@ -1,14 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::result;
 
 use super::Utxo;
-use crate::common::Hash;
+use crate::common::{Hash, INIT_UTXO_AMOUNT, INIT_UTXO_HASH};
 use crate::transaction::{InvalidTransaction, Transaction, TransactionInput, TransactionOutput};
-
-/// Amount of initial utxos
-const INIT_AMOUNT: u32 = 10;
-const INIT_HASH: [u8; 32] = [0u8; 32];
 
 pub struct UtxoPool {
     data: HashMap<TransactionInput, TransactionOutput>,
@@ -21,8 +17,8 @@ impl UtxoPool {
                 .into_iter()
                 .map(|x| {
                     (
-                        TransactionInput::new(Hash::from(INIT_HASH), x),
-                        TransactionOutput::new(INIT_AMOUNT, x),
+                        TransactionInput::new(Hash::from(INIT_UTXO_HASH), x),
+                        TransactionOutput::new(INIT_UTXO_AMOUNT, x),
                     )
                 })
                 .collect(),
@@ -103,7 +99,28 @@ impl UtxoPool {
     }
 }
 
+impl Eq for UtxoPool {}
+
+impl PartialEq for UtxoPool {
+    fn eq(&self, other: &Self) -> bool {
+        let (p1, _): (HashSet<TransactionInput>, HashSet<TransactionOutput>) =
+            self.data.iter().unzip();
+        let (p2, _): (HashSet<TransactionInput>, HashSet<TransactionOutput>) =
+            other.data.iter().unzip();
+        p1.symmetric_difference(&p2).next().is_none()
+    }
+}
+
 impl fmt::Display for UtxoPool {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (_input, output) in &self.data {
+            write!(f, " ({}, {}) ", output.puzzle(), output.amount())?;
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for UtxoPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (_input, output) in &self.data {
             write!(f, " ({}, {}) ", output.puzzle(), output.amount())?;

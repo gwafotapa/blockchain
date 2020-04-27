@@ -12,6 +12,10 @@ const SHUT_DOWN: &[u8] = b"Shut down";
 pub const INPUT_SIZE_BYTES: usize = 32 + 8;
 pub const OUTPUT_SIZE_BYTES: usize = 4 + 8;
 
+/// Amount of initial utxos
+pub const INIT_UTXO_AMOUNT: u32 = 10;
+pub const INIT_UTXO_HASH: [u8; 32] = [0u8; 32];
+
 pub enum Message<'a> {
     Transaction(Cow<'a, Transaction>),
     // Block(Block),

@@ -2,7 +2,7 @@ use std::convert::TryInto;
 
 use crate::common::OUTPUT_SIZE_BYTES;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct TransactionOutput {
     amount: u32,
     puzzle: usize,

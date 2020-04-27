@@ -2,6 +2,7 @@ use merkle_cbt::merkle_tree::CBMT;
 use sha2::{Digest, Sha256};
 use std::convert::TryInto;
 use std::fmt;
+use std::hash::{Hash as HashTrait, Hasher};
 use std::iter;
 
 use self::merkle_tree::MergeHash;
@@ -106,6 +107,12 @@ impl fmt::Display for Transaction {
             write!(f, "{:?}\n", output)?;
         }
         Ok(())
+    }
+}
+
+impl HashTrait for Transaction {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 

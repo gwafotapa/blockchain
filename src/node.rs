@@ -1,23 +1,14 @@
 use log::info;
-// use rand::Rng;
-// use std::convert::TryInto;
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
-// use crate::block::Block;
-// use crate::chain::Blockchain;
-// use crate::common::Message;
 use crate::common::{Message, NODES};
 use crate::transaction::TransactionPool;
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
-
-// const PROBABILITY_NEW_BLOCK: f64 = 1.0 / 1000000.0;
-// const PROBABILITY_NEW_TRANSACTION: f64 = 1.0 / 1000000.0;
-// const SEND: usize = 1 << 2;
 
 pub struct Node {
     id: usize,
@@ -64,8 +55,6 @@ impl Node {
             utxo_pool,
             transaction_pool,
             wallet,
-            // blockchain: Blockchain::new(),
-            // rx0,
         }
     }
 
@@ -82,13 +71,6 @@ impl Node {
                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                 self.transaction_pool_mut().add(transaction);
             }
-            // if let Some(block) = self.blockchain().mine() {
-            //     self.propagate(Message::Block(&block));
-            //     self.blockchain.add(block);
-            // }
-
-            // TODO: do I need to check for multiple messages ?
-            // Use a test module ?
             if let Ok(bytes) = self.listener().try_recv() {
                 for message in Message::from(bytes.deref()) {
                     match message {
@@ -115,10 +97,7 @@ impl Node {
                                 self.utxo_pool(),
                             );
                             return;
-                        } //         Message::Block(block) => {
-                          //             self.propagate(Message::Block(&block));
-                          //             self.blockchain.add(block);
-                          //         }
+                        }
                     }
                 }
             }
@@ -174,6 +153,13 @@ impl Node {
         &mut self.wallet
     }
 
+    pub fn propagate(&self, message: Message) {
+        let bytes = Arc::new(message.serialize());
+        for neighbour in self.neighbours.iter() {
+            neighbour.1.send(Arc::clone(&bytes)).unwrap();
+        }
+    }
+
     // pub fn blockchain(&self) -> &Blockchain {
     //     &self.blockchain
     // }
@@ -210,13 +196,6 @@ impl Node {
     //         tx.1.send(Arc::clone(&bytes)).unwrap();
     //     }
     // }
-
-    pub fn propagate(&self, message: Message) {
-        let bytes = Arc::new(message.serialize());
-        for neighbour in self.neighbours.iter() {
-            neighbour.1.send(Arc::clone(&bytes)).unwrap();
-        }
-    }
 
     // pub fn mine(&mut self) -> Option<Block> {
     //     let mut rng = rand::thread_rng();

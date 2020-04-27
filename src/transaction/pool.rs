@@ -1,8 +1,12 @@
+use std::collections::HashSet;
+use std::fmt;
+use std::iter::FromIterator;
 use std::ops::Index;
 
 use crate::transaction::Transaction;
 // use crate::utxo::Utxo;
 
+#[derive(fmt::Debug)]
 pub struct TransactionPool {
     transactions: Vec<Transaction>,
 }
@@ -60,6 +64,16 @@ impl TransactionPool {
     // pub fn utxo(&self, input: TransactionInput) -> Option<Utxo> {
     //     input.utxo(self)
     // }
+}
+
+impl Eq for TransactionPool {}
+
+impl PartialEq for TransactionPool {
+    fn eq(&self, other: &Self) -> bool {
+        let p1 = HashSet::<Transaction>::from_iter(self.transactions().iter().cloned());
+        let p2 = HashSet::<Transaction>::from_iter(other.transactions().iter().cloned());
+        p1.symmetric_difference(&p2).next().is_none()
+    }
 }
 
 impl Index<usize> for TransactionPool {
