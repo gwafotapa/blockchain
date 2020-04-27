@@ -22,21 +22,21 @@ pub enum Message<'a> {
     ShutDown,
 }
 
-// impl<'a, T> From<T> for Message<'a>
-// where
-//     T: AsRef<[u8]>,
-// {
-//     fn from(bytes: T) -> Self {
-//         let bytes = bytes.as_ref();
-//         if &bytes[..] == SHUT_DOWN {
-//             return Message::ShutDown;
-//         }
-//         match bytes[0] {
-//             b't' => Message::Transaction(Cow::Owned(Transaction::from(&bytes[1..]))),
-//             _ => panic!("Unexpected message"),
-//         }
-//     }
-// }
+impl<'a, T> From<T> for Message<'a>
+where
+    T: AsRef<[u8]>,
+{
+    fn from(bytes: T) -> Self {
+        let bytes = bytes.as_ref();
+        if &bytes[..] == SHUT_DOWN {
+            return Message::ShutDown;
+        }
+        match bytes[0] {
+            b't' => Message::Transaction(Cow::Owned(Transaction::from(&bytes[..]))),
+            _ => panic!("Unexpected message"),
+        }
+    }
+}
 
 impl<'a> Message<'a> {
     pub fn serialize(&self) -> Vec<u8> {
@@ -46,35 +46,40 @@ impl<'a> Message<'a> {
         }
     }
 
-    // TODO: use from trait ?
-    pub fn from<T>(bytes: T) -> Vec<Self>
+    pub fn deserialize<T>(bytes: T) -> Self
     where
         T: AsRef<[u8]>,
     {
-        let mut bytes = bytes.as_ref();
-        let mut vec = Vec::new();
-        while !bytes.is_empty() {
-            if &bytes[..] == SHUT_DOWN {
-                vec.push(Message::ShutDown);
-                let len = SHUT_DOWN.len();
-                bytes = &bytes[len..];
-            } else {
-                match bytes[0] {
-                    b't' => {
-                        let transaction = Transaction::from(&bytes[..]);
-                        let len = 1
-                            + 8
-                            + transaction.inputs().len() * INPUT_SIZE_BYTES
-                            + 8
-                            + transaction.outputs().len() * OUTPUT_SIZE_BYTES;
-                        bytes = &bytes[len..];
-                        let message = Message::Transaction(Cow::Owned(transaction));
-                        vec.push(message);
-                    }
-                    _ => panic!("Unexpected message"),
-                }
-            }
-        }
-        vec
+        Self::from(bytes)
     }
+    // pub fn from<T>(bytes: T) -> Vec<Self>
+    // where
+    //     T: AsRef<[u8]>,
+    // {
+    //     let mut bytes = bytes.as_ref();
+    //     let mut vec = Vec::new();
+    //     while !bytes.is_empty() {
+    //         if &bytes[..] == SHUT_DOWN {
+    //             vec.push(Message::ShutDown);
+    //             let len = SHUT_DOWN.len();
+    //             bytes = &bytes[len..];
+    //         } else {
+    //             match bytes[0] {
+    //                 b't' => {
+    //                     let transaction = Transaction::from(&bytes[..]);
+    //                     let len = 1
+    //                         + 8
+    //                         + transaction.inputs().len() * INPUT_SIZE_BYTES
+    //                         + 8
+    //                         + transaction.outputs().len() * OUTPUT_SIZE_BYTES;
+    //                     bytes = &bytes[len..];
+    //                     let message = Message::Transaction(Cow::Owned(transaction));
+    //                     vec.push(message);
+    //                 }
+    //                 _ => panic!("Unexpected message"),
+    //             }
+    //         }
+    //     }
+    //     vec
+    // }
 }

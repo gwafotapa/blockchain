@@ -71,35 +71,37 @@ impl Node {
                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                 self.transaction_pool_mut().add(transaction);
             }
-            if let Ok(bytes) = self.listener().try_recv() {
-                for message in Message::from(bytes.deref()) {
-                    match message {
-                        Message::Transaction(transaction) => {
-                            if !self.transaction_pool().contains(&transaction) {
-                                info!(
-                                    "Node #{} --- Received transaction:\n{}\n",
-                                    self.id(),
-                                    transaction
-                                );
-                                self.utxo_pool_mut().process(&transaction).unwrap();
-                                self.wallet_mut().process(&transaction);
-                                self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                                self.transaction_pool_mut().add(transaction.into_owned());
-                                // } else {
-                                //     info!("Transaction already in the pool");
-                            }
-                        }
-                        Message::ShutDown => {
+            if let Ok(message) = self.listener().try_recv() {
+                // if let Ok(messages) = self.listener().try_recv() {
+                //     for message in Message::from(messages.deref()) {
+                //         match message {
+                match Message::deserialize(message.deref()) {
+                    Message::Transaction(transaction) => {
+                        if !self.transaction_pool().contains(&transaction) {
                             info!(
-                                "Node {} shutting down\nTransactions: {}\nUtxo pool: {}",
+                                "Node #{} --- Received transaction:\n{}\n",
                                 self.id(),
-                                self.transaction_pool().size(),
-                                self.utxo_pool(),
+                                transaction
                             );
-                            return;
+                            self.utxo_pool_mut().process(&transaction).unwrap();
+                            self.wallet_mut().process(&transaction);
+                            self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+                            self.transaction_pool_mut().add(transaction.into_owned());
+                            // } else {
+                            //     info!("Transaction already in the pool");
                         }
                     }
+                    Message::ShutDown => {
+                        info!(
+                            "Node {} shutting down\nTransactions: {}\nUtxo pool: {}",
+                            self.id(),
+                            self.transaction_pool().size(),
+                            self.utxo_pool(),
+                        );
+                        return;
+                    }
                 }
+                // }
             }
             // match rx0.lock().unwrap().try_recv() {
             //     Ok(SHUT_DOWN) => {
