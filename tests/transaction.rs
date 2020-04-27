@@ -1,22 +1,16 @@
-use log::info;
-// use rand::Rng;
-// use std::ops::Deref;
-// use std::sync::mpsc::{self, Receiver, Sender};
-// use std::sync::Arc;
+use log::{info, warn};
 use std::thread;
 use std::time::Duration;
 
 use blockchain::common::{Message, NODES};
 use blockchain::network::Network;
-// use blockchain::node::Node;
 
-fn main() {
-    env_logger::init();
-    // let mut rng = rand::thread_rng();
-    // let nodes = match NODES {
-    //     0 => rng.gen_range(2, MAX_NODES + 1),
-    //     value => value,
-    // };
+pub mod common;
+
+#[test]
+fn consensus() {
+    common::log_setup();
+
     let nodes = NODES;
     let mut network = Network::random(nodes);
     info!("Network:\n{:?}", network);
@@ -25,9 +19,16 @@ fn main() {
 
     info!("Network shutting down");
     network.broadcast(Message::ShutDown);
+    let mut nodes = Vec::new();
     for option in network.threads_mut() {
         if let Some(thread) = option.take() {
-            thread.join().unwrap();
+            nodes.push(thread.join().unwrap());
+        }
+    }
+    if nodes.len() > 0 {
+        for i in 0..nodes.len() - 1 {
+            assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
+            assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
         }
     }
 }

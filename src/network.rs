@@ -72,6 +72,10 @@ impl Network {
             sender.send(Arc::clone(&bytes)).unwrap();
         }
     }
+
+    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {
+        self.threads.as_mut()
+    }
 }
 
 fn random_graph(vertices: usize) -> Graph {
@@ -113,24 +117,24 @@ fn random_graph(vertices: usize) -> Graph {
     graph
 }
 
-impl Drop for Network {
-    fn drop(&mut self) {
-        info!("Network shutting down");
-        self.broadcast(Message::ShutDown);
-        let mut nodes = Vec::new();
-        for option in &mut self.threads {
-            if let Some(thread) = option.take() {
-                nodes.push(thread.join().unwrap());
-            }
-        }
-        if nodes.len() > 0 {
-            for i in 0..nodes.len() - 1 {
-                assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
-                assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
-            }
-        }
-    }
-}
+// impl Drop for Network {
+//     fn drop(&mut self) {
+//         info!("Network shutting down");
+//         self.broadcast(Message::ShutDown);
+//         let mut nodes = Vec::new();
+//         for option in &mut self.threads {
+//             if let Some(thread) = option.take() {
+//                 nodes.push(thread.join().unwrap());
+//             }
+//         }
+//         if nodes.len() > 0 {
+//             for i in 0..nodes.len() - 1 {
+//                 assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
+//                 assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
+//             }
+//         }
+//     }
+// }
 
 impl fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

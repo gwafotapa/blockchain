@@ -1,5 +1,5 @@
 
-network.rs,696
+network.rs,796
 pub struct Network {Network16,356
 impl Network {Network22,494
     pub fn with_capacity(n: usize) -> Network {with_capacity23,509
@@ -7,13 +7,14 @@ impl Network {Network22,494
     pub fn random(nodes: usize) -> Network {random36,853
     pub fn run(&mut self) {run59,1691
     pub fn broadcast(&self, message: Message) {broadcast69,1949
-fn random_graph(vertices: usize) -> Graph {random_graph77,2159
-impl Drop for Network {Network116,3341
-    fn drop(&mut self) {drop117,3365
-impl fmt::Debug for Network {Network135,3947
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt136,3977
-mod test {test147,4320
-    fn test_random_graph() {test_random_graph151,4362
+    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut76,2157
+fn random_graph(vertices: usize) -> Graph {random_graph81,2270
+// impl Drop for Network {Network120,3452
+//     fn drop(&mut self) {drop121,3479
+impl fmt::Debug for Network {Network139,4112
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt140,4142
+mod test {test151,4485
+    fn test_random_graph() {test_random_graph155,4527
 
 node.rs,1595
 pub struct Node {Node13,284
@@ -25,23 +26,23 @@ impl Hash for Node {Node33,732
 impl Node {Node39,838
     pub fn new(new40,850
     pub fn run(&mut self) {run61,1435
-    pub fn id(&self) -> usize {id116,4021
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender120,4076
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener124,4156
-    pub fn neighbours(&self) -> &[(usize, Sender<Arc<Vec<u8>>>)] {neighbours128,4242
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool132,4349
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut136,4423
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool140,4513
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut144,4608
-    pub fn wallet(&self) -> &Wallet {wallet148,4719
-    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut152,4785
-    pub fn propagate(&self, message: Message) {propagate156,4867
-    // pub fn blockchain(&self) -> &Blockchain {blockchain163,5092
-    // pub fn update_transaction_pool(&mut self) -> Option<&[Transaction]> {update_transaction_pool168,5221
-    //     // pub fn update_transaction_pool(&mut self) -> Option<Vec<u8>> {update_transaction_pool169,5298
-    // pub fn propagate<B>(&self, bytes: B)propagate190,6168
-    // pub fn mine(&mut self) -> Option<Block> {mine200,6427
-    // pub fn synchronize(&mut self) {synchronize220,7302
+    pub fn id(&self) -> usize {id118,4075
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender122,4130
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener126,4210
+    pub fn neighbours(&self) -> &[(usize, Sender<Arc<Vec<u8>>>)] {neighbours130,4296
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool134,4403
+    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut138,4477
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool142,4567
+    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut146,4662
+    pub fn wallet(&self) -> &Wallet {wallet150,4773
+    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut154,4839
+    pub fn propagate(&self, message: Message) {propagate158,4921
+    // pub fn blockchain(&self) -> &Blockchain {blockchain165,5146
+    // pub fn update_transaction_pool(&mut self) -> Option<&[Transaction]> {update_transaction_pool170,5275
+    //     // pub fn update_transaction_pool(&mut self) -> Option<Vec<u8>> {update_transaction_pool171,5352
+    // pub fn propagate<B>(&self, bytes: B)propagate192,6222
+    // pub fn mine(&mut self) -> Option<Block> {mine202,6481
+    // pub fn synchronize(&mut self) {synchronize222,7356
 
 wallet.rs,395
 pub struct Wallet {Wallet8,194
@@ -53,7 +54,7 @@ impl Wallet {Wallet13,254
     pub fn process(&mut self, transaction: &Transaction) {process79,2606
 
 main.rs,24
-fn main() {main13,270
+fn main() {main13,281
 
 chain.rs,563
 pub struct Blockchain {Blockchain3,54
@@ -67,7 +68,7 @@ impl Blockchain {Blockchain8,136
     pub fn take_mined_block(&mut self) -> Block {take_mined_block37,721
     pub fn set_mined_block(&mut self, transactions: Vec<Transaction>) {set_mined_block41,819
 
-common.rs,734
+common.rs,794
 pub const NODES: usize = 4;NODES9,178
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;PROBABILITY_SPEND10,206
 const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN11,258
@@ -76,11 +77,12 @@ pub const OUTPUT_SIZE_BYTES: usize = 4 + 8;OUTPUT_SIZE_BYTES13,341
 pub const INIT_UTXO_AMOUNT: u32 = 10;INIT_UTXO_AMOUNT16,414
 pub const INIT_UTXO_HASH: [u8; 32] = [0u8; 32];INIT_UTXO_HASH17,452
 pub enum Message<'a> {Message19,501
-// impl<'a, T> From<T> for Message<'a>Message25,601
-//     fn from(bytes: T) -> Self {from29,677
-impl<'a> Message<'a> {Message41,1040
-    pub fn serialize(&self) -> Vec<u8> {serialize42,1063
-    pub fn from<T>(bytes: T) -> Vec<Self>from50,1299
+impl<'a, T> From<T> for Message<'a>Message25,601
+    fn from(bytes: T) -> Self {from29,665
+impl<'a> Message<'a> {Message41,994
+    pub fn serialize(&self) -> Vec<u8> {serialize42,1017
+    pub fn deserialize<T>(bytes: T) -> Selfdeserialize49,1223
+    // pub fn from<T>(bytes: T) -> Vec<Self>from55,1339
 
 transaction/pool.rs,1058
 pub struct TransactionPool {TransactionPool10,182
