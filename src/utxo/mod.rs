@@ -1,3 +1,4 @@
+use secp256k1::PublicKey;
 use std::fmt;
 
 use crate::common::Hash;
@@ -60,15 +61,15 @@ impl Utxo {
         self.output.amount()
     }
 
-    pub fn puzzle(&self) -> usize {
-        self.output.puzzle()
+    pub fn public_key(&self) -> PublicKey {
+        self.output.public_key()
     }
 
     // pub fn serialize(&self) -> Vec<u8> {
     //     self.amount
     //         .to_be_bytes()
     //         .iter()
-    //         .chain(self.puzzle.to_be_bytes().iter())
+    //         .chain(self.public_key.to_be_bytes().iter())
     //         .copied()
     //         .collect()
     // }
@@ -81,11 +82,11 @@ impl fmt::Display for Utxo {
             "txid: {:?}\n\
              vout: {}\n\
              amount: {}\n\
-             puzzle: {}",
+             public_key: {}",
             self.txid(),
             self.vout(),
             self.amount(),
-            self.puzzle()
+            self.public_key()
         )
     }
 }

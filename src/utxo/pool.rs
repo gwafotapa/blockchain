@@ -1,3 +1,4 @@
+use secp256k1::PublicKey;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::result;
@@ -11,14 +12,15 @@ pub struct UtxoPool {
 }
 
 impl UtxoPool {
-    pub fn new(nodes: usize) -> Self {
+    pub fn new(keys: Vec<PublicKey>) -> Self {
         Self {
-            data: (0..nodes)
+            data: keys
                 .into_iter()
-                .map(|x| {
+                .enumerate()
+                .map(|(n, pk)| {
                     (
-                        TransactionInput::new(Hash::from(INIT_UTXO_HASH), x),
-                        TransactionOutput::new(INIT_UTXO_AMOUNT, x),
+                        TransactionInput::new(Hash::from(INIT_UTXO_HASH), n),
+                        TransactionOutput::new(INIT_UTXO_AMOUNT, pk),
                     )
                 })
                 .collect(),
@@ -54,10 +56,10 @@ impl UtxoPool {
     //     Utxo { amount, puzzle }
     // }
 
-    pub fn node(&self, node: usize) -> Vec<Utxo> {
+    pub fn owned_by(&self, pk: PublicKey) -> Vec<Utxo> {
         self.data
             .iter()
-            .filter(|(_i, o)| o.puzzle() == node)
+            .filter(|(_i, o)| o.public_key() == pk)
             .map(|(i, o)| Utxo::new(*i, *o))
             .collect()
     }
@@ -114,7 +116,7 @@ impl PartialEq for UtxoPool {
 impl fmt::Display for UtxoPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (_input, output) in &self.data {
-            write!(f, " ({}, {}) ", output.puzzle(), output.amount())?;
+            write!(f, " ({}, {}) ", output.public_key(), output.amount())?;
         }
         Ok(())
     }
@@ -122,9 +124,10 @@ impl fmt::Display for UtxoPool {
 
 impl fmt::Debug for UtxoPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (_input, output) in &self.data {
-            write!(f, " ({}, {}) ", output.puzzle(), output.amount())?;
-        }
-        Ok(())
+        // for (_input, output) in &self.data {
+        //     write!(f, " ({}, {}) ", output.public_key(), output.amount())?;
+        // }
+        // Ok(())
+        fmt::Display::fmt(self, f)
     }
 }

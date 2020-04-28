@@ -13,7 +13,7 @@ pub use self::input::TransactionInput;
 pub use self::output::TransactionOutput;
 pub use self::pool::TransactionPool;
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Debug)]
 pub struct Transaction {
     id: Hash,
     inputs: Vec<TransactionInput>,
@@ -91,6 +91,8 @@ impl From<&[u8]> for Transaction {
         Self::new(inputs, outputs)
     }
 }
+
+impl Eq for Transaction {}
 
 impl PartialEq for Transaction {
     fn eq(&self, other: &Self) -> bool {

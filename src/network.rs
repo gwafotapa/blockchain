@@ -1,5 +1,7 @@
-use log::info;
-use rand::{seq::SliceRandom, Rng};
+use rand::seq::SliceRandom;
+use rand::Rng;
+use rand_core::RngCore;
+use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::sync::mpsc::Sender;
@@ -34,7 +36,18 @@ impl Network {
     }
 
     pub fn random(nodes: usize) -> Network {
-        let graph = random_graph(nodes);
+        let secp = Secp256k1::new();
+        let mut rng = rand::thread_rng();
+        let mut public_keys = Vec::with_capacity(nodes);
+        for _node in 0..nodes {
+            // let (_secret_key, public_key) = secp.generate_keypair(&mut rng);
+            let mut secret_key = [0u8; 32];
+            rng.fill_bytes(&mut secret_key);
+            let secret_key = SecretKey::from_slice(&secret_key).unwrap();
+            let public_key = PublicKey::from_secret_key(&secp, &secret_key);
+            public_keys.push(public_key);
+        }
+
         let mut senders = Vec::with_capacity(nodes);
         let mut listeners = Vec::with_capacity(nodes);
         for _node in 0..nodes {
@@ -42,15 +55,24 @@ impl Network {
             senders.push(sender);
             listeners.push(listener);
         }
+
+        let graph = random_graph(nodes);
         let mut network = Network::with_capacity(nodes);
         for node in (0..nodes).rev() {
+            let public_key = public_keys[node];
             let sender = senders[node].clone();
             let listener = listeners.pop().unwrap();
             let neighbours = graph[&node]
                 .iter()
-                .map(|&x| (x, senders[x].clone()))
+                .map(|&x| (public_keys[x], senders[x].clone()))
                 .collect();
-            let node = Node::new(node, sender, listener, neighbours);
+            let node = Node::new(
+                public_key,
+                sender,
+                listener,
+                neighbours,
+                public_keys.clone(),
+            );
             network.add(node);
         }
         network
@@ -140,8 +162,8 @@ impl fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for node in &self.nodes {
             let node = node.as_ref().unwrap();
-            let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
-            write!(f, "{:?}: {:?}\n", node.id(), neighborhood)?
+            let neighborhood: Vec<PublicKey> = node.neighbours().iter().map(|x| x.0).collect();
+            write!(f, "{:?}: {:?}\n", node.public_key(), neighborhood)?
         }
         Ok(())
     }

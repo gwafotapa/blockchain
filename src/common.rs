@@ -10,7 +10,8 @@ pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
 const SHUT_DOWN: &[u8] = b"Shut down";
 pub const INPUT_SIZE_BYTES: usize = 32 + 8;
-pub const OUTPUT_SIZE_BYTES: usize = 4 + 8;
+pub const OUTPUT_SIZE_BYTES: usize = 4 + 33;
+// pub const OUTPUT_SIZE_BYTES: usize = 4 + 65;
 
 /// Amount of initial utxos
 pub const INIT_UTXO_AMOUNT: u32 = 10;
