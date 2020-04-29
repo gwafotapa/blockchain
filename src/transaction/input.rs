@@ -1,6 +1,7 @@
 use std::convert::TryInto;
+use std::fmt;
 
-use crate::common::{Hash, INPUT_SIZE_BYTES};
+use crate::common::{Hash, TX_INPUT_BYTES};
 use crate::utxo::UtxoId;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,5 +42,11 @@ impl From<&[u8]> for TransactionInput {
     fn from(bytes: &[u8]) -> Self {
         let utxo_id = UtxoId::deserialize(bytes);
         Self { utxo_id }
+    }
+}
+
+impl fmt::Display for TransactionInput {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.utxo_id)
     }
 }

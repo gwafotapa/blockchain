@@ -53,6 +53,7 @@ version = "0.1.0"
 dependencies = [
  "env_logger",
  "generic-array",
+ "hex",
  "log",
  "merkle-cbt",
  "rand 0.7.3",
@@ -141,6 +142,12 @@ checksum = "725cf19794cf90aa94e65050cb4191ff5d8fa87a498383774c47b332e3af952e"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "hex"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
 
 [[package]]
 name = "humantime"

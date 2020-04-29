@@ -6,7 +6,7 @@ use std::hash::{Hash as HashTrait, Hasher};
 use std::iter;
 
 use self::merkle_tree::MergeHash;
-use crate::common::{Hash, INPUT_SIZE_BYTES, OUTPUT_SIZE_BYTES};
+use crate::common::{Hash, TX_INPUT_BYTES, TX_OUTPUT_BYTES};
 
 pub use self::error::InvalidTransaction;
 pub use self::input::TransactionInput;
@@ -80,15 +80,15 @@ impl From<&[u8]> for Transaction {
         let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
         i += 8;
         let inputs = bytes[i..]
-            .chunks_exact(INPUT_SIZE_BYTES)
+            .chunks_exact(TX_INPUT_BYTES)
             .take(inputs_len)
-            .map(|c| TransactionInput::from(c))
+            .map(|c| TransactionInput::deserialize(c))
             .collect();
-        i += inputs_len * INPUT_SIZE_BYTES;
+        i += inputs_len * TX_INPUT_BYTES;
         let outputs = bytes[i..]
-            .chunks_exact(OUTPUT_SIZE_BYTES)
+            .chunks_exact(TX_OUTPUT_BYTES)
             .take(outputs_len)
-            .map(|c| TransactionOutput::from(c))
+            .map(|c| TransactionOutput::deserialize(c))
             .collect();
         Self::new(inputs, outputs)
     }
@@ -102,17 +102,17 @@ impl PartialEq for Transaction {
     }
 }
 
-// impl fmt::Display for Transaction {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         for input in &self.inputs {
-//             write!(f, "{:?}\n", input)?;
-//         }
-//         for output in &self.outputs {
-//             write!(f, "{:?}\n", output)?;
-//         }
-//         Ok(())
-//     }
-// }
+impl fmt::Display for Transaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (i, input) in self.inputs().iter().enumerate() {
+            write!(f, "Input {}:   {}\n", i, input)?;
+        }
+        for (o, output) in self.outputs().iter().enumerate() {
+            write!(f, "Output {}:   {}\n", o, output)?;
+        }
+        Ok(())
+    }
+}
 
 impl HashTrait for Transaction {
     fn hash<H: Hasher>(&self, state: &mut H) {

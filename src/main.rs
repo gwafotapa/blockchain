@@ -1,10 +1,8 @@
 /* TODO:
- * 1 - Display txid in hexadecimal form like PublicKey
- * 2 - An utxo is not a couple (txinput, txoutput):
- *     An utxo is a tuple (txid, vout, amount, public_key)
- *     A transcation input is a tuple (txid, vout, signature)
- *     A transaction output is a tuple (amount, public_key)
- * 3 - Implement signatures
+ * 1 - Display network in user friendly style
+ * 2 - Further split module utxo
+ * 3 - Update tests
+ * 4 - Implement signatures
  */
 
 use log::info;

@@ -8,9 +8,10 @@ pub type Hash = GenericArray<u8, U32>;
 pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
 const SHUT_DOWN: &[u8] = b"Shut down";
-pub const INPUT_SIZE_BYTES: usize = 32 + 8;
-pub const OUTPUT_SIZE_BYTES: usize = 4 + 33;
+pub const TX_INPUT_BYTES: usize = 32 + 8;
+pub const TX_OUTPUT_BYTES: usize = 4 + 33;
 pub const UTXO_ID_BYTES: usize = 32 + 8;
+pub const UTXO_DATA_BYTES: usize = TX_OUTPUT_BYTES;
 
 /// Amount of initial utxos
 pub const INIT_UTXO_AMOUNT: u32 = 10;
@@ -68,9 +69,9 @@ impl<'a> Message<'a> {
     //                     let transaction = Transaction::from(&bytes[..]);
     //                     let len = 1
     //                         + 8
-    //                         + transaction.inputs().len() * INPUT_SIZE_BYTES
+    //                         + transaction.inputs().len() * TX_INPUT_BYTES
     //                         + 8
-    //                         + transaction.outputs().len() * OUTPUT_SIZE_BYTES;
+    //                         + transaction.outputs().len() * TX_OUTPUT_BYTES;
     //                     bytes = &bytes[len..];
     //                     let message = Message::Transaction(Cow::Owned(transaction));
     //                     vec.push(message);

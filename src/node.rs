@@ -67,7 +67,7 @@ impl Node {
         loop {
             if let Some(transaction) = self.initiate() {
                 info!(
-                    "Node #{} --- New transaction:\n{:?}\n",
+                    "Node #{} --- New transaction:\n{}\n",
                     self.public_key(),
                     transaction
                 );
@@ -84,7 +84,7 @@ impl Node {
                     Message::Transaction(transaction) => {
                         if !self.transaction_pool().contains(&transaction) {
                             info!(
-                                "Node #{} --- Received transaction:\n{:?}\n",
+                                "Node #{} --- Received transaction:\n{}\n",
                                 self.public_key(),
                                 transaction
                             );
@@ -98,7 +98,7 @@ impl Node {
                     }
                     Message::ShutDown => {
                         info!(
-                            "Node {} shutting down\nTransactions: {}\nUtxo pool: {:?}",
+                            "Node {} shutting down\nTransactions: {}\nUtxo pool:\n{}",
                             self.public_key(),
                             self.transaction_pool().size(),
                             self.utxo_pool(),

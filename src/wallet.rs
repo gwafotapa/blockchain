@@ -31,7 +31,7 @@ impl Wallet {
         for input in transaction.inputs() {
             self.remove(input)
         }
-        for (vout, &output) in transaction.outputs().iter().enumerate() {
+        for (vout, output) in transaction.outputs().iter().enumerate() {
             if output.public_key() != self.public_key() {
                 continue;
             }

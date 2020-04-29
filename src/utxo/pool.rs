@@ -82,21 +82,11 @@ impl UtxoPool {
 //     }
 // }
 
-// impl fmt::Display for UtxoPool {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         for (_input, output) in &self.data {
-//             write!(f, " ({}, {}) ", output.public_key(), output.amount())?;
-//         }
-//         Ok(())
-//     }
-// }
-
-// impl fmt::Debug for UtxoPool {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         // for (_input, output) in &self.data {
-//         //     write!(f, " ({}, {}) ", output.public_key(), output.amount())?;
-//         // }
-//         // Ok(())
-//         fmt::Display::fmt(self, f)
-//     }
-// }
+impl fmt::Display for UtxoPool {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for (utxo_id, utxo_data) in &self.data {
+            write!(f, "{}\n{}\n\n", utxo_id, utxo_data)?;
+        }
+        Ok(())
+    }
+}
