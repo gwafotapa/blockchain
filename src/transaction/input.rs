@@ -1,23 +1,20 @@
 use std::convert::TryInto;
 
 use crate::common::{Hash, INPUT_SIZE_BYTES};
+use crate::utxo::UtxoId;
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TransactionInput {
-    txid: Hash,
-    vout: usize,
+    utxo_id: UtxoId,
 }
 
 impl TransactionInput {
-    pub fn new(txid: Hash, vout: usize) -> Self {
-        Self { txid, vout }
+    pub fn new(utxo_id: UtxoId) -> Self {
+        Self { utxo_id }
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(INPUT_SIZE_BYTES);
-        bytes.extend(self.txid.as_slice());
-        bytes.extend(&self.vout.to_be_bytes());
-        bytes
+        self.utxo_id.serialize()
     }
 
     pub fn deserialize<B>(bytes: B) -> Self
@@ -27,27 +24,22 @@ impl TransactionInput {
         Self::from(bytes.as_ref())
     }
 
-    pub fn txid(&self) -> Hash {
-        self.txid
+    pub fn utxo_id(&self) -> &UtxoId {
+        &self.utxo_id
+    }
+
+    pub fn txid(&self) -> &Hash {
+        &self.utxo_id.txid()
     }
 
     pub fn vout(&self) -> usize {
-        self.vout
+        self.utxo_id.vout()
     }
-
-    // pub fn utxo(&self, tx_pool: &TransactionPool) -> Option<Utxo> {
-    //     if let Some(transaction) = tx_pool.transactions().iter().find(|&tx| tx.id == self.txid) {
-    //         Some(transaction.outputs()[self.vout])
-    //     } else {
-    //         None
-    //     }
-    // }
 }
 
 impl From<&[u8]> for TransactionInput {
     fn from(bytes: &[u8]) -> Self {
-        let txid = *Hash::from_slice(&bytes[..32]);
-        let vout = usize::from_be_bytes(bytes[32..40].try_into().unwrap());
-        Self { txid, vout }
+        let utxo_id = UtxoId::deserialize(bytes);
+        Self { utxo_id }
     }
 }

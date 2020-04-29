@@ -1,7 +1,6 @@
 use generic_array::{typenum::U32, GenericArray};
 use std::borrow::Cow;
 
-// use crate::block::Block;
 use crate::transaction::Transaction;
 
 pub type Hash = GenericArray<u8, U32>;
@@ -11,7 +10,7 @@ pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
 const SHUT_DOWN: &[u8] = b"Shut down";
 pub const INPUT_SIZE_BYTES: usize = 32 + 8;
 pub const OUTPUT_SIZE_BYTES: usize = 4 + 33;
-// pub const OUTPUT_SIZE_BYTES: usize = 4 + 65;
+pub const UTXO_ID_BYTES: usize = 32 + 8;
 
 /// Amount of initial utxos
 pub const INIT_UTXO_AMOUNT: u32 = 10;
@@ -19,7 +18,6 @@ pub const INIT_UTXO_HASH: [u8; 32] = [0u8; 32];
 
 pub enum Message<'a> {
     Transaction(Cow<'a, Transaction>),
-    // Block(Block),
     ShutDown,
 }
 

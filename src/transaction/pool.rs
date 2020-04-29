@@ -4,9 +4,8 @@ use std::iter::FromIterator;
 use std::ops::Index;
 
 use crate::transaction::Transaction;
-// use crate::utxo::Utxo;
 
-#[derive(fmt::Debug)]
+#[derive(Debug)]
 pub struct TransactionPool {
     transactions: Vec<Transaction>,
 }
@@ -17,24 +16,6 @@ impl TransactionPool {
             transactions: Vec::new(),
         }
     }
-
-    // pub fn update(&mut self, utxo_pool: &UtxoPool) -> Option<Vec<u8>> {
-    //     if let Some(transaction) = Transaction::find(PROBABILITY_NEW_TRANSACTION, utxo_pool) {
-    //         self.transactions.push(transaction);
-    //     }
-
-    //     if self.transactions.len() < self.propagated + SEND {
-    //         return None;
-    //     }
-
-    //     let mut bytes = Vec::new();
-    //     bytes.push(b't'); // 't' stands for 'transaction'
-    //     for transaction in &self.transactions[self.propagated..] {
-    //         bytes.extend(transaction.serialize());
-    //     }
-    //     self.propagated = self.transactions.len();
-    //     Some(bytes)
-    // }
 
     pub fn size(&self) -> usize {
         self.transactions.len()
@@ -60,10 +41,6 @@ impl TransactionPool {
     pub fn transactions(&self) -> &[Transaction] {
         &self.transactions
     }
-
-    // pub fn utxo(&self, input: TransactionInput) -> Option<Utxo> {
-    //     input.utxo(self)
-    // }
 }
 
 impl Eq for TransactionPool {}

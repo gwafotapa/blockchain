@@ -40,8 +40,8 @@ impl Transaction {
     pub fn serialize(&self) -> Vec<u8> {
         iter::once(b't')
             .chain(self.inputs.len().to_be_bytes().iter().copied())
-            .chain(self.inputs.iter().flat_map(|i| i.serialize()))
             .chain(self.outputs.len().to_be_bytes().iter().copied())
+            .chain(self.inputs.iter().flat_map(|i| i.serialize()))
             .chain(self.outputs.iter().flat_map(|o| o.serialize()))
             .collect()
     }
@@ -59,8 +59,8 @@ impl Transaction {
         merkle_tree.root()
     }
 
-    pub fn id(&self) -> Hash {
-        self.id
+    pub fn id(&self) -> &Hash {
+        &self.id
     }
 
     pub fn inputs(&self) -> &[TransactionInput] {
@@ -76,14 +76,16 @@ impl From<&[u8]> for Transaction {
     fn from(bytes: &[u8]) -> Self {
         let mut i = 1;
         let inputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
-        let inputs = bytes[i + 8..]
+        i += 8;
+        let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+        i += 8;
+        let inputs = bytes[i..]
             .chunks_exact(INPUT_SIZE_BYTES)
             .take(inputs_len)
             .map(|c| TransactionInput::from(c))
             .collect();
-        i += 8 + inputs_len * INPUT_SIZE_BYTES;
-        let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
-        let outputs = bytes[i + 8..]
+        i += inputs_len * INPUT_SIZE_BYTES;
+        let outputs = bytes[i..]
             .chunks_exact(OUTPUT_SIZE_BYTES)
             .take(outputs_len)
             .map(|c| TransactionOutput::from(c))
@@ -100,17 +102,17 @@ impl PartialEq for Transaction {
     }
 }
 
-impl fmt::Display for Transaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for input in &self.inputs {
-            write!(f, "{:?}\n", input)?;
-        }
-        for output in &self.outputs {
-            write!(f, "{:?}\n", output)?;
-        }
-        Ok(())
-    }
-}
+// impl fmt::Display for Transaction {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         for input in &self.inputs {
+//             write!(f, "{:?}\n", input)?;
+//         }
+//         for output in &self.outputs {
+//             write!(f, "{:?}\n", output)?;
+//         }
+//         Ok(())
+//     }
+// }
 
 impl HashTrait for Transaction {
     fn hash<H: Hasher>(&self, state: &mut H) {

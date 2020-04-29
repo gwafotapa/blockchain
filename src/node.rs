@@ -9,7 +9,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
 use crate::common::{Message, PROBABILITY_SPEND};
-use crate::transaction::{Transaction, TransactionOutput, TransactionPool};
+use crate::transaction::{Transaction, TransactionInput, TransactionOutput, TransactionPool};
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
 
@@ -50,7 +50,7 @@ impl Node {
     ) -> Self {
         let utxo_pool = UtxoPool::new(network.clone());
         let transaction_pool = TransactionPool::new();
-        let wallet = Wallet::new(public_key, utxo_pool.owned_by(public_key));
+        let wallet = Wallet::new(public_key, utxo_pool.owned_by(&public_key));
         Self {
             public_key,
             sender,
@@ -67,7 +67,7 @@ impl Node {
         loop {
             if let Some(transaction) = self.initiate() {
                 info!(
-                    "Node #{} --- New transaction:\n{}\n",
+                    "Node #{} --- New transaction:\n{:?}\n",
                     self.public_key(),
                     transaction
                 );
@@ -84,7 +84,7 @@ impl Node {
                     Message::Transaction(transaction) => {
                         if !self.transaction_pool().contains(&transaction) {
                             info!(
-                                "Node #{} --- Received transaction:\n{}\n",
+                                "Node #{} --- Received transaction:\n{:?}\n",
                                 self.public_key(),
                                 transaction
                             );
@@ -98,7 +98,7 @@ impl Node {
                     }
                     Message::ShutDown => {
                         info!(
-                            "Node {} shutting down\nTransactions: {}\nUtxo pool: {}",
+                            "Node {} shutting down\nTransactions: {}\nUtxo pool: {:?}",
                             self.public_key(),
                             self.transaction_pool().size(),
                             self.utxo_pool(),
@@ -141,8 +141,9 @@ impl Node {
                 // }
                 for index in indices {
                     let utxo = &self.wallet().utxos()[index];
+                    let input = TransactionInput::new(utxo.id().clone());
                     amount += utxo.amount();
-                    inputs.push(*utxo.input());
+                    inputs.push(input);
                 }
                 let mut outputs = Vec::new();
                 loop {

@@ -1,68 +1,61 @@
 use secp256k1::PublicKey;
+use std::convert::TryInto;
 use std::fmt;
 
-use crate::common::Hash;
-use crate::transaction::{TransactionInput, TransactionOutput};
+use crate::common::{Hash, UTXO_ID_BYTES};
 
 pub use self::pool::UtxoPool;
 
-/// For now, a utxo has an owner (instead of a script that someone has the unlocking key for)
-// #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Utxo {
-    input: TransactionInput,
-    output: TransactionOutput,
+    id: UtxoId,
+    data: UtxoData,
 }
 
-// impl PartialEq for Utxo {
-//     fn eq(&self, other: &Self) -> bool {
-//         self.puzzle == other.puzzle
-//     }
-// }
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct UtxoId {
+    txid: Hash,
+    vout: usize,
+}
 
-// impl From<&[u8]> for Utxo {
-//     fn from(bytes: &[u8]) -> Self {
-//         let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
-//         let puzzle = usize::from_be_bytes(bytes[4..12].try_into().unwrap());
-//         Self { amount, puzzle }
-//     }
-// }
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UtxoData {
+    amount: u32,
+    public_key: PublicKey,
+}
 
 impl Utxo {
-    // pub fn new(txid: Hash, vout: usize, amount: u32, puzzle: usize) -> Self {
-    //     Self {
-    //         txid,
-    //         vout,
-    //         amount,
-    //         puzzle,
-    //     }
+    pub fn new(id: UtxoId, data: UtxoData) -> Self {
+        Self { id, data }
+    }
+    // pub fn new(txid: Hash, vout: usize, amount: u32, public_key: PublicKey) -> Self {
+    //     let id = UtxoId::new(txid, vout);
+    //     let data = UtxoData::new(amount, public_key);
+    //     Self { id, data }
     // }
 
-    pub fn new(input: TransactionInput, output: TransactionOutput) -> Self {
-        Self { input, output }
+    pub fn id(&self) -> &UtxoId {
+        &self.id
     }
 
-    pub fn input(&self) -> &TransactionInput {
-        &self.input
+    pub fn data(&self) -> &UtxoData {
+        &self.data
     }
 
-    pub fn output(&self) -> &TransactionOutput {
-        &self.output
-    }
-
-    pub fn txid(&self) -> Hash {
-        self.input.txid()
+    pub fn txid(&self) -> &Hash {
+        &self.id.txid()
     }
 
     pub fn vout(&self) -> usize {
-        self.input.vout()
+        self.id.vout()
     }
 
     pub fn amount(&self) -> u32 {
-        self.output.amount()
+        self.data.amount()
     }
 
-    pub fn public_key(&self) -> PublicKey {
-        self.output.public_key()
+    pub fn public_key(&self) -> &PublicKey {
+        &self.data.public_key()
     }
 
     // pub fn serialize(&self) -> Vec<u8> {
@@ -75,19 +68,89 @@ impl Utxo {
     // }
 }
 
-impl fmt::Display for Utxo {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "txid: {:?}\n\
-             vout: {}\n\
-             amount: {}\n\
-             public_key: {}",
-            self.txid(),
-            self.vout(),
-            self.amount(),
-            self.public_key()
-        )
+impl Eq for Utxo {}
+
+impl PartialEq for Utxo {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+// impl From<(UtxoId, UtxoData)> for Utxo {
+//     fn from(u: (UtxoId, UtxoData)) -> Self {
+//         Self::new(u.0.txid, u.0.vout, u.1.amount, u.1.public_key)
+//     }
+// }
+
+// impl From<&[u8]> for Utxo {
+//     fn from(bytes: &[u8]) -> Self {
+//         let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
+//         let puzzle = usize::from_be_bytes(bytes[4..12].try_into().unwrap());
+//         Self { amount, puzzle }
+//     }
+// }
+
+// impl fmt::Display for Utxo {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         // write!(
+//         //     f,
+//         //     "txid: {:?}\n\
+//         //      vout: {}\n\
+//         //      amount: {}\n\
+//         //      public_key: {}",
+//         //     self.txid, self.vout, self.amount, self.public_key
+//         // )
+//         fmt::Debug::fmt(self, f)
+//     }
+// }
+
+impl UtxoId {
+    pub fn new(txid: Hash, vout: usize) -> Self {
+        Self { txid, vout }
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(UTXO_ID_BYTES);
+        bytes.extend(self.txid.as_slice());
+        bytes.extend(&self.vout.to_be_bytes());
+        bytes
+    }
+
+    pub fn deserialize<B>(bytes: B) -> Self
+    where
+        B: AsRef<[u8]>,
+    {
+        Self::from(bytes.as_ref())
+    }
+
+    pub fn txid(&self) -> &Hash {
+        &self.txid
+    }
+
+    pub fn vout(&self) -> usize {
+        self.vout
+    }
+}
+
+impl From<&[u8]> for UtxoId {
+    fn from(bytes: &[u8]) -> Self {
+        let txid = *Hash::from_slice(&bytes[..32]);
+        let vout = usize::from_be_bytes(bytes[32..40].try_into().unwrap());
+        Self { txid, vout }
+    }
+}
+
+impl UtxoData {
+    pub fn new(amount: u32, public_key: PublicKey) -> Self {
+        Self { amount, public_key }
+    }
+
+    pub fn amount(&self) -> u32 {
+        self.amount
+    }
+
+    pub fn public_key(&self) -> &PublicKey {
+        &self.public_key
     }
 }
 

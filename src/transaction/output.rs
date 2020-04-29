@@ -18,7 +18,6 @@ impl TransactionOutput {
         let mut bytes = Vec::with_capacity(OUTPUT_SIZE_BYTES);
         bytes.extend(&self.amount.to_be_bytes());
         bytes.extend(self.public_key.serialize().iter());
-        // bytes.extend(self.public_key.serialize_uncompressed().iter());
         bytes
     }
 
@@ -33,8 +32,8 @@ impl TransactionOutput {
         self.amount
     }
 
-    pub fn public_key(&self) -> PublicKey {
-        self.public_key
+    pub fn public_key(&self) -> &PublicKey {
+        &self.public_key
     }
 }
 
@@ -42,7 +41,6 @@ impl From<&[u8]> for TransactionOutput {
     fn from(bytes: &[u8]) -> Self {
         let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
         let public_key = PublicKey::from_slice(bytes[4..37].try_into().unwrap()).unwrap();
-        // let public_key = PublicKey::from_slice(bytes[4..69].try_into().unwrap()).unwrap();
         Self { amount, public_key }
     }
 }
