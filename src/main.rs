@@ -1,10 +1,3 @@
-/* TODO:
- * 1 - Display network in user friendly style
- * 2 - Further split module utxo
- * 3 - Update tests
- * 4 - Implement signatures
- */
-
 use log::info;
 // use rand::Rng;
 // use std::ops::Deref;

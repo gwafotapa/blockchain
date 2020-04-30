@@ -1,8 +1,6 @@
 use secp256k1::PublicKey;
-use std::convert::TryInto;
 use std::fmt;
 
-use crate::common::TX_OUTPUT_BYTES;
 use crate::utxo::UtxoData;
 
 #[derive(Clone, Debug)]

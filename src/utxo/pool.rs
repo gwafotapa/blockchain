@@ -1,11 +1,11 @@
 use secp256k1::PublicKey;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::result;
 
 use super::{Utxo, UtxoData, UtxoId};
 use crate::common::{Hash, INIT_UTXO_AMOUNT, INIT_UTXO_HASH};
-use crate::transaction::{InvalidTransaction, Transaction, TransactionInput, TransactionOutput};
+use crate::transaction::{InvalidTransaction, Transaction};
 
 #[derive(Debug)]
 pub struct UtxoPool {
@@ -70,17 +70,15 @@ impl UtxoPool {
     }
 }
 
-// impl Eq for UtxoPool {}
+impl Eq for UtxoPool {}
 
-// impl PartialEq for UtxoPool {
-//     fn eq(&self, other: &Self) -> bool {
-//         let (p1, _): (HashSet<TransactionInput>, HashSet<TransactionOutput>) =
-//             self.data.iter().unzip();
-//         let (p2, _): (HashSet<TransactionInput>, HashSet<TransactionOutput>) =
-//             other.data.iter().unzip();
-//         p1.symmetric_difference(&p2).next().is_none()
-//     }
-// }
+impl PartialEq for UtxoPool {
+    fn eq(&self, other: &Self) -> bool {
+        let (p1, _): (HashSet<UtxoId>, HashSet<UtxoData>) = self.data.iter().unzip();
+        let (p2, _): (HashSet<UtxoId>, HashSet<UtxoData>) = other.data.iter().unzip();
+        p1.symmetric_difference(&p2).next().is_none()
+    }
+}
 
 impl fmt::Display for UtxoPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

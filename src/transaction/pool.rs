@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::fmt;
 use std::iter::FromIterator;
 use std::ops::Index;
 

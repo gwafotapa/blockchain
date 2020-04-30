@@ -1,7 +1,6 @@
-use std::convert::TryInto;
 use std::fmt;
 
-use crate::common::{Hash, TX_INPUT_BYTES};
+use crate::common::Hash;
 use crate::utxo::UtxoId;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
