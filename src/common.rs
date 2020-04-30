@@ -8,10 +8,11 @@ pub type Hash = GenericArray<u8, U32>;
 pub const NODES: usize = 4;
 pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
 const SHUT_DOWN: &[u8] = b"Shut down";
-pub const TX_INPUT_BYTES: usize = 32 + 8;
-pub const TX_OUTPUT_BYTES: usize = 4 + 33;
+pub const TX_INPUT_BYTES: usize = UTXO_ID_BYTES + SIGNATURE_BYTES;
+pub const TX_OUTPUT_BYTES: usize = UTXO_DATA_BYTES;
 pub const UTXO_ID_BYTES: usize = 32 + 8;
-pub const UTXO_DATA_BYTES: usize = TX_OUTPUT_BYTES;
+pub const UTXO_DATA_BYTES: usize = 4 + 33;
+pub const SIGNATURE_BYTES: usize = 64;
 
 /// Amount of initial utxos
 pub const INIT_UTXO_AMOUNT: u32 = 10;

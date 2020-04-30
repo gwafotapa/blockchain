@@ -1,3 +1,8 @@
+/* TODO:
+ * 1 - Factor message signature
+ * 2 - Check display and test (add a relay function ?)
+ */
+
 use log::info;
 // use rand::Rng;
 // use std::ops::Deref;

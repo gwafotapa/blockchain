@@ -1,7 +1,8 @@
 use log::info;
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use secp256k1::PublicKey;
+use secp256k1::{Message as Text, PublicKey, Secp256k1, SecretKey};
+use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -16,6 +17,7 @@ use crate::wallet::Wallet;
 pub struct Node {
     id: usize,
     public_key: PublicKey,
+    secret_key: SecretKey,
     sender: Sender<Arc<Vec<u8>>>,
     listener: Receiver<Arc<Vec<u8>>>,
     neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
@@ -45,6 +47,7 @@ impl Node {
     pub fn new(
         id: usize,
         public_key: PublicKey,
+        secret_key: SecretKey,
         sender: Sender<Arc<Vec<u8>>>,
         listener: Receiver<Arc<Vec<u8>>>,
         neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
@@ -56,6 +59,7 @@ impl Node {
         Self {
             id,
             public_key,
+            secret_key,
             sender,
             listener,
             neighbours,
@@ -71,7 +75,7 @@ impl Node {
             if let Some(transaction) = self.initiate() {
                 info!(
                     "Node #{} --- New transaction:\n{}\n",
-                    self.public_key(),
+                    self.id(),
                     transaction
                 );
                 self.utxo_pool_mut().process(&transaction).unwrap();
@@ -135,32 +139,18 @@ impl Node {
             false => None,
             true => {
                 let inputs_len = rng.gen_range(1, self.wallet().utxos().len() + 1);
-                let mut inputs = Vec::with_capacity(inputs_len);
+                let mut utxo_ids = Vec::with_capacity(inputs_len);
                 let indices =
                     (0..self.wallet().utxos().len()).choose_multiple(&mut rng, inputs_len);
-                // indices.sort_by(|a, b| b.cmp(a));
                 let mut amount = 0;
-                // for index in indices {
-                //     let input = self.utxos.remove(index);
-                //     amount += input.amount();
-                //     inputs.push(input);
-                // }
                 for index in indices {
                     let utxo = &self.wallet().utxos()[index];
-                    let input = TransactionInput::new(utxo.id().clone());
+                    utxo_ids.push(utxo.id().clone());
                     amount += utxo.amount();
-                    inputs.push(input);
                 }
                 let mut outputs = Vec::new();
                 loop {
                     let amount1 = rng.gen_range(1, amount + 1);
-                    // let mut recipient;
-                    // loop {
-                    //     recipient = rng.gen_range(0, NODES);
-                    //     if recipient != self.public_key {
-                    //         break;
-                    //     }
-                    // }
                     let node = rng.gen_range(0, self.network.len());
                     let recipient = self.network[node];
                     let output = TransactionOutput::new(amount1, recipient);
@@ -169,6 +159,24 @@ impl Node {
                     if amount == 0 {
                         break;
                     }
+                }
+                let mut message = Vec::new();
+                for utxo_id in &utxo_ids {
+                    message.extend(utxo_id.serialize());
+                }
+                for output in &outputs {
+                    message.extend(output.serialize());
+                }
+                let mut hasher = Sha256::new();
+                hasher.input(message);
+                let text = hasher.result();
+                let message = Text::from_slice(&text).unwrap();
+                let secp = Secp256k1::new();
+                let sig = secp.sign(&message, &self.secret_key);
+                let mut inputs = Vec::with_capacity(inputs_len);
+                for utxo_id in utxo_ids {
+                    let input = TransactionInput::new(utxo_id, sig);
+                    inputs.push(input);
                 }
                 let transaction = Transaction::new(inputs, outputs);
                 Some(transaction)
@@ -182,6 +190,10 @@ impl Node {
 
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
+    }
+
+    pub fn secret_key(&self) -> &SecretKey {
+        &self.secret_key
     }
 
     pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {

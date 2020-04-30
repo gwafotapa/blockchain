@@ -105,10 +105,10 @@ impl PartialEq for Transaction {
 impl fmt::Display for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (i, input) in self.inputs().iter().enumerate() {
-            write!(f, "Input {}:   {}\n", i, input)?;
+            write!(f, "Input {}:  {}\n", i, input)?;
         }
         for (o, output) in self.outputs().iter().enumerate() {
-            write!(f, "Output {}:   {}\n", o, output)?;
+            write!(f, "Output {}:  {}\n", o, output)?;
         }
         Ok(())
     }

@@ -1,4 +1,5 @@
-use secp256k1::PublicKey;
+use secp256k1::{Message as Text, PublicKey, Secp256k1};
+use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::result;
@@ -53,8 +54,26 @@ impl UtxoPool {
     }
 
     pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
+        let mut message = Vec::new();
+        for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
+            message.extend(utxo_id.serialize());
+        }
+        for output in transaction.outputs() {
+            message.extend(output.serialize());
+        }
+        let mut hasher = Sha256::new();
+        hasher.input(message);
+        let text = hasher.result();
+        let message = Text::from_slice(&text).unwrap();
+        let secp = Secp256k1::new();
         for input in transaction.inputs() {
-            if !self.data.contains_key(input.utxo_id()) {
+            // if !self.data.contains_key(input.utxo_id()) {
+            //     return Err(InvalidTransaction);
+            // }
+            if let Some(utxo_data) = self.data.get(input.utxo_id()) {
+                secp.verify(&message, input.sig(), utxo_data.public_key())
+                    .map_err(|_| InvalidTransaction)?;
+            } else {
                 return Err(InvalidTransaction);
             }
         }

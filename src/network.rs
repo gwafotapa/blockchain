@@ -39,13 +39,15 @@ impl Network {
         let secp = Secp256k1::new();
         let mut rng = rand::thread_rng();
         let mut public_keys = Vec::with_capacity(nodes);
+        let mut secret_keys = Vec::with_capacity(nodes);
         for _node in 0..nodes {
-            // let (_secret_key, public_key) = secp.generate_keypair(&mut rng);
             let mut secret_key = [0u8; 32];
             rng.fill_bytes(&mut secret_key);
             let secret_key = SecretKey::from_slice(&secret_key).unwrap();
             let public_key = PublicKey::from_secret_key(&secp, &secret_key);
+            secret_keys.push(secret_key);
             public_keys.push(public_key);
+            // TODO: give only secret key and let each node derive its public key
         }
 
         let mut senders = Vec::with_capacity(nodes);
@@ -60,6 +62,7 @@ impl Network {
         let mut network = Network::with_capacity(nodes);
         for id in (0..nodes).rev() {
             let public_key = public_keys[id];
+            let secret_key = secret_keys[id];
             let sender = senders[id].clone();
             let listener = listeners.pop().unwrap();
             let neighbours = graph[&id]
@@ -69,6 +72,7 @@ impl Network {
             let node = Node::new(
                 id,
                 public_key,
+                secret_key,
                 sender,
                 listener,
                 neighbours,
