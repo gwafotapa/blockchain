@@ -1,4 +1,4 @@
-use secp256k1::{Message as Text, PublicKey, Secp256k1};
+use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
@@ -63,13 +63,10 @@ impl UtxoPool {
         }
         let mut hasher = Sha256::new();
         hasher.input(message);
-        let text = hasher.result();
-        let message = Text::from_slice(&text).unwrap();
+        let hash = hasher.result();
+        let message = MessageToSign::from_slice(&hash).unwrap();
         let secp = Secp256k1::new();
         for input in transaction.inputs() {
-            // if !self.data.contains_key(input.utxo_id()) {
-            //     return Err(InvalidTransaction);
-            // }
             if let Some(utxo_data) = self.data.get(input.utxo_id()) {
                 secp.verify(&message, input.sig(), utxo_data.public_key())
                     .map_err(|_| InvalidTransaction)?;

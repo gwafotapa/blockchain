@@ -1,7 +1,7 @@
 use log::info;
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use secp256k1::{Message as Text, PublicKey, Secp256k1, SecretKey};
+use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
@@ -139,20 +139,16 @@ impl Node {
             false => None,
             true => {
                 let inputs_len = rng.gen_range(1, self.wallet().utxos().len() + 1);
-                let mut utxo_ids = Vec::with_capacity(inputs_len);
-                let indices =
-                    (0..self.wallet().utxos().len()).choose_multiple(&mut rng, inputs_len);
-                let mut amount = 0;
-                for index in indices {
-                    let utxo = &self.wallet().utxos()[index];
-                    utxo_ids.push(utxo.id().clone());
-                    amount += utxo.amount();
-                }
+                let utxos = self
+                    .wallet()
+                    .utxos()
+                    .iter()
+                    .choose_multiple(&mut rng, inputs_len);
+                let mut amount: u32 = utxos.iter().map(|u| u.amount()).sum();
                 let mut outputs = Vec::new();
                 loop {
                     let amount1 = rng.gen_range(1, amount + 1);
-                    let node = rng.gen_range(0, self.network.len());
-                    let recipient = self.network[node];
+                    let recipient = *self.network.iter().choose(&mut rng).unwrap();
                     let output = TransactionOutput::new(amount1, recipient);
                     outputs.push(output);
                     amount -= amount1;
@@ -161,21 +157,21 @@ impl Node {
                     }
                 }
                 let mut message = Vec::new();
-                for utxo_id in &utxo_ids {
-                    message.extend(utxo_id.serialize());
+                for utxo in &utxos {
+                    message.extend(utxo.id().serialize());
                 }
                 for output in &outputs {
                     message.extend(output.serialize());
                 }
                 let mut hasher = Sha256::new();
                 hasher.input(message);
-                let text = hasher.result();
-                let message = Text::from_slice(&text).unwrap();
+                let hash = hasher.result();
+                let message = MessageToSign::from_slice(&hash).unwrap();
                 let secp = Secp256k1::new();
                 let sig = secp.sign(&message, &self.secret_key);
                 let mut inputs = Vec::with_capacity(inputs_len);
-                for utxo_id in utxo_ids {
-                    let input = TransactionInput::new(utxo_id, sig);
+                for utxo in utxos {
+                    let input = TransactionInput::new(*utxo.id(), sig);
                     inputs.push(input);
                 }
                 let transaction = Transaction::new(inputs, outputs);
