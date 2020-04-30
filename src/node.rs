@@ -14,10 +14,11 @@ use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
 
 pub struct Node {
+    id: usize,
     public_key: PublicKey,
     sender: Sender<Arc<Vec<u8>>>,
     listener: Receiver<Arc<Vec<u8>>>,
-    neighbours: Vec<(PublicKey, Sender<Arc<Vec<u8>>>)>,
+    neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
     network: Vec<PublicKey>,
     utxo_pool: UtxoPool,
     transaction_pool: TransactionPool,
@@ -42,16 +43,18 @@ impl Hash for Node {
 
 impl Node {
     pub fn new(
+        id: usize,
         public_key: PublicKey,
         sender: Sender<Arc<Vec<u8>>>,
         listener: Receiver<Arc<Vec<u8>>>,
-        neighbours: Vec<(PublicKey, Sender<Arc<Vec<u8>>>)>,
+        neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
         network: Vec<PublicKey>, // rx0: Arc<Mutex<Receiver<&'static str>>>,
     ) -> Self {
         let utxo_pool = UtxoPool::new(network.clone());
         let transaction_pool = TransactionPool::new();
         let wallet = Wallet::new(public_key, utxo_pool.owned_by(&public_key));
         Self {
+            id,
             public_key,
             sender,
             listener,
@@ -85,7 +88,7 @@ impl Node {
                         if !self.transaction_pool().contains(&transaction) {
                             info!(
                                 "Node #{} --- Received transaction:\n{}\n",
-                                self.public_key(),
+                                self.id(),
                                 transaction
                             );
                             self.utxo_pool_mut().process(&transaction).unwrap();
@@ -98,8 +101,11 @@ impl Node {
                     }
                     Message::ShutDown => {
                         info!(
-                            "Node {} shutting down\nTransactions: {}\nUtxo pool:\n{}",
-                            self.public_key(),
+                            "Node {} shutting down\n\
+                             Transactions: {}\n\
+                             Utxo pool:\n\
+                             {}",
+                            self.id(),
                             self.transaction_pool().size(),
                             self.utxo_pool(),
                         );
@@ -170,8 +176,12 @@ impl Node {
         }
     }
 
-    pub fn public_key(&self) -> PublicKey {
-        self.public_key
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
+    pub fn public_key(&self) -> &PublicKey {
+        &self.public_key
     }
 
     pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {
@@ -182,7 +192,7 @@ impl Node {
         &self.listener
     }
 
-    pub fn neighbours(&self) -> &[(PublicKey, Sender<Arc<Vec<u8>>>)] {
+    pub fn neighbours(&self) -> &[(usize, PublicKey, Sender<Arc<Vec<u8>>>)] {
         self.neighbours.as_ref()
     }
 
@@ -213,7 +223,7 @@ impl Node {
     pub fn propagate(&self, message: Message) {
         let bytes = Arc::new(message.serialize());
         for neighbour in self.neighbours.iter() {
-            neighbour.1.send(Arc::clone(&bytes)).unwrap();
+            neighbour.2.send(Arc::clone(&bytes)).unwrap();
         }
     }
 

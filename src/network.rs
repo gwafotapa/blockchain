@@ -58,15 +58,16 @@ impl Network {
 
         let graph = random_graph(nodes);
         let mut network = Network::with_capacity(nodes);
-        for node in (0..nodes).rev() {
-            let public_key = public_keys[node];
-            let sender = senders[node].clone();
+        for id in (0..nodes).rev() {
+            let public_key = public_keys[id];
+            let sender = senders[id].clone();
             let listener = listeners.pop().unwrap();
-            let neighbours = graph[&node]
+            let neighbours = graph[&id]
                 .iter()
-                .map(|&x| (public_keys[x], senders[x].clone()))
+                .map(|&x| (x, public_keys[x], senders[x].clone()))
                 .collect();
             let node = Node::new(
+                id,
                 public_key,
                 sender,
                 listener,
@@ -162,9 +163,16 @@ impl fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for node in &self.nodes {
             let node = node.as_ref().unwrap();
-            let neighborhood: Vec<PublicKey> = node.neighbours().iter().map(|x| x.0).collect();
-            write!(f, "{:?}: {:?}\n", node.public_key(), neighborhood)?
+            let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
+            write!(
+                f,
+                "Node #{}   Neighbours: {:?}   pk: {}\n",
+                node.id(),
+                neighborhood,
+                node.public_key(),
+            )?;
         }
+
         Ok(())
     }
 }
