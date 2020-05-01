@@ -1,6 +1,7 @@
 /* TODO:
- * 1 - Factor message signature
+ * 1 - Define my own error type
  * 2 - Check display and test (add a relay function ?)
+ * 3 - Clean and refactor
  */
 
 use log::info;

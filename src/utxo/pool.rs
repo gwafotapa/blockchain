@@ -2,7 +2,6 @@ use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::result;
 
 use super::{Utxo, UtxoData, UtxoId};
 use crate::common::{Hash, INIT_UTXO_AMOUNT, INIT_UTXO_HASH};
@@ -41,10 +40,6 @@ impl UtxoPool {
         self.data.contains_key(utxo.id())
     }
 
-    // pub fn find(&self, input: &TransactionInput) -> Option<UtxoData> {
-    //     self.data.contains_key(UtxoId::new(input.id(), input.vout())
-    // }
-
     pub fn owned_by(&self, pk: &PublicKey) -> Vec<Utxo> {
         self.data
             .iter()
@@ -53,7 +48,7 @@ impl UtxoPool {
             .collect()
     }
 
-    pub fn process(&mut self, transaction: &Transaction) -> result::Result<(), InvalidTransaction> {
+    pub fn process(&mut self, transaction: &Transaction) -> Result<(), InvalidTransaction> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
             message.extend(utxo_id.serialize());
@@ -68,10 +63,9 @@ impl UtxoPool {
         let secp = Secp256k1::new();
         for input in transaction.inputs() {
             if let Some(utxo_data) = self.data.get(input.utxo_id()) {
-                secp.verify(&message, input.sig(), utxo_data.public_key())
-                    .map_err(|_| InvalidTransaction)?;
+                secp.verify(&message, input.sig(), utxo_data.public_key())?;
             } else {
-                return Err(InvalidTransaction);
+                return Err(InvalidTransaction::UnknownUtxo);
             }
         }
         for input in transaction.inputs() {
