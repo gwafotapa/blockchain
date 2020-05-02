@@ -1,6 +1,7 @@
 use sha2::{Digest, Sha256};
 use std::convert::TryInto;
 
+use self::header::BlockHeader;
 use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK};
 // use crate::transaction::Transaction;
 
@@ -13,20 +14,14 @@ pub struct Block {
     // transactions: Vec<Transaction>,
 }
 
-pub struct BlockHeader {
-    hash_prev_block: Hash,
-    // hash_merkle_root: Hash,
-    // nonce: u32,
-}
-
 impl Block {
     pub fn genesis() -> Self {
         Self {
             height: 0,
-            header: BlockHeader {
-                hash_prev_block: Hash::from(GENESIS_BLOCK_HASH_PREV_BLOCK),
+            header: BlockHeader::new(
+                Hash::from(GENESIS_BLOCK_HASH_PREV_BLOCK),
                 // hash_merkle_root: *Hash::from_slice(GENESIS_BLOCK_HASH_MERKLE_ROOT),
-            },
+            ),
             // transactions: Vec::new(),
         }
     }
@@ -39,11 +34,9 @@ impl Block {
         // );
         Self {
             height,
-            header: BlockHeader {
-                hash_prev_block,
-                // hash_merkle_root: Transaction::hash_merkle_root(&transactions),
-            },
-            // transactions,
+            header: BlockHeader::new(
+                hash_prev_block, // hash_merkle_root: Transaction::hash_merkle_root(&transactions),
+            ), // transactions,
         }
     }
 
@@ -52,7 +45,7 @@ impl Block {
     }
 
     pub fn hash_prev_block(&self) -> &Hash {
-        &self.header.hash_prev_block
+        &self.header.hash_prev_block()
     }
 
     //     pub fn hash_merkle_root(&self) -> Hash {
@@ -101,26 +94,4 @@ where
     }
 }
 
-impl BlockHeader {
-    pub fn serialize(&self) -> Vec<u8> {
-        self.hash_prev_block.to_vec()
-    }
-
-    pub fn deserialize<B>(bytes: B) -> Self
-    where
-        B: AsRef<[u8]>,
-    {
-        Self::from(bytes)
-    }
-}
-
-impl<B> From<B> for BlockHeader
-where
-    B: AsRef<[u8]>,
-{
-    fn from(bytes: B) -> Self {
-        let bytes = bytes.as_ref();
-        let hash_prev_block = *Hash::from_slice(&bytes[..32]);
-        Self { hash_prev_block }
-    }
-}
+pub mod header;
