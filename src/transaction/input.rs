@@ -26,7 +26,7 @@ impl TransactionInput {
     where
         B: AsRef<[u8]>,
     {
-        Self::from(bytes.as_ref())
+        Self::from(bytes)
     }
 
     pub fn utxo_id(&self) -> &UtxoId {
@@ -46,8 +46,12 @@ impl TransactionInput {
     }
 }
 
-impl From<&[u8]> for TransactionInput {
-    fn from(bytes: &[u8]) -> Self {
+impl<B> From<B> for TransactionInput
+where
+    B: AsRef<[u8]>,
+{
+    fn from(bytes: B) -> Self {
+        let bytes = bytes.as_ref();
         let utxo_id = UtxoId::deserialize(bytes);
         let sig = Signature::from_compact(&bytes[UTXO_ID_BYTES..]).unwrap();
         Self { utxo_id, sig }

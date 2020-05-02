@@ -50,7 +50,7 @@ impl Transaction {
     where
         B: AsRef<[u8]>,
     {
-        Self::from(bytes.as_ref())
+        Self::from(bytes)
     }
 
     pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {
@@ -72,8 +72,12 @@ impl Transaction {
     }
 }
 
-impl From<&[u8]> for Transaction {
-    fn from(bytes: &[u8]) -> Self {
+impl<B> From<B> for Transaction
+where
+    B: AsRef<[u8]>,
+{
+    fn from(bytes: B) -> Self {
+        let bytes = bytes.as_ref();
         let mut i = 1;
         let inputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
         i += 8;

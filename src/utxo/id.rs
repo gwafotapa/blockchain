@@ -26,7 +26,7 @@ impl UtxoId {
     where
         B: AsRef<[u8]>,
     {
-        Self::from(bytes.as_ref())
+        Self::from(bytes)
     }
 
     pub fn txid(&self) -> &Hash {
@@ -38,8 +38,12 @@ impl UtxoId {
     }
 }
 
-impl From<&[u8]> for UtxoId {
-    fn from(bytes: &[u8]) -> Self {
+impl<B> From<B> for UtxoId
+where
+    B: AsRef<[u8]>,
+{
+    fn from(bytes: B) -> Self {
+        let bytes = bytes.as_ref();
         let txid = *Hash::from_slice(&bytes[..32]);
         let vout = usize::from_be_bytes(bytes[32..40].try_into().unwrap());
         Self { txid, vout }

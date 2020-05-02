@@ -5,6 +5,7 @@ use crate::transaction::Transaction;
 
 pub type Hash = GenericArray<u8, U32>;
 
+pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];
 pub const NODES: usize = 4;
 pub const SIGNATURE_BYTES: usize = 64;
 pub const SPEND_PROBA: f64 = 1.0 / 1000000.0;
@@ -22,11 +23,11 @@ pub enum Message<'a> {
     ShutDown,
 }
 
-impl<'a, T> From<T> for Message<'a>
+impl<'a, B> From<B> for Message<'a>
 where
-    T: AsRef<[u8]>,
+    B: AsRef<[u8]>,
 {
-    fn from(bytes: T) -> Self {
+    fn from(bytes: B) -> Self {
         let bytes = bytes.as_ref();
         if &bytes[..] == SHUT_DOWN {
             return Message::ShutDown;

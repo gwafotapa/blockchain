@@ -26,7 +26,7 @@ impl UtxoData {
     where
         B: AsRef<[u8]>,
     {
-        Self::from(bytes.as_ref())
+        Self::from(bytes)
     }
 
     pub fn amount(&self) -> u32 {
@@ -38,8 +38,12 @@ impl UtxoData {
     }
 }
 
-impl From<&[u8]> for UtxoData {
-    fn from(bytes: &[u8]) -> Self {
+impl<B> From<B> for UtxoData
+where
+    B: AsRef<[u8]>,
+{
+    fn from(bytes: B) -> Self {
+        let bytes = bytes.as_ref();
         let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
         let public_key = PublicKey::from_slice(bytes[4..37].try_into().unwrap()).unwrap();
         Self { amount, public_key }

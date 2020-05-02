@@ -183,7 +183,7 @@ impl Node {
     }
 
     pub fn neighbours(&self) -> &[(usize, PublicKey, Sender<Arc<Vec<u8>>>)] {
-        self.neighbours.as_ref()
+        &self.neighbours
     }
 
     pub fn utxo_pool(&self) -> &UtxoPool {
