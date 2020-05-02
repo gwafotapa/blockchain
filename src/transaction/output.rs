@@ -31,22 +31,8 @@ impl TransactionOutput {
     }
 }
 
-// impl From<&[u8]> for TransactionOutput {
-//     fn from(bytes: &[u8]) -> Self {
-//         let amount = u32::from_be_bytes(bytes[0..4].try_into().unwrap());
-//         let public_key = PublicKey::from_slice(bytes[4..37].try_into().unwrap()).unwrap();
-//         Self { amount, public_key }
-//     }
-// }
-
 impl fmt::Display for TransactionOutput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // write!(
-        //     f,
-        //     "amount: {}\n\
-        //      public_key: {}",
-        //     self.amount, self.public_key
-        // )
-        write!(f, "{}", self.0)
+        self.0.fmt(f)
     }
 }

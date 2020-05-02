@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use super::{Utxo, UtxoData, UtxoId};
-use crate::common::{Hash, INIT_UTXO_AMOUNT, INIT_UTXO_HASH};
+use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
 use crate::transaction::{InvalidTransaction, Transaction};
 
 #[derive(Debug)]
@@ -20,8 +20,8 @@ impl UtxoPool {
                 .enumerate()
                 .map(|(n, pk)| {
                     (
-                        UtxoId::new(Hash::from(INIT_UTXO_HASH), n),
-                        UtxoData::new(INIT_UTXO_AMOUNT, pk),
+                        UtxoId::new(Hash::from(UTXO_HASH_INIT), n),
+                        UtxoData::new(UTXO_AMOUNT_INIT, pk),
                     )
                 })
                 .collect(),

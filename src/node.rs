@@ -9,7 +9,7 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
-use crate::common::{Message, PROBABILITY_SPEND};
+use crate::common::{Message, SPEND_PROBA};
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput, TransactionPool};
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
@@ -25,8 +25,6 @@ pub struct Node {
     utxo_pool: UtxoPool,
     transaction_pool: TransactionPool,
     wallet: Wallet,
-    // blockchain: Blockchain,
-    // rx0: Arc<Mutex<Receiver<&'static str>>>,
 }
 
 impl PartialEq for Node {
@@ -51,7 +49,7 @@ impl Node {
         sender: Sender<Arc<Vec<u8>>>,
         listener: Receiver<Arc<Vec<u8>>>,
         neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
-        network: Vec<PublicKey>, // rx0: Arc<Mutex<Receiver<&'static str>>>,
+        network: Vec<PublicKey>,
     ) -> Self {
         let utxo_pool = UtxoPool::new(network.clone());
         let transaction_pool = TransactionPool::new();
@@ -84,9 +82,6 @@ impl Node {
                 self.transaction_pool_mut().add(transaction);
             }
             if let Ok(message) = self.listener().try_recv() {
-                // if let Ok(messages) = self.listener().try_recv() {
-                //     for message in Message::from(messages.deref()) {
-                //         match message {
                 match Message::deserialize(message.deref()) {
                     Message::Transaction(transaction) => {
                         if !self.transaction_pool().contains(&transaction) {
@@ -99,8 +94,6 @@ impl Node {
                             self.wallet_mut().process(&transaction);
                             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                             self.transaction_pool_mut().add(transaction.into_owned());
-                            // } else {
-                            //     info!("Transaction already in the pool");
                         }
                     }
                     Message::ShutDown => {
@@ -116,17 +109,7 @@ impl Node {
                         return;
                     }
                 }
-                // }
             }
-            // match rx0.lock().unwrap().try_recv() {
-            //     Ok(SHUT_DOWN) => {
-            //         println!("Thread #{} shutting down", public_key);
-            //         break;
-            //     }
-            //     Ok(message) => panic!("Received unexpected message: \"{}\"", message),
-            //     Err(TryRecvError::Empty) => {}
-            //     Err(TryRecvError::Disconnected) => panic!("Channel disconnected"),
-            // }
         }
     }
 
@@ -135,7 +118,7 @@ impl Node {
             return None;
         }
         let mut rng = rand::thread_rng();
-        match rng.gen_bool(PROBABILITY_SPEND) {
+        match rng.gen_bool(SPEND_PROBA) {
             false => None,
             true => {
                 let inputs_len = rng.gen_range(1, self.wallet().utxos().len() + 1);
@@ -169,11 +152,10 @@ impl Node {
                 let message = MessageToSign::from_slice(&hash).unwrap();
                 let secp = Secp256k1::new();
                 let sig = secp.sign(&message, &self.secret_key);
-                let mut inputs = Vec::with_capacity(inputs_len);
-                for utxo in utxos {
-                    let input = TransactionInput::new(*utxo.id(), sig);
-                    inputs.push(input);
-                }
+                let inputs = utxos
+                    .iter()
+                    .map(|u| TransactionInput::new(*u.id(), sig))
+                    .collect();
                 let transaction = Transaction::new(inputs, outputs);
                 Some(transaction)
             }
@@ -237,39 +219,6 @@ impl Node {
 
     // pub fn blockchain(&self) -> &Blockchain {
     //     &self.blockchain
-    // }
-
-    // TODO: try returning &[Transaction]
-    // pub fn update_transaction_pool(&mut self) -> Option<&[Transaction]> {
-    //     // pub fn update_transaction_pool(&mut self) -> Option<Vec<u8>> {
-    //     if let Some(transaction) = Transaction::find(PROBABILITY_NEW_TRANSACTION, &self.utxo_pool) {
-    //         self.transaction_pool.add(transaction);
-    //     }
-
-    //     if self.transaction_pool.size() < self.transaction_pool.propagated() + SEND {
-    //         return None;
-    //     }
-    //     self.transaction_pool
-    //         .set_propagated(self.transaction_pool.size());
-    //     Some(self.transaction_pool.transactions())
-
-    //     // let mut bytes = Vec::new();
-    //     // bytes.push(b't'); // 't' stands for 'transaction'
-    //     // for transaction in &pool.transactions()[pool.propagated()..] {
-    //     //     bytes.extend(transaction.serialize());
-    //     // }
-    //     // pool.set_propagated(pool.size());
-    //     // Some(bytes)
-    // }
-
-    // pub fn propagate<B>(&self, bytes: B)
-    // where
-    //     B: Into<Vec<u8>>,
-    // {
-    //     let bytes = Arc::new(bytes.into());
-    //     for tx in self.txs.iter() {
-    //         tx.1.send(Arc::clone(&bytes)).unwrap();
-    //     }
     // }
 
     // pub fn mine(&mut self) -> Option<Block> {

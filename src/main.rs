@@ -1,20 +1,9 @@
-/* TODO:
- * 1 - Define my own error type
- * 2 - Check display and test (add a relay function ?)
- * 3 - Clean and refactor
- */
-
 use log::info;
-// use rand::Rng;
-// use std::ops::Deref;
-// use std::sync::mpsc::{self, Receiver, Sender};
-// use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
 use blockchain::common::{Message, NODES};
 use blockchain::network::Network;
-// use blockchain::node::Node;
 
 fn main() {
     env_logger::init();

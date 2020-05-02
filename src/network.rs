@@ -47,7 +47,6 @@ impl Network {
             let public_key = PublicKey::from_secret_key(&secp, &secret_key);
             secret_keys.push(secret_key);
             public_keys.push(public_key);
-            // TODO: give only secret key and let each node derive its public key
         }
 
         let mut senders = Vec::with_capacity(nodes);
@@ -116,10 +115,7 @@ fn random_graph(vertices: usize) -> Graph {
     }
 
     let mut rng = rand::thread_rng();
-    let mut candidates = Vec::with_capacity(vertices);
-    for i in 0..vertices {
-        candidates.push(i);
-    }
+    let candidates = (0..vertices).collect::<Vec<_>>();
     for vertex in 0..vertices - 1 {
         let neighbours = rng.gen_range(1, vertices + 1);
         let current_neighbours = graph[&vertex].len();

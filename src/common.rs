@@ -6,17 +6,16 @@ use crate::transaction::Transaction;
 pub type Hash = GenericArray<u8, U32>;
 
 pub const NODES: usize = 4;
-pub const PROBABILITY_SPEND: f64 = 1.0 / 1000000.0;
-const SHUT_DOWN: &[u8] = b"Shut down";
+pub const SIGNATURE_BYTES: usize = 64;
+pub const SPEND_PROBA: f64 = 1.0 / 1000000.0;
 pub const TX_INPUT_BYTES: usize = UTXO_ID_BYTES + SIGNATURE_BYTES;
 pub const TX_OUTPUT_BYTES: usize = UTXO_DATA_BYTES;
-pub const UTXO_ID_BYTES: usize = 32 + 8;
+pub const UTXO_AMOUNT_INIT: u32 = 10;
 pub const UTXO_DATA_BYTES: usize = 4 + 33;
-pub const SIGNATURE_BYTES: usize = 64;
+pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];
+pub const UTXO_ID_BYTES: usize = 32 + 8;
 
-/// Amount of initial utxos
-pub const INIT_UTXO_AMOUNT: u32 = 10;
-pub const INIT_UTXO_HASH: [u8; 32] = [0u8; 32];
+const SHUT_DOWN: &[u8] = b"Shut down";
 
 pub enum Message<'a> {
     Transaction(Cow<'a, Transaction>),
@@ -53,34 +52,4 @@ impl<'a> Message<'a> {
     {
         Self::from(bytes)
     }
-    // pub fn from<T>(bytes: T) -> Vec<Self>
-    // where
-    //     T: AsRef<[u8]>,
-    // {
-    //     let mut bytes = bytes.as_ref();
-    //     let mut vec = Vec::new();
-    //     while !bytes.is_empty() {
-    //         if &bytes[..] == SHUT_DOWN {
-    //             vec.push(Message::ShutDown);
-    //             let len = SHUT_DOWN.len();
-    //             bytes = &bytes[len..];
-    //         } else {
-    //             match bytes[0] {
-    //                 b't' => {
-    //                     let transaction = Transaction::from(&bytes[..]);
-    //                     let len = 1
-    //                         + 8
-    //                         + transaction.inputs().len() * TX_INPUT_BYTES
-    //                         + 8
-    //                         + transaction.outputs().len() * TX_OUTPUT_BYTES;
-    //                     bytes = &bytes[len..];
-    //                     let message = Message::Transaction(Cow::Owned(transaction));
-    //                     vec.push(message);
-    //                 }
-    //                 _ => panic!("Unexpected message"),
-    //             }
-    //         }
-    //     }
-    //     vec
-    // }
 }
