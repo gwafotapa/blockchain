@@ -115,7 +115,7 @@ fn random_graph(vertices: usize) -> Graph {
     }
 
     let mut rng = rand::thread_rng();
-    let candidates = (0..vertices).collect::<Vec<_>>();
+    let candidates: Vec<_> = (0..vertices).collect();
     for vertex in 0..vertices - 1 {
         let neighbours = rng.gen_range(1, vertices + 1);
         let current_neighbours = graph[&vertex].len();

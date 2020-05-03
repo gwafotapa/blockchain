@@ -8,6 +8,7 @@ use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK};
 // const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =
 //     &hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
 
+#[derive(Clone)]
 pub struct Block {
     height: usize,
     header: BlockHeader,
@@ -26,7 +27,7 @@ impl Block {
         }
     }
 
-    // TODO: use a single argument 'parent: &Block' instead ?
+    // TODO: use a single argument 'parent: &Block' instead or add another function ?
     pub fn new(height: usize, hash_prev_block: Hash) -> Self {
         // assert!(
         //     transactions.len().is_power_of_two(),
@@ -58,7 +59,9 @@ impl Block {
 
     pub fn hash(&self) -> Hash {
         let mut hasher = Sha256::new();
-        hasher.input(self.serialize());
+        hasher.input(self.header.serialize());
+        let hash = hasher.result_reset();
+        hasher.input(hash);
         hasher.result()
     }
 

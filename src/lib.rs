@@ -1,4 +1,5 @@
 pub mod block;
+pub mod chain;
 pub mod common;
 pub mod network;
 pub mod node;

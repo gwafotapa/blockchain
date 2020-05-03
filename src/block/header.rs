@@ -1,5 +1,6 @@
 use crate::common::Hash;
 
+#[derive(Clone)]
 pub struct BlockHeader {
     hash_prev_block: Hash,
     // hash_merkle_root: Hash,

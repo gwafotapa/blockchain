@@ -23,11 +23,11 @@ pub struct Transaction {
 impl Transaction {
     pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {
         let mut hasher = Sha256::new();
-        let bytes = inputs
+        let bytes: Vec<u8> = inputs
             .iter()
             .flat_map(|i| i.serialize())
             .chain(outputs.iter().flat_map(|o| o.serialize()))
-            .collect::<Vec<_>>();
+            .collect();
         hasher.input(bytes);
         let id = hasher.result();
         Self {
