@@ -9,7 +9,9 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
-use crate::common::{Message, SPEND_PROBA};
+use crate::block::Block;
+use crate::chain::Blockchain;
+use crate::common::{Message, MINE_NEW_BLOCK_PROBA, SPEND_PROBA};
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput, TransactionPool};
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
@@ -22,18 +24,19 @@ pub struct Node {
     listener: Receiver<Arc<Vec<u8>>>,
     neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
     network: Vec<PublicKey>,
+    blockchain: Blockchain,
     utxo_pool: UtxoPool,
     transaction_pool: TransactionPool,
     wallet: Wallet,
 }
+
+impl Eq for Node {}
 
 impl PartialEq for Node {
     fn eq(&self, other: &Node) -> bool {
         self.public_key == other.public_key
     }
 }
-
-impl Eq for Node {}
 
 impl Hash for Node {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -51,6 +54,7 @@ impl Node {
         neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
         network: Vec<PublicKey>,
     ) -> Self {
+        let blockchain = Blockchain::new();
         let utxo_pool = UtxoPool::new(network.clone());
         let transaction_pool = TransactionPool::new();
         let wallet = Wallet::new(public_key, utxo_pool.owned_by(&public_key));
@@ -62,6 +66,7 @@ impl Node {
             listener,
             neighbours,
             network,
+            blockchain,
             utxo_pool,
             transaction_pool,
             wallet,
@@ -81,12 +86,17 @@ impl Node {
                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                 self.transaction_pool_mut().add(transaction);
             }
+            if let Some(block) = self.mine() {
+                info!("Node #{} --- New block:\n{}\n", self.id(), block);
+                self.propagate(Message::Block(Cow::Borrowed(&block)));
+                self.blockchain.push(block);
+            }
             if let Ok(message) = self.listener().try_recv() {
                 match Message::deserialize(message.deref()) {
                     Message::Transaction(transaction) => {
                         if !self.transaction_pool().contains(&transaction) {
                             info!(
-                                "Node #{} --- Received transaction:\n{}\n",
+                                "Node #{} --- Received new transaction:\n{}\n",
                                 self.id(),
                                 transaction
                             );
@@ -94,6 +104,13 @@ impl Node {
                             self.wallet_mut().process(&transaction);
                             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
                             self.transaction_pool_mut().add(transaction.into_owned());
+                        }
+                    }
+                    Message::Block(block) => {
+                        if !self.blockchain.contains(&block) {
+                            info!("Node #{} --- Received new block:\n{}\n", self.id(), block);
+                            self.propagate(Message::Block(Cow::Borrowed(&block)));
+                            self.blockchain.push(block.into_owned());
                         }
                     }
                     Message::ShutDown => {
@@ -162,6 +179,19 @@ impl Node {
         }
     }
 
+    pub fn mine(&mut self) -> Option<Block> {
+        let mut rng = rand::thread_rng();
+        match rng.gen_bool(MINE_NEW_BLOCK_PROBA) {
+            false => None,
+            true => {
+                let height = 1 + self.blockchain.height();
+                let hash_prev_block = *self.blockchain.top_hash();
+                let block = Block::new(height, hash_prev_block);
+                Some(block)
+            }
+        }
+    }
+
     pub fn id(&self) -> usize {
         self.id
     }
@@ -219,26 +249,6 @@ impl Node {
 
     // pub fn blockchain(&self) -> &Blockchain {
     //     &self.blockchain
-    // }
-
-    // pub fn mine(&mut self) -> Option<Block> {
-    //     let mut rng = rand::thread_rng();
-    //     if !self.blockchain.has_mined_block() && !self.transaction_pool.has_next_batch() {
-    //         return None;
-    //     } else if !self.blockchain.has_mined_block() && self.transaction_pool.has_next_batch() {
-    //         self.blockchain
-    //             .set_mined_block(self.transaction_pool.next_batch().unwrap().to_vec());
-    //     }
-    //     match rng.gen_bool(PROBABILITY_NEW_BLOCK) {
-    //         false => None,
-    //         true => {
-    //             let block = self.blockchain.take_mined_block();
-    //             Some(block)
-    //             // self.transaction_pool.remove(block.transactions());
-    //             // self.blockchain.push(block);
-    //             // Some(self.blockchain.last())
-    //         }
-    //     }
     // }
 
     // pub fn synchronize(&mut self) {

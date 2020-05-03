@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
 use crate::block::Block;
-use crate::common::Hash;
-
-type BlockHash = Hash;
+use crate::common::Hash as BlockHash;
 
 pub struct Blockchain {
     chain: HashMap<BlockHash, Block>,
@@ -56,6 +54,10 @@ impl Blockchain {
         }
     }
 
+    pub fn contains(&self, block: &Block) -> bool {
+        self.chain.contains_key(&block.hash()) || self.orphans.contains_key(&block.hash())
+    }
+
     pub fn top(&self) -> &Block {
         &self.chain[&self.top_hash]
     }
@@ -66,5 +68,9 @@ impl Blockchain {
 
     pub fn len(&self) -> usize {
         1 + self.height()
+    }
+
+    pub fn top_hash(&self) -> &BlockHash {
+        &self.top_hash
     }
 }

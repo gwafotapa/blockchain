@@ -1,11 +1,13 @@
 use generic_array::{typenum::U32, GenericArray};
 use std::borrow::Cow;
 
+use crate::block::Block;
 use crate::transaction::Transaction;
 
 pub type Hash = GenericArray<u8, U32>;
 
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];
+pub const MINE_NEW_BLOCK_PROBA: f64 = 1.0 / 1000000.0;
 pub const NODES: usize = 4;
 pub const SIGNATURE_BYTES: usize = 64;
 pub const SPEND_PROBA: f64 = 1.0 / 1000000.0;
@@ -20,6 +22,7 @@ const SHUT_DOWN: &[u8] = b"Shut down";
 
 pub enum Message<'a> {
     Transaction(Cow<'a, Transaction>),
+    Block(Cow<'a, Block>),
     ShutDown,
 }
 
@@ -33,7 +36,8 @@ where
             return Message::ShutDown;
         }
         match bytes[0] {
-            b't' => Message::Transaction(Cow::Owned(Transaction::from(&bytes[..]))),
+            b't' => Message::Transaction(Cow::Owned(Transaction::deserialize(&bytes[..]))),
+            b'b' => Message::Block(Cow::Owned(Block::deserialize(&bytes[..]))),
             _ => panic!("Unexpected message"),
         }
     }
@@ -43,6 +47,7 @@ impl<'a> Message<'a> {
     pub fn serialize(&self) -> Vec<u8> {
         match self {
             Message::Transaction(transaction) => transaction.serialize(),
+            Message::Block(block) => block.serialize(),
             Message::ShutDown => SHUT_DOWN.to_vec(),
         }
     }

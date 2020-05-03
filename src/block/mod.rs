@@ -1,5 +1,7 @@
 use sha2::{Digest, Sha256};
 use std::convert::TryInto;
+use std::fmt;
+use std::iter;
 
 use self::header::BlockHeader;
 use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK};
@@ -8,7 +10,7 @@ use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK};
 // const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =
 //     &hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Block {
     height: usize,
     header: BlockHeader,
@@ -66,15 +68,19 @@ impl Block {
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend(&self.height.to_be_bytes());
-        bytes.extend(self.header.serialize());
+        iter::once(b'b')
+            .chain(self.height.to_be_bytes().iter().copied())
+            .chain(self.header.serialize())
+            .collect()
+        // let mut bytes = Vec::new();
+        // bytes.extend(&self.height.to_be_bytes());
+        // bytes.extend(self.header.serialize());
         // bytes.extend(self.hash_prev_block().as_slice());
         // bytes.extend(self.hash_merkle_root().as_slice());
         // for transaction in &self.transactions {
         //     bytes.extend(transaction.serialize());
         // }
-        bytes
+        // bytes
     }
 
     pub fn deserialize<B>(bytes: B) -> Self
@@ -91,10 +97,18 @@ where
 {
     fn from(bytes: B) -> Self {
         let bytes = bytes.as_ref();
-        let height = usize::from_be_bytes(bytes[0..8].try_into().unwrap());
-        let header = BlockHeader::deserialize(&bytes[8..]);
+        let mut i = 1;
+        let height = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+        i += 8;
+        let header = BlockHeader::deserialize(&bytes[i..]);
         Self { height, header }
     }
 }
 
 pub mod header;
+
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
