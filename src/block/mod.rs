@@ -5,7 +5,7 @@ use std::iter;
 
 use self::header::BlockHeader;
 use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK};
-// use crate::transaction::Transaction;
+use crate::transaction::Transaction;
 
 // const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =
 //     &hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");

@@ -81,34 +81,40 @@ impl Node {
                     self.id(),
                     transaction
                 );
-                self.utxo_pool_mut().process(&transaction).unwrap();
-                self.wallet_mut().process(&transaction);
                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                self.transaction_pool_mut().add(transaction);
+                self.utxo_pool.process(&transaction);
+                self.wallet.process(&transaction);
+                self.transaction_pool.add(transaction);
             }
             if let Some(block) = self.mine() {
-                info!("Node #{} --- New block:\n{}\n", self.id(), block);
+                info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
+                // self.utxo_pool.process_transactions_from(&block);
+                // self.wallet.process_transactions_from(&block);
+                // self.transaction_pool.add_transactions_from(&block);
                 self.blockchain.push(block);
             }
-            if let Ok(message) = self.listener().try_recv() {
+            if let Ok(message) = self.listener.try_recv() {
                 match Message::deserialize(message.deref()) {
                     Message::Transaction(transaction) => {
-                        if !self.transaction_pool().contains(&transaction) {
+                        if !self.transaction_pool.contains(&transaction)
+                            && self.utxo_pool.verify(&transaction).is_ok()
+                        {
                             info!(
                                 "Node #{} --- Received new transaction:\n{}\n",
-                                self.id(),
-                                transaction
+                                self.id, transaction
                             );
-                            self.utxo_pool_mut().process(&transaction).unwrap();
-                            self.wallet_mut().process(&transaction);
                             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                            self.transaction_pool_mut().add(transaction.into_owned());
+                            self.utxo_pool.process(&transaction);
+                            self.wallet.process(&transaction);
+                            self.transaction_pool.add(transaction.into_owned());
                         }
                     }
                     Message::Block(block) => {
-                        if !self.blockchain.contains(&block) {
-                            info!("Node #{} --- Received new block:\n{}\n", self.id(), block);
+                        if !self.blockchain.contains(&block)
+                            && self.utxo_pool.validate(&block).is_ok()
+                        {
+                            info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
                             self.blockchain.push(block.into_owned());
                         }
@@ -119,9 +125,9 @@ impl Node {
                              Transactions: {}\n\
                              Utxo pool:\n\
                              {}",
-                            self.id(),
-                            self.transaction_pool().size(),
-                            self.utxo_pool(),
+                            self.id,
+                            self.transaction_pool.size(),
+                            self.utxo_pool,
                         );
                         return;
                     }
@@ -131,7 +137,7 @@ impl Node {
     }
 
     pub fn initiate(&mut self) -> Option<Transaction> {
-        if self.wallet().utxos().is_empty() {
+        if self.wallet.utxos().is_empty() {
             return None;
         }
         let mut rng = rand::thread_rng();
@@ -140,7 +146,7 @@ impl Node {
             true => {
                 let inputs_len = rng.gen_range(1, self.wallet().utxos().len() + 1);
                 let utxos = self
-                    .wallet()
+                    .wallet
                     .utxos()
                     .iter()
                     .choose_multiple(&mut rng, inputs_len);

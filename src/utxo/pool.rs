@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use super::{Utxo, UtxoData, UtxoId};
+use crate::block::Block;
 use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
 use crate::transaction::{InvalidTransaction, Transaction};
 
@@ -48,7 +49,18 @@ impl UtxoPool {
             .collect()
     }
 
-    pub fn process(&mut self, transaction: &Transaction) -> Result<(), InvalidTransaction> {
+    pub fn process(&mut self, transaction: &Transaction) {
+        for input in transaction.inputs() {
+            self.data.remove(input.utxo_id());
+        }
+        for (vout, output) in transaction.outputs().iter().enumerate() {
+            let utxo_id = UtxoId::new(*transaction.id(), vout);
+            let utxo_data = UtxoData::new(output.amount(), *output.public_key());
+            self.data.insert(utxo_id, utxo_data);
+        }
+    }
+
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), InvalidTransaction> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
             message.extend(utxo_id.serialize());
@@ -68,14 +80,10 @@ impl UtxoPool {
                 return Err(InvalidTransaction::UnknownUtxo);
             }
         }
-        for input in transaction.inputs() {
-            self.data.remove(input.utxo_id());
-        }
-        for (vout, output) in transaction.outputs().iter().enumerate() {
-            let utxo_id = UtxoId::new(*transaction.id(), vout);
-            let utxo_data = UtxoData::new(output.amount(), *output.public_key());
-            self.data.insert(utxo_id, utxo_data);
-        }
+        Ok(())
+    }
+
+    pub fn validate(&self, block: &Block) -> Result<(), InvalidTransaction> {
         Ok(())
     }
 }
