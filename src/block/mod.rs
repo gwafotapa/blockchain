@@ -129,6 +129,19 @@ pub mod header;
 
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // write!(
+        //     f,
+        //     "Block {{\n\
+        //      height: {}\n\
+        //      hash_prev_block: {:?}\n\
+        //      transactions:\n",
+        //     self.height,
+        //     self.hash_prev_block(),
+        // )?;
+        // for transaction in &self.transactions {
+        //     write!(f, "{}", transaction)?;
+        // }
+        // write!(f, "}}")
         write!(f, "{:?}", self)
     }
 }

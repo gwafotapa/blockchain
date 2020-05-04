@@ -95,9 +95,10 @@ impl Node {
             {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
-                // self.utxo_pool.process_transactions_from(&block);
-                // self.wallet.process_transactions_from(&block);
-                // self.transaction_pool.add_transactions_from(&block);
+                // TODO: use block.transactions() as argument in the three calls below
+                self.utxo_pool.process_transactions_from(&block);
+                self.wallet.process_transactions_from(&block);
+                self.transaction_pool.remove_transactions_from(&block);
                 self.blockchain.push(block);
             }
             if let Ok(message) = self.listener.try_recv() {
@@ -122,6 +123,15 @@ impl Node {
                         {
                             info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
+                            /* TODO: need to process transactions from potential higher orphan
+                             * blocks that becomes part of the main chain because we just added
+                             * their missing parent
+                             */
+                            if self.blockchain.is_longer_with(&block) {
+                                self.utxo_pool.process_transactions_from(&block);
+                                self.wallet.process_transactions_from(&block);
+                                self.transaction_pool.remove_transactions_from(&block);
+                            }
                             self.blockchain.push(block.into_owned());
                         }
                     }
@@ -194,6 +204,13 @@ impl Node {
         }
     }
 
+    pub fn propagate(&self, message: Message) {
+        let bytes = Arc::new(message.serialize());
+        for neighbour in self.neighbours.iter() {
+            neighbour.2.send(Arc::clone(&bytes)).unwrap();
+        }
+    }
+
     pub fn id(&self) -> usize {
         self.id
     }
@@ -240,12 +257,5 @@ impl Node {
 
     pub fn wallet_mut(&mut self) -> &mut Wallet {
         &mut self.wallet
-    }
-
-    pub fn propagate(&self, message: Message) {
-        let bytes = Arc::new(message.serialize());
-        for neighbour in self.neighbours.iter() {
-            neighbour.2.send(Arc::clone(&bytes)).unwrap();
-        }
     }
 }

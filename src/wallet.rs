@@ -1,5 +1,6 @@
 use secp256k1::PublicKey;
 
+use crate::block::Block;
 use crate::transaction::{Transaction, TransactionInput};
 use crate::utxo::{Utxo, UtxoData, UtxoId};
 
@@ -42,6 +43,8 @@ impl Wallet {
             self.add(utxo);
         }
     }
+
+    pub fn process_transactions_from(&mut self, block: &Block) {}
 
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key

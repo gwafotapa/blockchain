@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Index;
 
+use crate::block::Block;
 use crate::common::TXS_PER_BLOCK;
 use crate::transaction::Transaction;
 
@@ -51,6 +52,8 @@ impl TransactionPool {
                 .collect(),
         )
     }
+
+    pub fn remove_transactions_from(&mut self, block: &Block) {}
 
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions

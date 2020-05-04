@@ -86,6 +86,8 @@ impl UtxoPool {
     pub fn validate(&self, block: &Block) -> Result<(), InvalidTransaction> {
         Ok(())
     }
+
+    pub fn process_transactions_from(&mut self, block: &Block) {}
 }
 
 impl Eq for UtxoPool {}

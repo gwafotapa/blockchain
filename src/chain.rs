@@ -60,6 +60,10 @@ impl Blockchain {
         self.chain.contains_key(&block.hash()) || self.orphans.contains_key(&block.hash())
     }
 
+    pub fn is_longer_with(&self, block: &Block) -> bool {
+        self.chain.contains_key(block.hash_prev_block()) && self.height() < block.height()
+    }
+
     pub fn top(&self) -> &Block {
         &self.chain[&self.top_hash]
     }
