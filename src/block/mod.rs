@@ -60,10 +60,6 @@ impl Block {
     //         self.header.hash_merkle_root
     //     }
 
-    //     pub fn transactions(&self) -> &Vec<Transaction> {
-    //         &self.transactions
-    //     }
-
     pub fn hash(&self) -> Hash {
         let mut hasher = Sha256::new();
         hasher.input(self.header.serialize());
@@ -95,6 +91,10 @@ impl Block {
         B: AsRef<[u8]>,
     {
         Self::from(bytes)
+    }
+
+    pub fn transactions(&self) -> &Vec<Transaction> {
+        &self.transactions
     }
 }
 

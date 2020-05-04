@@ -52,7 +52,7 @@ impl TransactionPool {
         )
     }
 
-    pub fn transactions(&self) -> &[Transaction] {
+    pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions
     }
 }

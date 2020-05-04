@@ -59,7 +59,7 @@ impl Node {
         let utxo_pool = UtxoPool::new(network.clone());
         let transaction_pool = TransactionPool::new();
         let wallet = Wallet::new(public_key, utxo_pool.owned_by(&public_key));
-        let miner = Miner::new_from(blockchain.top(), &transaction_pool);
+        let miner = Miner::new();
         Self {
             id,
             public_key,
@@ -89,15 +89,16 @@ impl Node {
                 self.wallet.process(&transaction);
                 self.transaction_pool.add(transaction);
             }
-            if let Some(block) = self.miner.mine() {
+            if let Some(block) = self
+                .miner
+                .mine(self.blockchain.top(), &self.transaction_pool)
+            {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
                 // self.utxo_pool.process_transactions_from(&block);
                 // self.wallet.process_transactions_from(&block);
                 // self.transaction_pool.add_transactions_from(&block);
                 self.blockchain.push(block);
-                self.miner
-                    .mine_from(self.blockchain.top(), &self.transaction_pool);
             }
             if let Ok(message) = self.listener.try_recv() {
                 match Message::deserialize(message.deref()) {
@@ -122,8 +123,6 @@ impl Node {
                             info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
                             self.blockchain.push(block.into_owned());
-                            self.miner
-                                .mine_from(self.blockchain.top(), &self.transaction_pool);
                         }
                     }
                     Message::ShutDown => {
@@ -215,7 +214,7 @@ impl Node {
         &self.listener
     }
 
-    pub fn neighbours(&self) -> &[(usize, PublicKey, Sender<Arc<Vec<u8>>>)] {
+    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {
         &self.neighbours
     }
 

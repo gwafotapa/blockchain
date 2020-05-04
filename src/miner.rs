@@ -13,28 +13,27 @@ impl Miner {
         Self { block: None }
     }
 
-    pub fn new_from(top: &Block, transaction_pool: &TransactionPool) -> Self {
-        let mut miner = Self::new();
-        miner.mine_from(top, transaction_pool);
-        miner
+    pub fn mine(&mut self, top: &Block, transaction_pool: &TransactionPool) -> Option<Block> {
+        self.mine_from(top, transaction_pool);
+        if self.block.is_some() {
+            let mut rng = rand::thread_rng();
+            match rng.gen_bool(MINE_NEW_BLOCK_PROBA) {
+                true => self.block.take(),
+                false => None,
+            }
+        } else {
+            None
+        }
     }
 
     pub fn mine_from(&mut self, top: &Block, transaction_pool: &TransactionPool) {
         if let Some(block) = self.block.as_ref() {
-            if block.hash() == top.hash() {
+            if *block.hash_prev_block() == top.hash() {
                 return;
             }
         }
         self.block = transaction_pool
             .select()
-            .map(|txs| Block::new(1 + top.height(), top.hash(), txs));
-    }
-
-    pub fn mine(&mut self) -> Option<Block> {
-        let mut rng = rand::thread_rng();
-        match rng.gen_bool(MINE_NEW_BLOCK_PROBA) {
-            false => None,
-            true => self.block.take(),
-        }
+            .map(|transactions| Block::new(1 + top.height(), top.hash(), transactions));
     }
 }

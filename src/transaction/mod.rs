@@ -87,11 +87,11 @@ impl Transaction {
         &self.id
     }
 
-    pub fn inputs(&self) -> &[TransactionInput] {
+    pub fn inputs(&self) -> &Vec<TransactionInput> {
         &self.inputs
     }
 
-    pub fn outputs(&self) -> &[TransactionOutput] {
+    pub fn outputs(&self) -> &Vec<TransactionOutput> {
         &self.outputs
     }
 }

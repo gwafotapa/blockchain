@@ -47,7 +47,7 @@ impl Wallet {
         &self.public_key
     }
 
-    pub fn utxos(&self) -> &[Utxo] {
+    pub fn utxos(&self) -> &Vec<Utxo> {
         &self.utxos
     }
 }
