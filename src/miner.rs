@@ -25,9 +25,9 @@ impl Miner {
                 return;
             }
         }
-        let transactions = transaction_pool.select();
-        let block = Block::new(1 + top.height(), top.hash(), transactions);
-        self.block = Some(block)
+        self.block = transaction_pool
+            .select()
+            .map(|txs| Block::new(1 + top.height(), top.hash(), txs));
     }
 
     pub fn mine(&mut self) -> Option<Block> {

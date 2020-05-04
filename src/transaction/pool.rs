@@ -1,7 +1,9 @@
+use rand::seq::SliceRandom;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::ops::Index;
 
+use crate::common::TXS_PER_BLOCK;
 use crate::transaction::Transaction;
 
 #[derive(Debug)]
@@ -38,8 +40,16 @@ impl TransactionPool {
         self.transactions.iter().position(|tx| tx == transaction)
     }
 
-    pub fn select(&self) -> Vec<Transaction> {
-        vec![]
+    pub fn select(&self) -> Option<Vec<Transaction>> {
+        if self.size() < TXS_PER_BLOCK {
+            return None;
+        }
+        Some(
+            self.transactions
+                .choose_multiple(&mut rand::thread_rng(), TXS_PER_BLOCK)
+                .cloned()
+                .collect(),
+        )
     }
 
     pub fn transactions(&self) -> &[Transaction] {

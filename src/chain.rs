@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::block::Block;
 use crate::common::Hash as BlockHash;
 
+#[derive(Debug)]
 pub struct Blockchain {
     chain: HashMap<BlockHash, Block>,
     orphans: HashMap<BlockHash, Block>,
@@ -72,5 +74,19 @@ impl Blockchain {
 
     pub fn top_hash(&self) -> &BlockHash {
         &self.top_hash
+    }
+}
+
+impl fmt::Display for Blockchain {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "  chain:\n")?;
+        for (_, block) in &self.chain {
+            write!(f, "    {}\n", block)?;
+        }
+        write!(f, "  orphans:\n")?;
+        for (_, block) in &self.orphans {
+            write!(f, "    {}\n", block)?;
+        }
+        Ok(())
     }
 }
