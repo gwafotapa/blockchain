@@ -44,9 +44,9 @@ impl Wallet {
         }
     }
 
-    pub fn process_transactions_from(&mut self, block: &Block) {}
+    pub fn process_all(&mut self, transactions: &[Transaction]) {}
 
-    pub fn undo_transactions_from(&mut self, block: &Block) {}
+    pub fn undo_all(&mut self, transactions: &[Transaction]) {}
 
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key

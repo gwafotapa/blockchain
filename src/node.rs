@@ -96,9 +96,9 @@ impl Node {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
                 // TODO: use block.transactions() as argument in the three calls below
-                self.utxo_pool.process_transactions_from(&block);
-                self.wallet.process_transactions_from(&block);
-                self.transaction_pool.remove_transactions_from(&block);
+                self.utxo_pool.process_all(block.transactions());
+                self.wallet.process_all(block.transactions());
+                self.transaction_pool.remove_all(block.transactions());
                 self.blockchain.push(block);
             }
             if let Ok(message) = self.listener.try_recv() {
@@ -134,14 +134,14 @@ impl Node {
                             // let new_top = self.blockchain.top();
                             // let (olds, news) = self.blockchain.common_parent(old_top, new_top);
                             // for block in olds {
-                            //     self.utxo_pool.undo_transactions_from(&block);
-                            //     self.wallet.undo_transactions_from(&block);
-                            //     self.transaction_pool.add_transactions_from(&block);
+                            //     self.utxo_pool.undo_all(block.transactions());
+                            //     self.wallet.undo_all(block.transactions());
+                            //     self.transaction_pool.add_all(block.transactions());
                             // }
                             // for block in news {
-                            //     self.utxo_pool.process_transactions_from(&block);
-                            //     self.wallet.process_transactions_from(&block);
-                            //     self.transaction_pool.remove_transactions_from(&block);
+                            //     self.utxo_pool.process_all(block.transactions());
+                            //     self.wallet.process_all(block.transactions());
+                            //     self.transaction_pool.remove_all(block.transactions();
                             // }
                         }
                     }

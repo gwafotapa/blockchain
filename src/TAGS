@@ -26,32 +26,32 @@ impl Hash for Node {Node42,1072
 impl Node {Node48,1186
     pub fn new(new49,1198
     pub fn run(&mut self) {run79,2058
-    pub fn initiate(&mut self) -> Option<Transaction> {initiate168,6560
-    pub fn propagate(&self, message: Message) {propagate217,8535
-    pub fn id(&self) -> usize {id224,8760
-    pub fn public_key(&self) -> &PublicKey {public_key228,8815
-    pub fn secret_key(&self) -> &SecretKey {secret_key232,8892
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender236,8969
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener240,9049
-    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours244,9135
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool248,9248
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut252,9322
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool256,9412
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut260,9507
-    pub fn wallet(&self) -> &Wallet {wallet264,9618
-    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut268,9684
+    pub fn initiate(&mut self) -> Option<Transaction> {initiate168,6559
+    pub fn propagate(&self, message: Message) {propagate217,8534
+    pub fn id(&self) -> usize {id224,8759
+    pub fn public_key(&self) -> &PublicKey {public_key228,8814
+    pub fn secret_key(&self) -> &SecretKey {secret_key232,8891
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender236,8968
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener240,9048
+    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours244,9134
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool248,9247
+    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut252,9321
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool256,9411
+    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut260,9506
+    pub fn wallet(&self) -> &Wallet {wallet264,9617
+    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut268,9683
 
-wallet.rs,646
+wallet.rs,620
 pub struct Wallet {Wallet7,153
 impl Wallet {Wallet12,225
     pub fn new(public_key: PublicKey, utxos: Vec<Utxo>) -> Self {new13,239
     pub fn add(&mut self, utxo: Utxo) {add17,347
     pub fn remove(&mut self, input: &TransactionInput) {remove24,528
     pub fn process(&mut self, transaction: &Transaction) {process31,775
-    pub fn process_transactions_from(&mut self, block: &Block) {}process_transactions_from47,1308
-    pub fn undo_transactions_from(&mut self, block: &Block) {}undo_transactions_from49,1375
-    pub fn public_key(&self) -> &PublicKey {public_key51,1439
-    pub fn utxos(&self) -> &Vec<Utxo> {utxos55,1516
+    pub fn process_all(&mut self, transactions: &[Transaction]) {}process_all47,1308
+    pub fn undo_all(&mut self, transactions: &[Transaction]) {}undo_all49,1376
+    pub fn public_key(&self) -> &PublicKey {public_key51,1441
+    pub fn utxos(&self) -> &Vec<Utxo> {utxos55,1518
 
 main.rs,23
 fn main() {main8,135
@@ -92,24 +92,24 @@ impl<'a> Message<'a> {Message47,1365
     pub fn serialize(&self) -> Vec<u8> {serialize48,1388
     pub fn deserialize<T>(bytes: T) -> Selfdeserialize56,1650
 
-transaction/pool.rs,1145
-pub struct TransactionPool {TransactionPool11,224
-impl TransactionPool {TransactionPool15,292
-    pub fn new() -> Self {new16,315
-    pub fn size(&self) -> usize {size22,412
-    pub fn add(&mut self, transaction: Transaction) {add27,524
-    pub fn remove(&mut self, transaction: &Transaction) -> Option<Transaction> {remove31,630
-    pub fn contains(&self, transaction: &Transaction) -> bool {contains36,803
-    pub fn position(&self, transaction: &Transaction) -> Option<usize> {position40,922
-    pub fn select(&self) -> Option<Vec<Transaction>> {select44,1068
-    pub fn add_transactions_from(&mut self, block: &Block) {}add_transactions_from56,1387
-    pub fn remove_transactions_from(&mut self, block: &Block) {}remove_transactions_from58,1450
-    pub fn transactions(&self) -> &Vec<Transaction> {transactions60,1516
-impl Eq for TransactionPool {}TransactionPool65,1606
-impl PartialEq for TransactionPool {TransactionPool67,1638
-    fn eq(&self, other: &Self) -> bool {eq68,1675
-impl Index<usize> for TransactionPool {TransactionPool75,1958
-    fn index(&self, index: usize) -> &Self::Output {index78,2030
+transaction/pool.rs,1119
+pub struct TransactionPool {TransactionPool10,199
+impl TransactionPool {TransactionPool14,267
+    pub fn new() -> Self {new15,290
+    pub fn size(&self) -> usize {size21,387
+    pub fn add(&mut self, transaction: Transaction) {add26,499
+    pub fn remove(&mut self, transaction: &Transaction) -> Option<Transaction> {remove30,605
+    pub fn contains(&self, transaction: &Transaction) -> bool {contains35,778
+    pub fn position(&self, transaction: &Transaction) -> Option<usize> {position39,897
+    pub fn select(&self) -> Option<Vec<Transaction>> {select43,1043
+    pub fn add_all(&mut self, transactions: &[Transaction]) {}add_all55,1362
+    pub fn remove_all(&mut self, transactions: &[Transaction]) {}remove_all57,1426
+    pub fn transactions(&self) -> &Vec<Transaction> {transactions59,1493
+impl Eq for TransactionPool {}TransactionPool64,1583
+impl PartialEq for TransactionPool {TransactionPool66,1615
+    fn eq(&self, other: &Self) -> bool {eq67,1652
+impl Index<usize> for TransactionPool {TransactionPool74,1935
+    fn index(&self, index: usize) -> &Self::Output {index77,2007
 
 transaction/error.rs,476
 pub enum InvalidTransaction {InvalidTransaction5,48
@@ -251,7 +251,7 @@ impl<B> From<B> for UtxoDataUtxoData41,833
 impl fmt::Display for UtxoData {UtxoData53,1168
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt54,1201
 
-utxo/pool.rs,1128
+utxo/pool.rs,1102
 pub struct UtxoPool {UtxoPool12,350
 impl UtxoPool {UtxoPool16,412
     pub fn new(keys: Vec<PublicKey>) -> Self {new17,428
@@ -262,13 +262,13 @@ impl UtxoPool {UtxoPool16,412
     pub fn process(&mut self, transaction: &Transaction) {process52,1391
     pub fn verify(&self, transaction: &Transaction) -> Result<(), InvalidTransaction> {verify63,1837
     pub fn validate(&self, block: &Block) -> Result<(), InvalidTransaction> {validate86,2728
-    pub fn process_transactions_from(&mut self, block: &Block) {}process_transactions_from90,2828
-    pub fn undo_transactions_from(&mut self, block: &Block) {}undo_transactions_from92,2895
-impl Eq for UtxoPool {}UtxoPool95,2961
-impl PartialEq for UtxoPool {UtxoPool97,2986
-    fn eq(&self, other: &Self) -> bool {eq98,3016
-impl fmt::Display for UtxoPool {UtxoPool105,3293
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt106,3326
+    pub fn process_all(&mut self, transactions: &[Transaction]) {}process_all90,2828
+    pub fn undo_all(&mut self, transactions: &[Transaction]) {}undo_all92,2896
+impl Eq for UtxoPool {}UtxoPool95,2963
+impl PartialEq for UtxoPool {UtxoPool97,2988
+    fn eq(&self, other: &Self) -> bool {eq98,3018
+impl fmt::Display for UtxoPool {UtxoPool105,3295
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt106,3328
 
 utxo/mod.rs,610
 pub struct Utxo {Utxo10,164
