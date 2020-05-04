@@ -38,6 +38,10 @@ impl TransactionPool {
         self.transactions.iter().position(|tx| tx == transaction)
     }
 
+    pub fn select(&self) -> Vec<Transaction> {
+        vec![]
+    }
+
     pub fn transactions(&self) -> &[Transaction] {
         &self.transactions
     }
