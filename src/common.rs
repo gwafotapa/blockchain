@@ -36,7 +36,7 @@ where
             return Message::ShutDown;
         }
         match bytes[0] {
-            b't' => Message::Transaction(Cow::Owned(Transaction::deserialize(&bytes[..]))),
+            b't' => Message::Transaction(Cow::Owned(Transaction::deserialize(&bytes[..]).0)),
             b'b' => Message::Block(Cow::Owned(Block::deserialize(&bytes[..]))),
             _ => panic!("Unexpected message"),
         }

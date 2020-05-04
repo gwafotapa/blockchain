@@ -14,7 +14,7 @@ use crate::transaction::Transaction;
 pub struct Block {
     height: usize,
     header: BlockHeader,
-    // transactions: Vec<Transaction>,
+    transactions: Vec<Transaction>,
 }
 
 impl Block {
@@ -25,12 +25,12 @@ impl Block {
                 Hash::from(GENESIS_BLOCK_HASH_PREV_BLOCK),
                 // hash_merkle_root: *Hash::from_slice(GENESIS_BLOCK_HASH_MERKLE_ROOT),
             ),
-            // transactions: Vec::new(),
+            transactions: Vec::new(),
         }
     }
 
     // TODO: use a single argument 'parent: &Block' instead or add another function ?
-    pub fn new(height: usize, hash_prev_block: Hash) -> Self {
+    pub fn new(height: usize, hash_prev_block: Hash, transactions: Vec<Transaction>) -> Self {
         // assert!(
         //     transactions.len().is_power_of_two(),
         //     "Number of transactions is not a power of 2"
@@ -39,12 +39,13 @@ impl Block {
             height,
             header: BlockHeader::new(
                 hash_prev_block, // hash_merkle_root: Transaction::hash_merkle_root(&transactions),
-            ), // transactions,
+            ),
+            transactions,
         }
     }
 
-    pub fn child(&self) -> Self {
-        Self::new(1 + self.height(), self.hash())
+    pub fn child(&self, transactions: Vec<Transaction>) -> Self {
+        Self::new(1 + self.height(), self.hash(), transactions)
     }
 
     pub fn height(&self) -> usize {
@@ -74,7 +75,9 @@ impl Block {
     pub fn serialize(&self) -> Vec<u8> {
         iter::once(b'b')
             .chain(self.height.to_be_bytes().iter().copied())
+            .chain(self.transactions.len().to_be_bytes().iter().copied())
             .chain(self.header.serialize())
+            .chain(self.transactions.iter().flat_map(|tx| tx.serialize()))
             .collect()
         // let mut bytes = Vec::new();
         // bytes.extend(&self.height.to_be_bytes());
@@ -104,8 +107,21 @@ where
         let mut i = 1;
         let height = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
         i += 8;
-        let header = BlockHeader::deserialize(&bytes[i..]);
-        Self { height, header }
+        let transactions_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+        i += 8;
+        let header = BlockHeader::deserialize(&bytes[i..i + 32]);
+        i += 32;
+        let mut transactions = Vec::with_capacity(transactions_len);
+        for _j in 0..transactions_len {
+            let (transaction, size) = Transaction::deserialize(&bytes[i..]);
+            transactions.push(transaction);
+            i += size;
+        }
+        Self {
+            height,
+            header,
+            transactions,
+        }
     }
 }
 

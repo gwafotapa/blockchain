@@ -39,6 +39,7 @@ impl Transaction {
 
     pub fn serialize(&self) -> Vec<u8> {
         iter::once(b't')
+            .chain(self.bytes().to_be_bytes().iter().copied())
             .chain(self.inputs.len().to_be_bytes().iter().copied())
             .chain(self.outputs.len().to_be_bytes().iter().copied())
             .chain(self.inputs.iter().flat_map(|i| i.serialize()))
@@ -46,39 +47,14 @@ impl Transaction {
             .collect()
     }
 
-    pub fn deserialize<B>(bytes: B) -> Self
+    pub fn deserialize<B>(bytes: B) -> (Self, usize)
     where
         B: AsRef<[u8]>,
     {
-        Self::from(bytes)
-    }
-
-    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {
-        let hashes = transactions.iter().map(|x| x.id).collect();
-        let merkle_tree = CBMT::<Hash, MergeHash>::build_merkle_tree(hashes);
-        merkle_tree.root()
-    }
-
-    pub fn id(&self) -> &Hash {
-        &self.id
-    }
-
-    pub fn inputs(&self) -> &[TransactionInput] {
-        &self.inputs
-    }
-
-    pub fn outputs(&self) -> &[TransactionOutput] {
-        &self.outputs
-    }
-}
-
-impl<B> From<B> for Transaction
-where
-    B: AsRef<[u8]>,
-{
-    fn from(bytes: B) -> Self {
         let bytes = bytes.as_ref();
         let mut i = 1;
+        let size = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+        i += 8;
         let inputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
         i += 8;
         let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
@@ -94,9 +70,59 @@ where
             .take(outputs_len)
             .map(|c| TransactionOutput::deserialize(c))
             .collect();
-        Self::new(inputs, outputs)
+        (Self::new(inputs, outputs), size)
+    }
+
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {
+        let hashes = transactions.iter().map(|x| x.id).collect();
+        let merkle_tree = CBMT::<Hash, MergeHash>::build_merkle_tree(hashes);
+        merkle_tree.root()
+    }
+
+    pub fn bytes(&self) -> usize {
+        1 + 3 * 8 + self.inputs.len() * TX_INPUT_BYTES + self.outputs.len() * TX_OUTPUT_BYTES
+    }
+
+    pub fn id(&self) -> &Hash {
+        &self.id
+    }
+
+    pub fn inputs(&self) -> &[TransactionInput] {
+        &self.inputs
+    }
+
+    pub fn outputs(&self) -> &[TransactionOutput] {
+        &self.outputs
     }
 }
+
+// impl<B> From<B> for Transaction
+// where
+//     B: AsRef<[u8]>,
+// {
+//     fn from(bytes: B) -> Self {
+//         let bytes = bytes.as_ref();
+//         let mut i = 1;
+//         let size = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+//         i += 8;
+//         let inputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+//         i += 8;
+//         let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
+//         i += 8;
+//         let inputs = bytes[i..]
+//             .chunks_exact(TX_INPUT_BYTES)
+//             .take(inputs_len)
+//             .map(|c| TransactionInput::deserialize(c))
+//             .collect();
+//         i += inputs_len * TX_INPUT_BYTES;
+//         let outputs = bytes[i..]
+//             .chunks_exact(TX_OUTPUT_BYTES)
+//             .take(outputs_len)
+//             .map(|c| TransactionOutput::deserialize(c))
+//             .collect();
+//         Self::new(inputs, outputs)
+//     }
+// }
 
 impl Eq for Transaction {}
 

@@ -242,30 +242,4 @@ impl Node {
             neighbour.2.send(Arc::clone(&bytes)).unwrap();
         }
     }
-
-    // pub fn blockchain(&self) -> &Blockchain {
-    //     &self.blockchain
-    // }
-
-    // pub fn synchronize(&mut self) {
-    //     match self.listener.try_recv() {
-    //         Ok(message) => match message[0] {
-    //             b'b' => {
-    //                 let height = usize::from_be_bytes(message[1..9].try_into().unwrap());
-    //                 println!("Thread {} received block {}", self.public_key, height);
-    //                 // TODO: add block if longer chain
-    //             }
-    //             b't' => {
-    //                 for bytes in message[1..].chunks(24) {
-    //                     let transaction = Transaction::deserialize(bytes);
-    //                     println!("Thread {} received {:?}", self.public_key, transaction);
-    //                     self.transaction_pool.add(transaction);
-    //                 }
-    //             }
-    //             _ => panic!("Thread {} received invalid message: '{:?}'", self.public_key, message),
-    //         },
-    //         Err(TryRecvError::Empty) => {}
-    //         Err(TryRecvError::Disconnected) => panic!("Channel disconnected"),
-    //     }
-    // }
 }

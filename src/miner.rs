@@ -10,7 +10,7 @@ pub struct Miner {
 impl Miner {
     pub fn new(top: &Block) -> Self {
         Self {
-            mined: Some(top.child()),
+            mined: Some(top.child(vec![])),
         }
     }
 
@@ -20,7 +20,7 @@ impl Miner {
             false => None,
             true => {
                 let block = self.mined.take().unwrap();
-                self.mined = Some(block.child());
+                self.mined = Some(block.child(vec![]));
                 Some(block)
             }
         }

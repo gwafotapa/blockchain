@@ -20,6 +20,7 @@ impl TransactionPool {
         self.transactions.len()
     }
 
+    // TODO: use push instead of add ?
     pub fn add(&mut self, transaction: Transaction) {
         self.transactions.push(transaction);
     }
