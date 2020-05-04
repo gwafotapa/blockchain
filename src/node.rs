@@ -125,14 +125,24 @@ impl Node {
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
                             /* TODO: need to process transactions from potential higher orphan
                              * blocks that becomes part of the main chain because we just added
-                             * their missing parent
+                             * their missing parent. Same thing 20 lines above.
                              */
-                            if self.blockchain.is_longer_with(&block) {
-                                self.utxo_pool.process_transactions_from(&block);
-                                self.wallet.process_transactions_from(&block);
-                                self.transaction_pool.remove_transactions_from(&block);
-                            }
+                            /* TODO: there may be transactions to undo here */
+
+                            // let old_top = self.blockchain.top();
                             self.blockchain.push(block.into_owned());
+                            // let new_top = self.blockchain.top();
+                            // let (olds, news) = self.blockchain.common_parent(old_top, new_top);
+                            // for block in olds {
+                            //     self.utxo_pool.undo_transactions_from(&block);
+                            //     self.wallet.undo_transactions_from(&block);
+                            //     self.transaction_pool.add_transactions_from(&block);
+                            // }
+                            // for block in news {
+                            //     self.utxo_pool.process_transactions_from(&block);
+                            //     self.wallet.process_transactions_from(&block);
+                            //     self.transaction_pool.remove_transactions_from(&block);
+                            // }
                         }
                     }
                     Message::ShutDown => {

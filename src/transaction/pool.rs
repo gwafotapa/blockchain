@@ -53,6 +53,8 @@ impl TransactionPool {
         )
     }
 
+    pub fn add_transactions_from(&mut self, block: &Block) {}
+
     pub fn remove_transactions_from(&mut self, block: &Block) {}
 
     pub fn transactions(&self) -> &Vec<Transaction> {

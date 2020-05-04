@@ -88,6 +88,8 @@ impl UtxoPool {
     }
 
     pub fn process_transactions_from(&mut self, block: &Block) {}
+
+    pub fn undo_transactions_from(&mut self, block: &Block) {}
 }
 
 impl Eq for UtxoPool {}
