@@ -9,9 +9,9 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
-use crate::block::Block;
 use crate::chain::Blockchain;
-use crate::common::{Message, MINE_NEW_BLOCK_PROBA, SPEND_PROBA};
+use crate::common::{Message, SPEND_PROBA};
+use crate::miner::Miner;
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput, TransactionPool};
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
@@ -28,6 +28,7 @@ pub struct Node {
     utxo_pool: UtxoPool,
     transaction_pool: TransactionPool,
     wallet: Wallet,
+    miner: Miner,
 }
 
 impl Eq for Node {}
@@ -58,6 +59,7 @@ impl Node {
         let utxo_pool = UtxoPool::new(network.clone());
         let transaction_pool = TransactionPool::new();
         let wallet = Wallet::new(public_key, utxo_pool.owned_by(&public_key));
+        let miner = Miner::new(blockchain.top());
         Self {
             id,
             public_key,
@@ -70,6 +72,7 @@ impl Node {
             utxo_pool,
             transaction_pool,
             wallet,
+            miner,
         }
     }
 
@@ -86,7 +89,7 @@ impl Node {
                 self.wallet.process(&transaction);
                 self.transaction_pool.add(transaction);
             }
-            if let Some(block) = self.mine() {
+            if let Some(block) = self.miner.mine() {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
                 // self.utxo_pool.process_transactions_from(&block);
@@ -181,19 +184,6 @@ impl Node {
                     .collect();
                 let transaction = Transaction::new(inputs, outputs);
                 Some(transaction)
-            }
-        }
-    }
-
-    pub fn mine(&mut self) -> Option<Block> {
-        let mut rng = rand::thread_rng();
-        match rng.gen_bool(MINE_NEW_BLOCK_PROBA) {
-            false => None,
-            true => {
-                let height = 1 + self.blockchain.height();
-                let hash_prev_block = *self.blockchain.top_hash();
-                let block = Block::new(height, hash_prev_block);
-                Some(block)
             }
         }
     }

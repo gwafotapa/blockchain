@@ -43,6 +43,10 @@ impl Block {
         }
     }
 
+    pub fn child(&self) -> Self {
+        Self::new(1 + self.height(), self.hash())
+    }
+
     pub fn height(&self) -> usize {
         self.height
     }

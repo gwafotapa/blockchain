@@ -1,6 +1,7 @@
 pub mod block;
 pub mod chain;
 pub mod common;
+pub mod miner;
 pub mod network;
 pub mod node;
 pub mod transaction;

@@ -22,7 +22,7 @@ pub struct Network {
 }
 
 impl Network {
-    pub fn with_capacity(n: usize) -> Network {
+    pub fn with_capacity(n: usize) -> Self {
         Self {
             nodes: Vec::with_capacity(n),
             threads: Vec::with_capacity(n),
@@ -35,7 +35,7 @@ impl Network {
         self.nodes.push(Some(node));
     }
 
-    pub fn random(nodes: usize) -> Network {
+    pub fn random(nodes: usize) -> Self {
         let secp = Secp256k1::new();
         let mut rng = rand::thread_rng();
         let mut public_keys = Vec::with_capacity(nodes);
