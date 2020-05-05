@@ -57,6 +57,7 @@ impl UtxoPool {
         for (vout, output) in transaction.outputs().iter().enumerate() {
             let utxo_id = UtxoId::new(*transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
+            // TODO: use self.add instead and look in the rest of the file for such things
             self.data.insert(utxo_id, utxo_data);
         }
     }

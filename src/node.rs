@@ -128,7 +128,7 @@ impl Node {
                                 self.blockchain.push(block.into_owned());
                             // TODO: Add a delta between old_txs and new_txs ?
                             self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
-                            self.wallet.undo_all(&old_transactions);
+                            self.wallet.undo_all(&old_transactions, &self.blockchain);
                             self.transaction_pool.add_all(old_transactions);
 
                             self.utxo_pool.process_all(&new_transactions);
