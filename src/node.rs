@@ -95,7 +95,6 @@ impl Node {
             {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
-                // TODO: use block.transactions() as argument in the three calls below
                 self.utxo_pool.process_all(block.transactions());
                 self.wallet.process_all(block.transactions());
                 self.transaction_pool.remove_all(block.transactions());
@@ -104,6 +103,8 @@ impl Node {
             if let Ok(message) = self.listener.try_recv() {
                 match Message::deserialize(message.deref()) {
                     Message::Transaction(transaction) => {
+                        // TODO: Verify if the transaction is already in the blockchain ?
+                        // Or will it be rejected anyway because of spent utxo(s) ?
                         if !self.transaction_pool.contains(&transaction)
                             && self.utxo_pool.verify(&transaction).is_ok()
                         {
@@ -123,26 +124,18 @@ impl Node {
                         {
                             info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
-                            /* TODO: need to process transactions from potential higher orphan
-                             * blocks that becomes part of the main chain because we just added
-                             * their missing parent. Same thing 20 lines above.
-                             */
-                            /* TODO: there may be transactions to undo here */
-
-                            // let old_top = self.blockchain.top();
-                            self.blockchain.push(block.into_owned());
-                            // let new_top = self.blockchain.top();
-                            // let (olds, news) = self.blockchain.common_parent(old_top, new_top);
-                            // for block in olds {
-                            //     self.utxo_pool.undo_all(block.transactions());
-                            //     self.wallet.undo_all(block.transactions());
-                            //     self.transaction_pool.add_all(block.transactions());
-                            // }
-                            // for block in news {
-                            //     self.utxo_pool.process_all(block.transactions());
-                            //     self.wallet.process_all(block.transactions());
-                            //     self.transaction_pool.remove_all(block.transactions();
-                            // }
+                            let (popped, pushed) = self.blockchain.push(block.into_owned());
+                            // TODO: Add a delta between pushed and popped ?
+                            for block in popped {
+                                self.utxo_pool.undo_all(block.transactions());
+                                self.wallet.undo_all(block.transactions());
+                                self.transaction_pool.add_all(block.transactions());
+                            }
+                            for block in pushed {
+                                self.utxo_pool.process_all(block.transactions());
+                                self.wallet.process_all(block.transactions());
+                                self.transaction_pool.remove_all(block.transactions());
+                            }
                         }
                     }
                     Message::ShutDown => {

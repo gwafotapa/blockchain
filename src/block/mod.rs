@@ -48,14 +48,6 @@ impl Block {
         Self::new(1 + self.height(), self.hash(), transactions)
     }
 
-    pub fn height(&self) -> usize {
-        self.height
-    }
-
-    pub fn hash_prev_block(&self) -> &Hash {
-        &self.header.hash_prev_block()
-    }
-
     //     pub fn hash_merkle_root(&self) -> Hash {
     //         self.header.hash_merkle_root
     //     }
@@ -93,8 +85,28 @@ impl Block {
         Self::from(bytes)
     }
 
+    pub fn is_genesis(&self) -> bool {
+        self.height == 0
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    pub fn hash_prev_block(&self) -> &Hash {
+        &self.header.hash_prev_block()
+    }
+
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions
+    }
+}
+
+impl Eq for Block {}
+
+impl PartialEq for Block {
+    fn eq(&self, other: &Self) -> bool {
+        self.hash() == other.hash()
     }
 }
 

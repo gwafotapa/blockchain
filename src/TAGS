@@ -26,20 +26,20 @@ impl Hash for Node {Node42,1072
 impl Node {Node48,1186
     pub fn new(new49,1198
     pub fn run(&mut self) {run79,2058
-    pub fn initiate(&mut self) -> Option<Transaction> {initiate168,6559
-    pub fn propagate(&self, message: Message) {propagate217,8534
-    pub fn id(&self) -> usize {id224,8759
-    pub fn public_key(&self) -> &PublicKey {public_key228,8814
-    pub fn secret_key(&self) -> &SecretKey {secret_key232,8891
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender236,8968
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener240,9048
-    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours244,9134
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool248,9247
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut252,9321
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool256,9411
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut260,9506
-    pub fn wallet(&self) -> &Wallet {wallet264,9617
-    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut268,9683
+    pub fn initiate(&mut self) -> Option<Transaction> {initiate161,6103
+    pub fn propagate(&self, message: Message) {propagate210,8078
+    pub fn id(&self) -> usize {id217,8303
+    pub fn public_key(&self) -> &PublicKey {public_key221,8358
+    pub fn secret_key(&self) -> &SecretKey {secret_key225,8435
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender229,8512
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener233,8592
+    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours237,8678
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool241,8791
+    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut245,8865
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool249,8955
+    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut253,9050
+    pub fn wallet(&self) -> &Wallet {wallet257,9161
+    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut261,9227
 
 wallet.rs,620
 pub struct Wallet {Wallet7,153
@@ -56,20 +56,23 @@ impl Wallet {Wallet12,225
 main.rs,23
 fn main() {main8,135
 
-chain.rs,756
-pub struct Blockchain {Blockchain8,127
-impl Blockchain {Blockchain14,257
-    pub fn new() -> Self {new15,275
-    pub fn push(&mut self, block: Block) {push27,572
-    pub fn push_orphans_of(&mut self, parent: &Block) {push_orphans_of41,1075
-    pub fn contains(&self, block: &Block) -> bool {contains59,1655
-    pub fn common_parent(&self, old: &Block, new: &Block) -> (Vec<Block>, Vec<Block>) {common_parent63,1805
-    pub fn top(&self) -> &Block {top67,1925
-    pub fn height(&self) -> usize {height71,2002
-    pub fn len(&self) -> usize {len75,2073
-    pub fn top_hash(&self) -> &BlockHash {top_hash79,2139
-impl fmt::Display for Blockchain {Blockchain84,2214
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt85,2249
+chain.rs,1015
+pub struct Blockchain {Blockchain9,151
+impl Blockchain {Blockchain15,281
+    pub fn new() -> Self {new16,299
+    pub fn push(&mut self, block: Block) -> (Vec<Block>, Vec<Block>) {push28,596
+    pub fn add(&mut self, block: Block) -> BlockHash {add33,763
+    pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {remove_orphans_of52,1450
+    pub fn transaction_delta(&self, old_top_hash: BlockHash) -> (Vec<Block>, Vec<Block>) {transaction_delta66,1863
+    pub fn contains(&self, block: &Block) -> bool {contains86,2661
+    pub fn parent(&self, block: &Block) -> Option<&Block> {parent90,2811
+    pub fn common_parent<'a>(common_parent94,2926
+    pub fn top(&self) -> &Block {top119,3787
+    pub fn height(&self) -> usize {height123,3864
+    pub fn len(&self) -> usize {len127,3935
+    pub fn top_hash(&self) -> &BlockHash {top_hash131,4001
+impl fmt::Display for Blockchain {Blockchain136,4076
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt137,4111
 
 common.rs,1187
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];GENESIS_BLOCK_HASH_PREV_BLOCK9,175
@@ -177,25 +180,29 @@ pub struct MergeHash {}MergeHash6,91
 impl Merge for MergeHash {MergeHash8,116
     fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {merge11,166
 
-block/mod.rs,1058
+block/mod.rs,1248
 // const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =GENESIS_BLOCK_HASH_MERKLE_ROOT10,212
 pub struct Block {Block14,372
 impl Block {Block20,474
     pub fn genesis() -> Self {genesis21,487
     pub fn new(height: usize, hash_prev_block: Hash, transactions: Vec<Transaction>) -> Self {new33,897
     pub fn child(&self, transactions: Vec<Transaction>) -> Self {child47,1370
-    pub fn height(&self) -> usize {height51,1507
-    pub fn hash_prev_block(&self) -> &Hash {hash_prev_block55,1570
-    //     pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root59,1661
-    pub fn hash(&self) -> Hash {hash63,1771
-    pub fn serialize(&self) -> Vec<u8> {serialize71,1992
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize89,2741
-    pub fn transactions(&self) -> &Vec<Transaction> {transactions96,2858
-impl<B> From<B> for BlockBlock101,2948
-    fn from(bytes: B) -> Self {from105,3002
-pub mod header;header128,3741
-impl fmt::Display for Block {Block130,3758
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt131,3788
+    //     pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root51,1507
+    pub fn hash(&self) -> Hash {hash55,1617
+    pub fn serialize(&self) -> Vec<u8> {serialize63,1838
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize81,2587
+    pub fn is_genesis(&self) -> bool {is_genesis88,2704
+    pub fn height(&self) -> usize {height92,2775
+    pub fn hash_prev_block(&self) -> &Hash {hash_prev_block96,2838
+    pub fn transactions(&self) -> &Vec<Transaction> {transactions100,2929
+impl Eq for Block {}Block105,3019
+impl PartialEq for Block {Block107,3041
+    fn eq(&self, other: &Self) -> bool {eq108,3068
+impl<B> From<B> for BlockBlock113,3154
+    fn from(bytes: B) -> Self {from117,3208
+pub mod header;header140,3947
+impl fmt::Display for Block {Block142,3964
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt143,3994
 
 block/header.rs,423
 pub struct BlockHeader {BlockHeader4,50
