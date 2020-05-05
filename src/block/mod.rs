@@ -5,7 +5,8 @@ use std::iter;
 
 use self::header::BlockHeader;
 use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK};
-use crate::transaction::Transaction;
+use crate::transaction::{Transaction, TransactionInput};
+use crate::utxo::{Utxo, UtxoId};
 
 // const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =
 //     &hex!("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
@@ -44,9 +45,23 @@ impl Block {
         }
     }
 
-    pub fn child(&self, transactions: Vec<Transaction>) -> Self {
-        Self::new(1 + self.height(), self.hash(), transactions)
+    pub fn get_utxo_from(&self, input: &TransactionInput) -> Option<Utxo> {
+        let txid = input.utxo_id().txid();
+        let vout = input.utxo_id().vout();
+        for transaction in &self.transactions {
+            if transaction.id() == txid {
+                let utxo_id = UtxoId::new(*txid, vout);
+                let utxo_data = transaction.outputs()[input.vout()].0;
+                let utxo = Utxo::new(utxo_id, utxo_data);
+                return Some(utxo);
+            }
+        }
+        None
     }
+
+    // pub fn child(&self, transactions: Vec<Transaction>) -> Self {
+    //     Self::new(1 + self.height(), self.hash(), transactions)
+    // }
 
     //     pub fn hash_merkle_root(&self) -> Hash {
     //         self.header.hash_merkle_root

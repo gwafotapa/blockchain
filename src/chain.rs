@@ -4,6 +4,8 @@ use std::fmt;
 
 use crate::block::Block;
 use crate::common::Hash as BlockHash;
+use crate::transaction::{Transaction, TransactionInput};
+use crate::utxo::Utxo;
 
 #[derive(Debug)]
 pub struct Blockchain {
@@ -25,7 +27,7 @@ impl Blockchain {
         }
     }
 
-    pub fn push(&mut self, block: Block) -> (Vec<Block>, Vec<Block>) {
+    pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {
         let old_top_hash = self.add(block);
         self.transaction_delta(old_top_hash)
     }
@@ -63,24 +65,27 @@ impl Blockchain {
             .collect()
     }
 
-    pub fn transaction_delta(&self, old_top_hash: BlockHash) -> (Vec<Block>, Vec<Block>) {
+    pub fn transaction_delta(
+        &self,
+        old_top_hash: BlockHash,
+    ) -> (Vec<Transaction>, Vec<Transaction>) {
         let old_top = self.chain.get(&old_top_hash).unwrap();
         let new_top = self.top();
         let parent = self.common_parent(old_top, new_top).unwrap();
         // TODO: Add a function for the next 6 lines
-        let mut old_blocks = vec![];
+        let mut old_transactions = vec![];
         let mut old_block = old_top;
         while old_block != parent {
-            old_blocks.push(old_block.clone());
+            old_transactions.extend(old_block.transactions().clone());
             old_block = self.parent(old_block).unwrap();
         }
-        let mut new_blocks = vec![];
+        let mut new_transactions = vec![];
         let mut new_block = new_top;
         while new_block != parent {
-            new_blocks.push(new_block.clone());
+            new_transactions.extend(new_block.transactions().clone());
             new_block = self.parent(new_block).unwrap();
         }
-        (old_blocks, new_blocks)
+        (old_transactions, new_transactions)
     }
 
     pub fn contains(&self, block: &Block) -> bool {
@@ -114,6 +119,16 @@ impl Blockchain {
             }
         }
         Some(block1)
+    }
+
+    pub fn get_utxo_from(&self, input: &TransactionInput) -> Utxo {
+        let mut block = self.top();
+        loop {
+            if let Some(utxo) = block.get_utxo_from(input) {
+                return utxo;
+            }
+            block = self.chain.get(block.hash_prev_block()).unwrap();
+        }
     }
 
     pub fn top(&self) -> &Block {

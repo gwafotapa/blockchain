@@ -124,18 +124,16 @@ impl Node {
                         {
                             info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
-                            let (popped, pushed) = self.blockchain.push(block.into_owned());
-                            // TODO: Add a delta between pushed and popped ?
-                            for block in popped {
-                                self.utxo_pool.undo_all(block.transactions());
-                                self.wallet.undo_all(block.transactions());
-                                self.transaction_pool.add_all(block.transactions());
-                            }
-                            for block in pushed {
-                                self.utxo_pool.process_all(block.transactions());
-                                self.wallet.process_all(block.transactions());
-                                self.transaction_pool.remove_all(block.transactions());
-                            }
+                            let (old_transactions, new_transactions) =
+                                self.blockchain.push(block.into_owned());
+                            // TODO: Add a delta between old_txs and new_txs ?
+                            self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
+                            self.wallet.undo_all(&old_transactions);
+                            self.transaction_pool.add_all(old_transactions);
+
+                            self.utxo_pool.process_all(&new_transactions);
+                            self.wallet.process_all(&new_transactions);
+                            self.transaction_pool.remove_all(&new_transactions);
                         }
                     }
                     Message::ShutDown => {

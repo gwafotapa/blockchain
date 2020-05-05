@@ -6,6 +6,7 @@ use std::ops::Index;
 use crate::common::TXS_PER_BLOCK;
 use crate::transaction::Transaction;
 
+// TODO: Should it be a vector or a hashmap ?
 #[derive(Debug)]
 pub struct TransactionPool {
     transactions: Vec<Transaction>,
@@ -52,9 +53,17 @@ impl TransactionPool {
         )
     }
 
-    pub fn add_all(&mut self, transactions: &[Transaction]) {}
+    pub fn add_all(&mut self, transactions: Vec<Transaction>) {
+        for transaction in transactions {
+            self.add(transaction)
+        }
+    }
 
-    pub fn remove_all(&mut self, transactions: &[Transaction]) {}
+    pub fn remove_all(&mut self, transactions: &[Transaction]) {
+        for transaction in transactions {
+            self.remove(transaction);
+        }
+    }
 
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions

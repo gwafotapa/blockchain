@@ -25,6 +25,7 @@ impl Utxo {
         &self.data
     }
 
+    // TODO: Use Hash instead of &Hash everywhere
     pub fn txid(&self) -> &Hash {
         &self.id.txid()
     }

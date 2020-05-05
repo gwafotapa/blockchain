@@ -5,6 +5,7 @@ use std::fmt;
 
 use super::{Utxo, UtxoData, UtxoId};
 use crate::block::Block;
+use crate::chain::Blockchain;
 use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
 use crate::transaction::{InvalidTransaction, Transaction};
 
@@ -60,6 +61,19 @@ impl UtxoPool {
         }
     }
 
+    pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain) {
+        for input in transaction.inputs() {
+            let utxo = blockchain.get_utxo_from(input);
+            self.add(utxo);
+        }
+        for (vout, output) in transaction.outputs().iter().enumerate() {
+            let utxo_id = UtxoId::new(*transaction.id(), vout);
+            let utxo_data = UtxoData::new(output.amount(), *output.public_key());
+            let utxo = Utxo::new(utxo_id, utxo_data);
+            self.remove(&utxo);
+        }
+    }
+
     pub fn verify(&self, transaction: &Transaction) -> Result<(), InvalidTransaction> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
@@ -87,9 +101,17 @@ impl UtxoPool {
         Ok(())
     }
 
-    pub fn process_all(&mut self, transactions: &[Transaction]) {}
+    pub fn process_all(&mut self, transactions: &[Transaction]) {
+        for transaction in transactions {
+            self.process(transaction);
+        }
+    }
 
-    pub fn undo_all(&mut self, transactions: &[Transaction]) {}
+    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {
+        for transaction in transactions {
+            self.undo(transaction, blockchain);
+        }
+    }
 }
 
 impl Eq for UtxoPool {}

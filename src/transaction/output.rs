@@ -3,8 +3,9 @@ use std::fmt;
 
 use crate::utxo::UtxoData;
 
+// TODO: Is the wrapper really necessary ? Should the field be public ?
 #[derive(Clone, Debug)]
-pub struct TransactionOutput(UtxoData);
+pub struct TransactionOutput(pub UtxoData);
 
 impl TransactionOutput {
     pub fn new(amount: u32, public_key: PublicKey) -> Self {
