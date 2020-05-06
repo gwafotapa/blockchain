@@ -1,3 +1,10 @@
+/* TODO:
+ * - complete function validating a new block
+ * - ameliorate displays
+ * - deal with all the TODOs
+ * - clean and refactor
+ * - write tests
+ */
 use log::info;
 use std::thread;
 use std::time::Duration;

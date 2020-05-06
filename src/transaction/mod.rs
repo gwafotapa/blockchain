@@ -8,7 +8,7 @@ use std::iter;
 use self::merkle_tree::MergeHash;
 use crate::common::{Hash, TX_INPUT_BYTES, TX_OUTPUT_BYTES};
 
-pub use self::error::InvalidTransaction;
+pub use self::error::TransactionError;
 pub use self::input::TransactionInput;
 pub use self::output::TransactionOutput;
 pub use self::pool::TransactionPool;

@@ -2,31 +2,31 @@ use std::error;
 use std::fmt;
 
 #[derive(Debug)]
-pub enum InvalidTransaction {
+pub enum TransactionError {
     UnknownUtxo,
     InvalidSignature(secp256k1::Error),
 }
 
-impl fmt::Display for InvalidTransaction {
+impl fmt::Display for TransactionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            InvalidTransaction::UnknownUtxo => write!(f, "Unknown utxo"),
-            InvalidTransaction::InvalidSignature(err) => err.fmt(f),
+            TransactionError::UnknownUtxo => write!(f, "Unknown utxo"),
+            TransactionError::InvalidSignature(err) => err.fmt(f),
         }
     }
 }
 
-impl error::Error for InvalidTransaction {
+impl error::Error for TransactionError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            InvalidTransaction::UnknownUtxo => None,
-            InvalidTransaction::InvalidSignature(err) => err.source(),
+            TransactionError::UnknownUtxo => None,
+            TransactionError::InvalidSignature(err) => err.source(),
         }
     }
 }
 
-impl From<secp256k1::Error> for InvalidTransaction {
+impl From<secp256k1::Error> for TransactionError {
     fn from(err: secp256k1::Error) -> Self {
-        InvalidTransaction::InvalidSignature(err)
+        TransactionError::InvalidSignature(err)
     }
 }

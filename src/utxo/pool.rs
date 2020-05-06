@@ -4,10 +4,10 @@ use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use super::{Utxo, UtxoData, UtxoId};
-use crate::block::Block;
+use crate::block::{Block, BlockError};
 use crate::chain::Blockchain;
 use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
-use crate::transaction::{InvalidTransaction, Transaction};
+use crate::transaction::{Transaction, TransactionError};
 
 #[derive(Debug)]
 pub struct UtxoPool {
@@ -75,7 +75,7 @@ impl UtxoPool {
         }
     }
 
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), InvalidTransaction> {
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
             message.extend(utxo_id.serialize());
@@ -92,13 +92,13 @@ impl UtxoPool {
             if let Some(utxo_data) = self.data.get(input.utxo_id()) {
                 secp.verify(&message, input.sig(), utxo_data.public_key())?;
             } else {
-                return Err(InvalidTransaction::UnknownUtxo);
+                return Err(TransactionError::UnknownUtxo);
             }
         }
         Ok(())
     }
 
-    pub fn validate(&self, block: &Block) -> Result<(), InvalidTransaction> {
+    pub fn validate(&self, block: &Block) -> Result<(), BlockError> {
         Ok(())
     }
 
