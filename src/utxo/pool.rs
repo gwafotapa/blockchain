@@ -102,9 +102,11 @@ impl UtxoPool {
         if !block.transaction_count().is_power_of_two() {
             return Err(BlockError::WrongTransactionCount);
         }
-        for transaction in block.transactions() {
-            self.verify(transaction)?;
-        }
+        // TODO: Transactions need to be processed immediately after verification
+        // and they need to be undone in reverse order at the end.
+        // for transaction in block.transactions() {
+        //     self.verify(transaction)?;
+        // }
         Ok(())
     }
 

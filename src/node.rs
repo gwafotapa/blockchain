@@ -126,6 +126,7 @@ impl Node {
                             self.propagate(Message::Block(Cow::Borrowed(&block)));
                             let (old_transactions, new_transactions) =
                                 self.blockchain.push(block.into_owned());
+                            self.miner.discard_block();
                             // TODO: Add a delta between old_txs and new_txs ?
                             self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
                             self.wallet.undo_all(&old_transactions, &self.blockchain);

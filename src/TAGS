@@ -26,20 +26,20 @@ impl Hash for Node {Node42,1072
 impl Node {Node48,1186
     pub fn new(new49,1198
     pub fn run(&mut self) {run79,2058
-    pub fn initiate(&mut self) -> Option<Transaction> {initiate159,5991
-    pub fn propagate(&self, message: Message) {propagate208,7966
-    pub fn id(&self) -> usize {id215,8191
-    pub fn public_key(&self) -> &PublicKey {public_key219,8246
-    pub fn secret_key(&self) -> &SecretKey {secret_key223,8323
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender227,8400
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener231,8480
-    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours235,8566
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool239,8679
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut243,8753
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool247,8843
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut251,8938
-    pub fn wallet(&self) -> &Wallet {wallet255,9049
-    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut259,9115
+    pub fn initiate(&mut self) -> Option<Transaction> {initiate160,6047
+    pub fn propagate(&self, message: Message) {propagate209,8022
+    pub fn id(&self) -> usize {id216,8247
+    pub fn public_key(&self) -> &PublicKey {public_key220,8302
+    pub fn secret_key(&self) -> &SecretKey {secret_key224,8379
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender228,8456
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener232,8536
+    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours236,8622
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool240,8735
+    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut244,8809
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool248,8899
+    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut252,8994
+    pub fn wallet(&self) -> &Wallet {wallet256,9105
+    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut260,9171
 
 wallet.rs,816
 pub struct Wallet {Wallet7,158
@@ -56,7 +56,7 @@ impl Wallet {Wallet12,230
     pub fn utxos(&self) -> &Vec<Utxo> {utxos89,2692
 
 main.rs,24
-fn main() {main15,289
+fn main() {main15,298
 
 chain.rs,1058
 pub struct Blockchain {Blockchain11,231
@@ -77,7 +77,7 @@ impl Blockchain {Blockchain17,361
 impl fmt::Display for Blockchain {Blockchain151,4583
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt152,4618
 
-common.rs,1187
+common.rs,1182
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];GENESIS_BLOCK_HASH_PREV_BLOCK9,175
 pub const MINE_NEW_BLOCK_PROBA: f64 = 1.0 / 1000000.0;MINE_NEW_BLOCK_PROBA10,238
 pub const NODES: usize = 4;NODES11,293
@@ -85,18 +85,18 @@ pub const SIGNATURE_BYTES: usize = 64;SIGNATURE_BYTES12,321
 pub const SPEND_PROBA: f64 = 1.0 / 1000000.0;SPEND_PROBA13,360
 pub const TX_INPUT_BYTES: usize = UTXO_ID_BYTES + SIGNATURE_BYTES;TX_INPUT_BYTES14,406
 pub const TX_OUTPUT_BYTES: usize = UTXO_DATA_BYTES;TX_OUTPUT_BYTES15,473
-pub const TXS_PER_BLOCK: usize = 1 << 0;TXS_PER_BLOCK16,525
-pub const UTXO_AMOUNT_INIT: u32 = 10;UTXO_AMOUNT_INIT17,566
-pub const UTXO_DATA_BYTES: usize = 4 + 33;UTXO_DATA_BYTES18,604
-pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];UTXO_HASH_INIT19,647
-pub const UTXO_ID_BYTES: usize = 32 + 8;UTXO_ID_BYTES20,695
-const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN22,737
-pub enum Message<'a> {Message24,777
-impl<'a, B> From<B> for Message<'a>Message30,883
-    fn from(bytes: B) -> Self {from34,947
-impl<'a> Message<'a> {Message47,1365
-    pub fn serialize(&self) -> Vec<u8> {serialize48,1388
-    pub fn deserialize<T>(bytes: T) -> Selfdeserialize56,1650
+pub const TXS_PER_BLOCK: usize = 2;TXS_PER_BLOCK16,525
+pub const UTXO_AMOUNT_INIT: u32 = 10;UTXO_AMOUNT_INIT17,561
+pub const UTXO_DATA_BYTES: usize = 4 + 33;UTXO_DATA_BYTES18,599
+pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];UTXO_HASH_INIT19,642
+pub const UTXO_ID_BYTES: usize = 32 + 8;UTXO_ID_BYTES20,690
+const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN22,732
+pub enum Message<'a> {Message24,772
+impl<'a, B> From<B> for Message<'a>Message30,878
+    fn from(bytes: B) -> Self {from34,942
+impl<'a> Message<'a> {Message47,1360
+    pub fn serialize(&self) -> Vec<u8> {serialize48,1383
+    pub fn deserialize<T>(bytes: T) -> Selfdeserialize56,1645
 
 transaction/pool.rs,1119
 pub struct TransactionPool {TransactionPool11,245
@@ -240,12 +240,13 @@ pub mod transaction;transaction7,92
 pub mod utxo;utxo8,113
 pub mod wallet;wallet9,127
 
-miner.rs,302
+miner.rs,362
 pub struct Miner {Miner7,124
 impl Miner {Miner11,172
     pub fn new() -> Self {new12,185
     pub fn mine(&mut self, top: &Block, transaction_pool: &TransactionPool) -> Option<Block> {mine16,248
     pub fn mine_from(&mut self, top: &Block, transaction_pool: &TransactionPool) {mine_from29,664
+    pub fn discard_block(&mut self) {discard_block40,1058
 
 utxo/id.rs,537
 pub struct UtxoId {UtxoId8,152
@@ -285,13 +286,13 @@ impl UtxoPool {UtxoPool17,454
     pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain) {undo65,1970
     pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {verify78,2511
     pub fn validate(&self, block: &Block) -> Result<(), BlockError> {validate101,3398
-    pub fn process_all(&mut self, transactions: &[Transaction]) {process_all111,3716
-    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {undo_all117,3880
-impl Eq for UtxoPool {}UtxoPool124,4077
-impl PartialEq for UtxoPool {UtxoPool126,4102
-    fn eq(&self, other: &Self) -> bool {eq127,4132
-impl fmt::Display for UtxoPool {UtxoPool134,4409
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt135,4442
+    pub fn process_all(&mut self, transactions: &[Transaction]) {process_all113,3874
+    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {undo_all119,4038
+impl Eq for UtxoPool {}UtxoPool126,4235
+impl PartialEq for UtxoPool {UtxoPool128,4260
+    fn eq(&self, other: &Self) -> bool {eq129,4290
+impl fmt::Display for UtxoPool {UtxoPool136,4567
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt137,4600
 
 utxo/mod.rs,610
 pub struct Utxo {Utxo10,164
