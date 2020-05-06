@@ -28,8 +28,8 @@ impl error::Error for BlockError {
     }
 }
 
-// impl From<TransactionError> for BlockError {
-//     fn from(err: secp256k1::Error) -> Self {
-//         BlockError::InvalidTransaction(err)
-//     }
-// }
+impl From<TransactionError> for BlockError {
+    fn from(err: TransactionError) -> Self {
+        BlockError::InvalidTransaction(err)
+    }
+}

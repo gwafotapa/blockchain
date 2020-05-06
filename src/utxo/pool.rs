@@ -99,6 +99,12 @@ impl UtxoPool {
     }
 
     pub fn validate(&self, block: &Block) -> Result<(), BlockError> {
+        if !block.transaction_count().is_power_of_two() {
+            return Err(BlockError::WrongTransactionCount);
+        }
+        for transaction in block.transactions() {
+            self.verify(transaction)?;
+        }
         Ok(())
     }
 

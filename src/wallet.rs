@@ -1,6 +1,5 @@
 use secp256k1::PublicKey;
 
-use crate::block::Block;
 use crate::chain::Blockchain;
 use crate::transaction::{Transaction, TransactionInput};
 use crate::utxo::{Utxo, UtxoData, UtxoId};

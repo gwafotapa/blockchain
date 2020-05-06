@@ -106,6 +106,10 @@ impl Block {
         self.height == 0
     }
 
+    pub fn transaction_count(&self) -> usize {
+        self.transactions.len()
+    }
+
     pub fn height(&self) -> usize {
         self.height
     }
