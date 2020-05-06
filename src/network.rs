@@ -166,10 +166,10 @@ impl fmt::Debug for Network {
             let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
             write!(
                 f,
-                "Node #{}   Neighbours: {:?}   pk: {}\n",
+                "Node #{}  pk: {}  Neighbours: {:?}\n",
                 node.id(),
-                neighborhood,
                 node.public_key(),
+                neighborhood,
             )?;
         }
 

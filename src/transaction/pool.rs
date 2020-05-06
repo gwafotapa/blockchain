@@ -1,5 +1,6 @@
 use rand::seq::SliceRandom;
 use std::collections::HashSet;
+use std::fmt;
 use std::iter::FromIterator;
 use std::ops::Index;
 
@@ -67,6 +68,16 @@ impl TransactionPool {
 
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions
+    }
+}
+
+impl fmt::Display for TransactionPool {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Transaction pool ({}) {{\n", self.size())?;
+        for transaction in &self.transactions {
+            write!(f, "  {}\n", format!("{:#x}", transaction.id()))?;
+        }
+        write!(f, "}}\n")
     }
 }
 

@@ -1,4 +1,5 @@
 use secp256k1::PublicKey;
+use std::fmt;
 
 use crate::chain::Blockchain;
 use crate::transaction::{Transaction, TransactionInput};
@@ -88,5 +89,22 @@ impl Wallet {
 
     pub fn utxos(&self) -> &Vec<Utxo> {
         &self.utxos
+    }
+}
+
+impl fmt::Display for Wallet {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Wallet ({}) {{", self.utxos.len())?;
+        for utxo in &self.utxos {
+            write!(
+                f,
+                "\n  txid: {}  vout:{}\n  public_key: {}  amount: {}\n",
+                format!("{:#x}", utxo.txid()),
+                utxo.vout(),
+                utxo.public_key(),
+                utxo.amount()
+            )?;
+        }
+        write!(f, "}}\n")
     }
 }

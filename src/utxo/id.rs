@@ -1,6 +1,4 @@
-use hex::ToHex;
 use std::convert::TryInto;
-use std::fmt;
 
 use crate::common::{Hash, UTXO_ID_BYTES};
 
@@ -50,10 +48,10 @@ where
     }
 }
 
-impl fmt::Display for UtxoId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "txid: ")?;
-        self.txid.write_hex(f)?;
-        write!(f, "\tvout: {}", self.vout)
-    }
-}
+// impl fmt::Display for UtxoId {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "txid: ")?;
+//         self.txid.write_hex(f)?;
+//         write!(f, "\tvout: {}", self.vout)
+//     }
+// }

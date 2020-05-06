@@ -150,14 +150,26 @@ impl Blockchain {
 
 impl fmt::Display for Blockchain {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "  chain:\n")?;
+        write!(f, "Blockchain ({}) {{", self.len())?;
         for (_, block) in &self.chain {
-            write!(f, "    {}\n", block)?;
+            write!(
+                f,
+                "\n  height: {}\n  id: {}\n  parent: {}\n",
+                block.height(),
+                format!("{:#x}", block.id()),
+                format!("{:#x}", block.hash_prev_block())
+            )?;
         }
-        write!(f, "  orphans:\n")?;
+        write!(f, "}}\n\nOrphans ({}) {{", self.orphans.len())?;
         for (_, block) in &self.orphans {
-            write!(f, "    {}\n", block)?;
+            write!(
+                f,
+                "\n  height: {}\n  id: {}\n  parent: {}\n",
+                block.height(),
+                format!("{:#x}", block.id()),
+                format!("{:#x}", block.hash_prev_block())
+            )?;
         }
-        Ok(())
+        write!(f, "}}\n")
     }
 }

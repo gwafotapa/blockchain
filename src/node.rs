@@ -139,16 +139,13 @@ impl Node {
                     }
                     Message::ShutDown => {
                         info!(
-                            "Node {} shutting down\n\
-                             Transactions: {}\n\n\
-                             Utxo pool:\n\
-                             {}\
-                             Blockchain:\n\
-                             {}",
+                            "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
                             self.id,
-                            self.transaction_pool.size(),
-                            self.utxo_pool,
+                            self.public_key,
                             self.blockchain,
+                            self.transaction_pool,
+                            self.utxo_pool,
+                            self.wallet
                         );
                         return;
                     }

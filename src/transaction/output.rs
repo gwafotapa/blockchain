@@ -1,5 +1,4 @@
 use secp256k1::PublicKey;
-use std::fmt;
 
 use crate::utxo::UtxoData;
 
@@ -32,8 +31,8 @@ impl TransactionOutput {
     }
 }
 
-impl fmt::Display for TransactionOutput {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
+// impl fmt::Display for TransactionOutput {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         self.0.fmt(f)
+//     }
+// }

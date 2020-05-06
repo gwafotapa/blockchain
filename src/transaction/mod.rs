@@ -134,13 +134,26 @@ impl PartialEq for Transaction {
 
 impl fmt::Display for Transaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Transaction {{\n")?;
         for (i, input) in self.inputs().iter().enumerate() {
-            write!(f, "Input {}:  {}\n", i, input)?;
+            write!(
+                f,
+                "  Input {}:  txid: {}  vout: {}\n",
+                i,
+                format!("{:#x}", input.txid()),
+                input.vout(),
+            )?;
         }
         for (o, output) in self.outputs().iter().enumerate() {
-            write!(f, "Output {}:  {}\n", o, output)?;
+            write!(
+                f,
+                "  Output {}:  public_key: {}  amount: {}\n",
+                o,
+                output.public_key(),
+                output.amount(),
+            )?;
         }
-        Ok(())
+        write!(f, "}}\n")
     }
 }
 

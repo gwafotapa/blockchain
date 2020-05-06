@@ -51,6 +51,19 @@ impl PartialEq for Utxo {
     }
 }
 
+// impl fmt::Display for Utxo {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(
+//             f,
+//             "Utxo {{\n  txid: {}\n  vout: {}\n  amount: {}\n  public_key: {}\n}}\n",
+//             format!("{:#x}", self.txid()),
+//             self.vout(),
+//             self.amount(),
+//             self.public_key()
+//         )
+//     }
+// }
+
 pub mod data;
 pub mod id;
 pub mod pool;

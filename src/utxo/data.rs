@@ -1,6 +1,5 @@
 use secp256k1::PublicKey;
 use std::convert::TryInto;
-use std::fmt;
 
 use crate::common::UTXO_DATA_BYTES;
 
@@ -50,12 +49,12 @@ where
     }
 }
 
-impl fmt::Display for UtxoData {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "amount: {:>7}\t\tpublic_key: {}",
-            self.amount, self.public_key
-        )
-    }
-}
+// impl fmt::Display for UtxoData {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(
+//             f,
+//             "amount: {:>7}\t\tpublic_key: {}",
+//             self.amount, self.public_key
+//         )
+//     }
+// }

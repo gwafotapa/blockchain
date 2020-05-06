@@ -122,6 +122,10 @@ impl UtxoPool {
             self.undo(transaction, blockchain);
         }
     }
+
+    pub fn size(&self) -> usize {
+        self.data.len()
+    }
 }
 
 impl Eq for UtxoPool {}
@@ -136,9 +140,17 @@ impl PartialEq for UtxoPool {
 
 impl fmt::Display for UtxoPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Utxo pool ({}) {{", self.size())?;
         for (utxo_id, utxo_data) in &self.data {
-            write!(f, "{}\n{}\n\n", utxo_id, utxo_data)?;
+            write!(
+                f,
+                "\n  txid: {}  vout:{}\n  public_key: {}  amount: {}\n",
+                format!("{:#x}", utxo_id.txid()),
+                utxo_id.vout(),
+                utxo_data.public_key(),
+                utxo_data.amount()
+            )?;
         }
-        Ok(())
+        write!(f, "}}\n")
     }
 }
