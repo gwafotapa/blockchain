@@ -37,8 +37,8 @@ impl TransactionInput {
         &self.sig
     }
 
-    pub fn txid(&self) -> &Hash {
-        &self.utxo_id.txid()
+    pub fn txid(&self) -> Hash {
+        self.utxo_id.txid()
     }
 
     pub fn vout(&self) -> usize {

@@ -29,8 +29,8 @@ impl UtxoId {
         Self::from(bytes)
     }
 
-    pub fn txid(&self) -> &Hash {
-        &self.txid
+    pub fn txid(&self) -> Hash {
+        self.txid
     }
 
     pub fn vout(&self) -> usize {

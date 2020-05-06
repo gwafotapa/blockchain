@@ -52,7 +52,7 @@ impl Block {
         let vout = input.utxo_id().vout();
         for transaction in &self.transactions {
             if transaction.id() == txid {
-                let utxo_id = UtxoId::new(*txid, vout);
+                let utxo_id = UtxoId::new(txid, vout);
                 let utxo_data = transaction.outputs()[input.vout()].0;
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 return Some(utxo);
@@ -114,8 +114,8 @@ impl Block {
         self.height
     }
 
-    pub fn hash_prev_block(&self) -> &Hash {
-        &self.header.hash_prev_block()
+    pub fn hash_prev_block(&self) -> Hash {
+        self.header.hash_prev_block()
     }
 
     pub fn transactions(&self) -> &Vec<Transaction> {

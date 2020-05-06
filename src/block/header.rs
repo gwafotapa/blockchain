@@ -23,8 +23,8 @@ impl BlockHeader {
         Self::from(bytes)
     }
 
-    pub fn hash_prev_block(&self) -> &Hash {
-        &self.hash_prev_block
+    pub fn hash_prev_block(&self) -> Hash {
+        self.hash_prev_block
     }
 }
 

@@ -26,8 +26,8 @@ impl Utxo {
     }
 
     // TODO: Use Hash instead of &Hash everywhere
-    pub fn txid(&self) -> &Hash {
-        &self.id.txid()
+    pub fn txid(&self) -> Hash {
+        self.id.txid()
     }
 
     pub fn vout(&self) -> usize {

@@ -55,7 +55,7 @@ impl UtxoPool {
             self.data.remove(input.utxo_id());
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
-            let utxo_id = UtxoId::new(*transaction.id(), vout);
+            let utxo_id = UtxoId::new(transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             // TODO: use self.add instead and look in the rest of the file for such things
             self.data.insert(utxo_id, utxo_data);
@@ -68,13 +68,14 @@ impl UtxoPool {
             self.add(utxo);
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
-            let utxo_id = UtxoId::new(*transaction.id(), vout);
+            let utxo_id = UtxoId::new(transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             let utxo = Utxo::new(utxo_id, utxo_data);
             self.remove(&utxo);
         }
     }
 
+    // TODO: Need to check each input is only used once
     pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {

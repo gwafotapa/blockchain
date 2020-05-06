@@ -35,7 +35,7 @@ impl Blockchain {
     pub fn add(&mut self, block: Block) -> BlockHash {
         assert!(block.height() > 0, "block height cannot be zero");
         let old_top_hash = self.top_hash;
-        if self.chain.get(block.hash_prev_block()).is_some() {
+        if self.chain.get(&block.hash_prev_block()).is_some() {
             let block_hash = block.hash();
             if block.height() == 1 + self.height() {
                 self.top_hash = block_hash;
@@ -55,7 +55,7 @@ impl Blockchain {
         let hashes: Vec<_> = self
             .orphans
             .iter()
-            .filter(|(_, o)| *o.hash_prev_block() == block_hash)
+            .filter(|(_, o)| o.hash_prev_block() == block_hash)
             .map(|(h, _)| h)
             .copied()
             .collect();
@@ -93,7 +93,7 @@ impl Blockchain {
     }
 
     pub fn parent(&self, block: &Block) -> Option<&Block> {
-        self.chain.get(block.hash_prev_block())
+        self.chain.get(&block.hash_prev_block())
     }
 
     pub fn common_parent<'a>(
@@ -127,7 +127,7 @@ impl Blockchain {
             if let Some(utxo) = block.get_utxo_from(input) {
                 return utxo;
             }
-            block = self.chain.get(block.hash_prev_block()).unwrap();
+            block = self.chain.get(&block.hash_prev_block()).unwrap();
         }
     }
 

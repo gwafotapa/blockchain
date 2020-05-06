@@ -32,7 +32,7 @@ impl Wallet {
     pub fn remove_utxo_from(&mut self, input: &TransactionInput) {
         self.utxos
             .iter()
-            .position(|utxo| utxo.txid() == input.txid() && utxo.vout() == input.vout())
+            .position(|utxo| utxo.id() == input.utxo_id())
             .and_then(|i| Some(self.utxos.remove(i)));
     }
 
@@ -45,7 +45,7 @@ impl Wallet {
                 continue;
             }
             let utxo = Utxo::new(
-                UtxoId::new(*transaction.id(), vout),
+                UtxoId::new(transaction.id(), vout),
                 UtxoData::new(output.amount(), *output.public_key()),
             );
             self.add(utxo);
@@ -68,7 +68,7 @@ impl Wallet {
                 continue;
             }
             let utxo = Utxo::new(
-                UtxoId::new(*transaction.id(), vout),
+                UtxoId::new(transaction.id(), vout),
                 UtxoData::new(output.amount(), *output.public_key()),
             );
             self.remove(&utxo);

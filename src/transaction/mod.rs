@@ -83,8 +83,8 @@ impl Transaction {
         1 + 3 * 8 + self.inputs.len() * TX_INPUT_BYTES + self.outputs.len() * TX_OUTPUT_BYTES
     }
 
-    pub fn id(&self) -> &Hash {
-        &self.id
+    pub fn id(&self) -> Hash {
+        self.id
     }
 
     pub fn inputs(&self) -> &Vec<TransactionInput> {
