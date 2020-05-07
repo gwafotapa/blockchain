@@ -26,20 +26,20 @@ impl Hash for Node {Node42,1072
 impl Node {Node48,1186
     pub fn new(new49,1198
     pub fn run(&mut self) {run79,2058
-    pub fn initiate(&mut self) -> Option<Transaction> {initiate157,5955
-    pub fn propagate(&self, message: Message) {propagate206,7930
-    pub fn id(&self) -> usize {id213,8155
-    pub fn public_key(&self) -> &PublicKey {public_key217,8210
-    pub fn secret_key(&self) -> &SecretKey {secret_key221,8287
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender225,8364
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener229,8444
-    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours233,8530
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool237,8643
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut241,8717
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool245,8807
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut249,8902
-    pub fn wallet(&self) -> &Wallet {wallet253,9013
-    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut257,9079
+    pub fn initiate(&mut self) -> Option<Transaction> {initiate152,5720
+    pub fn propagate(&self, message: Message) {propagate201,7695
+    pub fn id(&self) -> usize {id208,7920
+    pub fn public_key(&self) -> &PublicKey {public_key212,7975
+    pub fn secret_key(&self) -> &SecretKey {secret_key216,8052
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender220,8129
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener224,8209
+    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours228,8295
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool232,8408
+    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut236,8482
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool240,8572
+    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut244,8667
+    pub fn wallet(&self) -> &Wallet {wallet248,8778
+    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut252,8844
 
 wallet.rs,933
 pub struct Wallet {Wallet8,172
@@ -58,7 +58,7 @@ impl fmt::Display for Wallet {Wallet95,2743
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt96,2774
 
 main.rs,24
-fn main() {main15,298
+fn main() {main14,273
 
 chain.rs,1058
 pub struct Blockchain {Blockchain11,231

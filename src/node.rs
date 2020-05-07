@@ -85,8 +85,6 @@ impl Node {
                     transaction
                 );
                 self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                self.utxo_pool.process(&transaction);
-                self.wallet.process(&transaction);
                 self.transaction_pool.add(transaction);
             }
             if let Some(block) = self
@@ -95,9 +93,9 @@ impl Node {
             {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
+                self.transaction_pool.remove_all(block.transactions());
                 self.utxo_pool.process_all(block.transactions());
                 self.wallet.process_all(block.transactions());
-                self.transaction_pool.remove_all(block.transactions());
                 self.blockchain.push(block);
             }
             if let Ok(message) = self.listener.try_recv() {
@@ -113,8 +111,6 @@ impl Node {
                                 self.id, transaction
                             );
                             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                            self.utxo_pool.process(&transaction);
-                            self.wallet.process(&transaction);
                             self.transaction_pool.add(transaction.into_owned());
                         }
                     }
@@ -128,13 +124,12 @@ impl Node {
                                 self.blockchain.push(block.into_owned());
                             self.miner.discard_block();
                             // TODO: Add a delta between old_txs and new_txs ?
-                            self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
-                            self.wallet.undo_all(&old_transactions, &self.blockchain);
                             self.transaction_pool.add_all(old_transactions);
-
-                            self.utxo_pool.process_all(&new_transactions);
-                            self.wallet.process_all(&new_transactions);
                             self.transaction_pool.remove_all(&new_transactions);
+                            self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
+                            self.utxo_pool.process_all(&new_transactions);
+                            self.wallet.undo_all(&old_transactions, &self.blockchain);
+                            self.wallet.process_all(&new_transactions);
                         }
                     }
                     Message::ShutDown => {

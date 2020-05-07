@@ -1,5 +1,4 @@
 /* TODO:
- * - ameliorate displays
  * - write/complete tests
  * - complete function validating a new block
  * - deal with all the TODOs
