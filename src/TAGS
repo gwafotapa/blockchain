@@ -26,18 +26,18 @@ impl Hash for Node {Node42,1072
 impl Node {Node48,1186
     pub fn new(new49,1198
     pub fn run(&mut self) {run79,2058
-    pub fn initiate(&mut self) -> Option<Transaction> {initiate152,5720
-    pub fn propagate(&self, message: Message) {propagate201,7695
-    pub fn id(&self) -> usize {id208,7920
-    pub fn public_key(&self) -> &PublicKey {public_key212,7975
-    pub fn secret_key(&self) -> &SecretKey {secret_key216,8052
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender220,8129
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener224,8209
-    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours228,8295
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool232,8408
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool236,8482
-    pub fn wallet(&self) -> &Wallet {wallet240,8577
-    pub fn blockchain(&self) -> &Blockchain {blockchain244,8643
+    pub fn initiate(&mut self) -> Option<Transaction> {initiate164,6663
+    pub fn propagate(&self, message: Message) {propagate213,8638
+    pub fn id(&self) -> usize {id220,8863
+    pub fn public_key(&self) -> &PublicKey {public_key224,8918
+    pub fn secret_key(&self) -> &SecretKey {secret_key228,8995
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender232,9072
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener236,9152
+    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours240,9238
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool244,9351
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool248,9425
+    pub fn wallet(&self) -> &Wallet {wallet252,9520
+    pub fn blockchain(&self) -> &Blockchain {blockchain256,9586
 
 wallet.rs,933
 pub struct Wallet {Wallet8,172
@@ -58,29 +58,31 @@ impl fmt::Display for Wallet {Wallet95,2743
 main.rs,24
 fn main() {main14,273
 
-chain.rs,1355
+chain.rs,1551
 pub struct Blockchain {Blockchain11,242
-impl Blockchain {Blockchain17,372
-    pub fn new() -> Self {new18,390
-    pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {push30,687
-    pub fn add(&mut self, block: Block) -> BlockHash {add35,866
-    pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {remove_orphans_of54,1554
-    pub fn transaction_delta(transaction_delta68,1966
-    pub fn contains(&self, block: &Block) -> bool {contains91,2869
-    pub fn parent(&self, block: &Block) -> Option<&Block> {parent95,3019
-    pub fn common_parent<'a>(common_parent99,3135
-    pub fn get_utxo_from(&self, input: &TransactionInput) -> Utxo {get_utxo_from124,3996
-    pub fn top(&self) -> &Block {top134,4307
-    pub fn height(&self) -> usize {height138,4384
-    pub fn len(&self) -> usize {len142,4455
-    pub fn chain(&self) -> &HashMap<BlockHash, Block> {chain146,4521
-    pub fn orphans(&self) -> &HashMap<BlockHash, Block> {orphans150,4604
-    pub fn top_hash(&self) -> &BlockHash {top_hash154,4691
-impl fmt::Display for Blockchain {Blockchain159,4766
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt160,4801
-impl Eq for Blockchain {}Blockchain185,5618
-impl PartialEq for Blockchain {Blockchain187,5645
-    fn eq(&self, other: &Self) -> bool {eq188,5677
+impl Blockchain {Blockchain17,375
+    pub fn new() -> Self {new18,393
+    // pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {push30,693
+    pub fn push(&mut self, block: Block) {push35,884
+    // pub fn add(&mut self, block: Block) -> BlockHash {add47,1297
+    // pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {remove_orphans_of66,2039
+    // pub fn transaction_delta(transaction_delta80,2490
+    pub fn transaction_delta(&self, old_top: &Block) -> (Vec<Transaction>, Vec<Transaction>) {transaction_delta103,3459
+    pub fn contains(&self, block: &Block) -> bool {contains122,4269
+    pub fn parent(&self, block: &Block) -> Option<&Block> {parent126,4375
+    pub fn common_parent<'a>(common_parent130,4491
+    pub fn get_utxo_from(&self, input: &TransactionInput) -> Utxo {get_utxo_from155,5352
+    pub fn top(&self) -> &Block {top165,5663
+    pub fn height(&self) -> usize {height169,5740
+    pub fn len(&self) -> usize {len173,5811
+    pub fn chain(&self) -> &HashMap<BlockHash, Block> {chain177,5877
+    // pub fn orphans(&self) -> &HashMap<BlockHash, Block> {orphans181,5960
+    pub fn top_hash(&self) -> &BlockHash {top_hash185,6056
+impl fmt::Display for Blockchain {Blockchain190,6131
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt191,6166
+impl Eq for Blockchain {}Blockchain216,7013
+impl PartialEq for Blockchain {Blockchain218,7040
+    fn eq(&self, other: &Self) -> bool {eq219,7072
 
 common.rs,1181
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];GENESIS_BLOCK_HASH_PREV_BLOCK9,175
@@ -293,15 +295,15 @@ impl UtxoPool {UtxoPool17,454
     pub fn process(&mut self, transaction: &Transaction) {process53,1433
     pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain) {undo65,1969
     pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {verify79,2565
-    pub fn validate(&self, block: &Block) -> Result<(), BlockError> {validate102,3452
-    pub fn process_all(&mut self, transactions: &[Transaction]) {process_all114,3928
-    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {undo_all120,4092
-    pub fn size(&self) -> usize {size126,4287
-impl Eq for UtxoPool {}UtxoPool131,4354
-impl PartialEq for UtxoPool {UtxoPool133,4379
-    fn eq(&self, other: &Self) -> bool {eq134,4409
-impl fmt::Display for UtxoPool {UtxoPool141,4692
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt142,4725
+    pub fn validate(&self, block: &Block) -> Result<(), BlockError> {validate103,3514
+    pub fn process_all(&mut self, transactions: &[Transaction]) {process_all113,3832
+    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {undo_all119,3996
+    pub fn size(&self) -> usize {size125,4191
+impl Eq for UtxoPool {}UtxoPool130,4258
+impl PartialEq for UtxoPool {UtxoPool132,4283
+    fn eq(&self, other: &Self) -> bool {eq133,4313
+impl fmt::Display for UtxoPool {UtxoPool140,4596
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt141,4629
 
 utxo/mod.rs,729
 pub struct Utxo {Utxo10,164

@@ -93,16 +93,14 @@ impl Node {
             {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
-                self.transaction_pool.remove_all(block.transactions());
                 self.utxo_pool.process_all(block.transactions());
                 self.wallet.process_all(block.transactions());
+                self.transaction_pool.remove_all(block.transactions());
                 self.blockchain.push(block);
             }
             if let Ok(message) = self.listener.try_recv() {
                 match Message::deserialize(message.deref()) {
                     Message::Transaction(transaction) => {
-                        // TODO: Verify if the transaction is already in the blockchain ?
-                        // Or will it be rejected anyway because of spent utxo(s) ?
                         if !self.transaction_pool.contains(&transaction)
                             && self.utxo_pool.verify(&transaction).is_ok()
                         {
@@ -115,21 +113,35 @@ impl Node {
                         }
                     }
                     Message::Block(block) => {
-                        if !self.blockchain.contains(&block)
-                            && self.utxo_pool.validate(&block).is_ok()
-                        {
-                            info!("Node #{} --- Received new block:\n{}\n", self.id, block);
-                            self.propagate(Message::Block(Cow::Borrowed(&block)));
-                            let (old_transactions, new_transactions) =
-                                self.blockchain.push(block.into_owned());
-                            self.miner.discard_block();
-                            // TODO: Add a delta between old_txs and new_txs ?
-                            self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
-                            self.utxo_pool.process_all(&new_transactions);
-                            self.wallet.undo_all(&old_transactions, &self.blockchain);
-                            self.wallet.process_all(&new_transactions);
-                            self.transaction_pool.add_all(old_transactions);
-                            self.transaction_pool.remove_all(&new_transactions);
+                        if !self.blockchain.contains(&block) {
+                            if let Some(parent) = self.blockchain.parent(&block) {
+                                let (old_transactions, new_transactions) =
+                                    self.blockchain.transaction_delta(parent);
+                                self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
+                                self.utxo_pool.process_all(&new_transactions);
+                                if self.utxo_pool.validate(&block).is_ok() {
+                                    info!("Node #{} --- Received new block:\n{}\n", self.id, block);
+                                    self.propagate(Message::Block(Cow::Borrowed(&block)));
+                                    if block.height() <= self.blockchain.height() {
+                                        self.utxo_pool
+                                            .undo_all(&new_transactions, &self.blockchain);
+                                        self.utxo_pool.process_all(&old_transactions);
+                                    } else {
+                                        self.utxo_pool.process_all(block.transactions());
+                                        self.wallet.undo_all(&old_transactions, &self.blockchain);
+                                        self.wallet.process_all(&new_transactions);
+                                        self.wallet.process_all(block.transactions());
+                                        self.transaction_pool.add_all(old_transactions);
+                                        self.transaction_pool.remove_all(&new_transactions);
+                                        self.transaction_pool.remove_all(block.transactions());
+                                        self.miner.discard_block();
+                                    }
+                                    self.blockchain.push(block.into_owned());
+                                } else {
+                                    self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                                    self.utxo_pool.process_all(&old_transactions);
+                                }
+                            }
                         }
                     }
                     Message::ShutDown => {

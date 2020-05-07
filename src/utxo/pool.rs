@@ -99,15 +99,14 @@ impl UtxoPool {
         Ok(())
     }
 
+    // TODO: Need to check no two transactions share an input
     pub fn validate(&self, block: &Block) -> Result<(), BlockError> {
         if !block.transaction_count().is_power_of_two() {
             return Err(BlockError::WrongTransactionCount);
         }
-        // TODO: Transactions need to be processed immediately after verification
-        // and they need to be undone in reverse order at the end.
-        // for transaction in block.transactions() {
-        //     self.verify(transaction)?;
-        // }
+        for transaction in block.transactions() {
+            self.verify(transaction)?;
+        }
         Ok(())
     }
 

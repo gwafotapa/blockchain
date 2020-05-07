@@ -10,7 +10,7 @@ use crate::utxo::Utxo;
 #[derive(Debug)]
 pub struct Blockchain {
     chain: HashMap<BlockHash, Block>,
-    orphans: HashMap<BlockHash, Block>,
+    // orphans: HashMap<BlockHash, Block>,
     top_hash: BlockHash,
 }
 
@@ -22,54 +22,85 @@ impl Blockchain {
         chain.insert(top_hash, genesis);
         Self {
             chain,
-            orphans: HashMap::new(),
+            // orphans: HashMap::new(),
             top_hash,
         }
     }
 
-    pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {
-        let old_top_hash = self.add(block);
-        self.transaction_delta(old_top_hash)
-    }
+    // pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {
+    //     let old_top_hash = self.add(block);
+    //     self.transaction_delta(old_top_hash)
+    // }
 
-    pub fn add(&mut self, block: Block) -> BlockHash {
-        assert!(block.height() > 0, "block height cannot be zero");
-        let old_top_hash = self.top_hash;
-        if self.chain.get(&block.hash_prev_block()).is_some() {
-            let block_hash = block.hash();
-            if block.height() == 1 + self.height() {
-                self.top_hash = block_hash;
-            }
-            self.chain.insert(block_hash, block);
-            let orphans = self.remove_orphans_of(block_hash);
-            for orphan in orphans {
-                self.add(orphan);
-            }
-        } else {
-            self.orphans.insert(block.hash(), block);
+    pub fn push(&mut self, block: Block) {
+        if self.contains(&block) {
+            panic!("Block already belongs to the blockchain");
+        } else if self.parent(&block).is_none() {
+            panic!("Block has no parent in the blockchain");
         }
-        old_top_hash
+        if block.height() > self.height() {
+            self.top_hash = block.hash();
+        }
+        self.chain.insert(block.hash(), block);
     }
 
-    pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {
-        let hashes: Vec<_> = self
-            .orphans
-            .iter()
-            .filter(|(_, o)| o.hash_prev_block() == block_hash)
-            .map(|(h, _)| h)
-            .copied()
-            .collect();
-        hashes
-            .iter()
-            .map(|h| self.orphans.remove(h).unwrap())
-            .collect()
-    }
+    // pub fn add(&mut self, block: Block) -> BlockHash {
+    //     assert!(block.height() > 0, "block height cannot be zero");
+    //     let old_top_hash = self.top_hash;
+    //     if self.chain.get(&block.hash_prev_block()).is_some() {
+    //         let block_hash = block.hash();
+    //         if block.height() == 1 + self.height() {
+    //             self.top_hash = block_hash;
+    //         }
+    //         self.chain.insert(block_hash, block);
+    //         let orphans = self.remove_orphans_of(block_hash);
+    //         for orphan in orphans {
+    //             self.add(orphan);
+    //         }
+    //     } else {
+    //         self.orphans.insert(block.hash(), block);
+    //     }
+    //     old_top_hash
+    // }
 
-    pub fn transaction_delta(
-        &self,
-        old_top_hash: BlockHash,
-    ) -> (Vec<Transaction>, Vec<Transaction>) {
-        let old_top = self.chain.get(&old_top_hash).unwrap();
+    // pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {
+    //     let hashes: Vec<_> = self
+    //         .orphans
+    //         .iter()
+    //         .filter(|(_, o)| o.hash_prev_block() == block_hash)
+    //         .map(|(h, _)| h)
+    //         .copied()
+    //         .collect();
+    //     hashes
+    //         .iter()
+    //         .map(|h| self.orphans.remove(h).unwrap())
+    //         .collect()
+    // }
+
+    // pub fn transaction_delta(
+    //     &self,
+    //     old_top_hash: BlockHash,
+    // ) -> (Vec<Transaction>, Vec<Transaction>) {
+    //     let old_top = self.chain.get(&old_top_hash).unwrap();
+    //     let new_top = self.top();
+    //     let parent = self.common_parent(old_top, new_top).unwrap();
+    //     // TODO: Add a function for the next 6 lines
+    //     let mut old_transactions = vec![];
+    //     let mut old_block = old_top;
+    //     while old_block != parent {
+    //         old_transactions.extend(old_block.transactions().clone());
+    //         old_block = self.parent(old_block).unwrap();
+    //     }
+    //     let mut new_transactions = vec![];
+    //     let mut new_block = new_top;
+    //     while new_block != parent {
+    //         new_transactions.extend(new_block.transactions().clone());
+    //         new_block = self.parent(new_block).unwrap();
+    //     }
+    //     (old_transactions, new_transactions)
+    // }
+
+    pub fn transaction_delta(&self, old_top: &Block) -> (Vec<Transaction>, Vec<Transaction>) {
         let new_top = self.top();
         let parent = self.common_parent(old_top, new_top).unwrap();
         // TODO: Add a function for the next 6 lines
@@ -89,7 +120,7 @@ impl Blockchain {
     }
 
     pub fn contains(&self, block: &Block) -> bool {
-        self.chain.contains_key(&block.hash()) || self.orphans.contains_key(&block.hash())
+        self.chain.contains_key(&block.hash())
     }
 
     pub fn parent(&self, block: &Block) -> Option<&Block> {
@@ -147,9 +178,9 @@ impl Blockchain {
         &self.chain
     }
 
-    pub fn orphans(&self) -> &HashMap<BlockHash, Block> {
-        &self.orphans
-    }
+    // pub fn orphans(&self) -> &HashMap<BlockHash, Block> {
+    //     &self.orphans
+    // }
 
     pub fn top_hash(&self) -> &BlockHash {
         &self.top_hash
@@ -168,16 +199,16 @@ impl fmt::Display for Blockchain {
                 format!("{:#x}", block.hash_prev_block())
             )?;
         }
-        write!(f, "}}\n\nOrphans ({}) {{", self.orphans.len())?;
-        for (_, block) in &self.orphans {
-            write!(
-                f,
-                "\n  height: {}\n  id: {}\n  parent: {}\n",
-                block.height(),
-                format!("{:#x}", block.id()),
-                format!("{:#x}", block.hash_prev_block())
-            )?;
-        }
+        // write!(f, "}}\n\nOrphans ({}) {{", self.orphans.len())?;
+        // for (_, block) in &self.orphans {
+        //     write!(
+        //         f,
+        //         "\n  height: {}\n  id: {}\n  parent: {}\n",
+        //         block.height(),
+        //         format!("{:#x}", block.id()),
+        //         format!("{:#x}", block.hash_prev_block())
+        //     )?;
+        // }
         write!(f, "}}\n")
     }
 }
@@ -194,11 +225,11 @@ impl PartialEq for Blockchain {
         if ch1.symmetric_difference(&ch2).next().is_some() {
             return false;
         }
-        let o1: HashSet<BlockHash> = self.orphans.iter().map(|(h, _)| h).copied().collect();
-        let o2: HashSet<BlockHash> = other.orphans.iter().map(|(h, _)| h).copied().collect();
-        if o1.symmetric_difference(&o2).next().is_some() {
-            return false;
-        }
+        // let o1: HashSet<BlockHash> = self.orphans.iter().map(|(h, _)| h).copied().collect();
+        // let o2: HashSet<BlockHash> = other.orphans.iter().map(|(h, _)| h).copied().collect();
+        // if o1.symmetric_difference(&o2).next().is_some() {
+        //     return false;
+        // }
         true
     }
 }
