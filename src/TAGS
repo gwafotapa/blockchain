@@ -270,17 +270,17 @@ impl<B> From<B> for UtxoIdUtxoId39,726
 //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt52,1048
 
 utxo/data.rs,589
-pub struct UtxoData {UtxoData7,142
-impl UtxoData {UtxoData12,211
-    pub fn new(amount: u32, public_key: PublicKey) -> Self {new13,227
-    pub fn serialize(&self) -> Vec<u8> {serialize17,331
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize24,562
-    pub fn amount(&self) -> u32 {amount31,679
-    pub fn public_key(&self) -> &PublicKey {public_key35,740
-impl<B> From<B> for UtxoDataUtxoData40,819
-    fn from(bytes: B) -> Self {from44,876
-// impl fmt::Display for UtxoData {UtxoData52,1154
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt53,1190
+pub struct UtxoData {UtxoData7,121
+impl UtxoData {UtxoData12,190
+    pub fn new(amount: u32, public_key: PublicKey) -> Self {new13,206
+    pub fn serialize(&self) -> Vec<u8> {serialize17,310
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize24,541
+    pub fn amount(&self) -> u32 {amount31,658
+    pub fn public_key(&self) -> &PublicKey {public_key35,719
+impl<B> From<B> for UtxoDataUtxoData40,798
+    fn from(bytes: B) -> Self {from44,855
+// impl fmt::Display for UtxoData {UtxoData52,1133
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt53,1169
 
 utxo/pool.rs,1263
 pub struct UtxoPool {UtxoPool13,392
@@ -300,8 +300,8 @@ impl UtxoPool {UtxoPool17,454
 impl Eq for UtxoPool {}UtxoPool131,4354
 impl PartialEq for UtxoPool {UtxoPool133,4379
     fn eq(&self, other: &Self) -> bool {eq134,4409
-impl fmt::Display for UtxoPool {UtxoPool141,4686
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt142,4719
+impl fmt::Display for UtxoPool {UtxoPool141,4692
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt142,4725
 
 utxo/mod.rs,729
 pub struct Utxo {Utxo10,164

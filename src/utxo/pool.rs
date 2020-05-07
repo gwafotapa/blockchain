@@ -132,8 +132,8 @@ impl Eq for UtxoPool {}
 
 impl PartialEq for UtxoPool {
     fn eq(&self, other: &Self) -> bool {
-        let (p1, _): (HashSet<UtxoId>, HashSet<UtxoData>) = self.data.iter().unzip();
-        let (p2, _): (HashSet<UtxoId>, HashSet<UtxoData>) = other.data.iter().unzip();
+        let p1: HashSet<UtxoId> = self.data.iter().map(|(id, _)| id).copied().collect();
+        let p2: HashSet<UtxoId> = other.data.iter().map(|(id, _)| id).copied().collect();
         p1.symmetric_difference(&p2).next().is_none()
     }
 }
