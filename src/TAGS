@@ -16,7 +16,7 @@ impl fmt::Debug for Network {Network162,4944
 mod test {test181,5457
     fn test_random_graph() {test_random_graph185,5499
 
-node.rs,1342
+node.rs,1161
 pub struct Node {Node19,547
 impl Eq for Node {}Node34,931
 impl PartialEq for Node {Node36,952
@@ -35,11 +35,9 @@ impl Node {Node48,1186
     pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener224,8209
     pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {neighbours228,8295
     pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool232,8408
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {utxo_pool_mut236,8482
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool240,8572
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {transaction_pool_mut244,8667
-    pub fn wallet(&self) -> &Wallet {wallet248,8778
-    pub fn wallet_mut(&mut self) -> &mut Wallet {wallet_mut252,8844
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool236,8482
+    pub fn wallet(&self) -> &Wallet {wallet240,8577
+    pub fn blockchain(&self) -> &Blockchain {blockchain244,8643
 
 wallet.rs,933
 pub struct Wallet {Wallet8,172
@@ -60,24 +58,29 @@ impl fmt::Display for Wallet {Wallet95,2743
 main.rs,24
 fn main() {main14,273
 
-chain.rs,1058
-pub struct Blockchain {Blockchain11,231
-impl Blockchain {Blockchain17,361
-    pub fn new() -> Self {new18,379
-    pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {push30,676
-    pub fn add(&mut self, block: Block) -> BlockHash {add35,855
-    pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {remove_orphans_of54,1543
-    pub fn transaction_delta(transaction_delta68,1955
-    pub fn contains(&self, block: &Block) -> bool {contains91,2858
-    pub fn parent(&self, block: &Block) -> Option<&Block> {parent95,3008
-    pub fn common_parent<'a>(common_parent99,3124
-    pub fn get_utxo_from(&self, input: &TransactionInput) -> Utxo {get_utxo_from124,3985
-    pub fn top(&self) -> &Block {top134,4296
-    pub fn height(&self) -> usize {height138,4373
-    pub fn len(&self) -> usize {len142,4444
-    pub fn top_hash(&self) -> &BlockHash {top_hash146,4510
-impl fmt::Display for Blockchain {Blockchain151,4585
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt152,4620
+chain.rs,1355
+pub struct Blockchain {Blockchain11,242
+impl Blockchain {Blockchain17,372
+    pub fn new() -> Self {new18,390
+    pub fn push(&mut self, block: Block) -> (Vec<Transaction>, Vec<Transaction>) {push30,687
+    pub fn add(&mut self, block: Block) -> BlockHash {add35,866
+    pub fn remove_orphans_of(&mut self, block_hash: BlockHash) -> Vec<Block> {remove_orphans_of54,1554
+    pub fn transaction_delta(transaction_delta68,1966
+    pub fn contains(&self, block: &Block) -> bool {contains91,2869
+    pub fn parent(&self, block: &Block) -> Option<&Block> {parent95,3019
+    pub fn common_parent<'a>(common_parent99,3135
+    pub fn get_utxo_from(&self, input: &TransactionInput) -> Utxo {get_utxo_from124,3996
+    pub fn top(&self) -> &Block {top134,4307
+    pub fn height(&self) -> usize {height138,4384
+    pub fn len(&self) -> usize {len142,4455
+    pub fn chain(&self) -> &HashMap<BlockHash, Block> {chain146,4521
+    pub fn orphans(&self) -> &HashMap<BlockHash, Block> {orphans150,4604
+    pub fn top_hash(&self) -> &BlockHash {top_hash154,4691
+impl fmt::Display for Blockchain {Blockchain159,4766
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt160,4801
+impl Eq for Blockchain {}Blockchain185,5618
+impl PartialEq for Blockchain {Blockchain187,5645
+    fn eq(&self, other: &Self) -> bool {eq188,5677
 
 common.rs,1181
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];GENESIS_BLOCK_HASH_PREV_BLOCK9,175

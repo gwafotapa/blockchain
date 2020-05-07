@@ -124,12 +124,12 @@ impl Node {
                                 self.blockchain.push(block.into_owned());
                             self.miner.discard_block();
                             // TODO: Add a delta between old_txs and new_txs ?
-                            self.transaction_pool.add_all(old_transactions);
-                            self.transaction_pool.remove_all(&new_transactions);
                             self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
                             self.utxo_pool.process_all(&new_transactions);
                             self.wallet.undo_all(&old_transactions, &self.blockchain);
                             self.wallet.process_all(&new_transactions);
+                            self.transaction_pool.add_all(old_transactions);
+                            self.transaction_pool.remove_all(&new_transactions);
                         }
                     }
                     Message::ShutDown => {
@@ -233,23 +233,15 @@ impl Node {
         &self.utxo_pool
     }
 
-    pub fn utxo_pool_mut(&mut self) -> &mut UtxoPool {
-        &mut self.utxo_pool
-    }
-
     pub fn transaction_pool(&self) -> &TransactionPool {
         &self.transaction_pool
-    }
-
-    pub fn transaction_pool_mut(&mut self) -> &mut TransactionPool {
-        &mut self.transaction_pool
     }
 
     pub fn wallet(&self) -> &Wallet {
         &self.wallet
     }
 
-    pub fn wallet_mut(&mut self) -> &mut Wallet {
-        &mut self.wallet
+    pub fn blockchain(&self) -> &Blockchain {
+        &self.blockchain
     }
 }

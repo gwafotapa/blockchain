@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use crate::block::Block;
@@ -143,6 +143,14 @@ impl Blockchain {
         1 + self.height()
     }
 
+    pub fn chain(&self) -> &HashMap<BlockHash, Block> {
+        &self.chain
+    }
+
+    pub fn orphans(&self) -> &HashMap<BlockHash, Block> {
+        &self.orphans
+    }
+
     pub fn top_hash(&self) -> &BlockHash {
         &self.top_hash
     }
@@ -171,5 +179,26 @@ impl fmt::Display for Blockchain {
             )?;
         }
         write!(f, "}}\n")
+    }
+}
+
+impl Eq for Blockchain {}
+
+impl PartialEq for Blockchain {
+    fn eq(&self, other: &Self) -> bool {
+        if self.top_hash != other.top_hash {
+            return false;
+        }
+        let ch1: HashSet<BlockHash> = self.chain.iter().map(|(h, _)| h).copied().collect();
+        let ch2: HashSet<BlockHash> = other.chain.iter().map(|(h, _)| h).copied().collect();
+        if ch1.symmetric_difference(&ch2).next().is_some() {
+            return false;
+        }
+        let o1: HashSet<BlockHash> = self.orphans.iter().map(|(h, _)| h).copied().collect();
+        let o2: HashSet<BlockHash> = other.orphans.iter().map(|(h, _)| h).copied().collect();
+        if o1.symmetric_difference(&o2).next().is_some() {
+            return false;
+        }
+        true
     }
 }

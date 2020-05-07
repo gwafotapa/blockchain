@@ -29,6 +29,7 @@ fn consensus() {
         for i in 0..nodes.len() - 1 {
             assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
             assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
+            assert_eq!(nodes[i].blockchain(), nodes[i + 1].blockchain());
         }
     }
 }
