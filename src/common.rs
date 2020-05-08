@@ -21,6 +21,7 @@ pub const UTXO_ID_BYTES: usize = 32 + 8;
 
 const SHUT_DOWN: &[u8] = b"Shut down";
 
+#[derive(Eq, PartialEq)]
 pub enum Message<'a> {
     Transaction(Cow<'a, Transaction>),
     Block(Cow<'a, Block>),

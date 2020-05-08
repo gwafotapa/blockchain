@@ -7,7 +7,7 @@ use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::Arc;
+use std::sync::{Arc, Barrier, Mutex};
 
 use crate::chain::Blockchain;
 use crate::common::{Message, SPEND_PROBA};
@@ -29,6 +29,7 @@ pub struct Node {
     transaction_pool: TransactionPool,
     wallet: Wallet,
     miner: Miner,
+    synchronizer: Synchronizer,
 }
 
 impl Eq for Node {}
@@ -54,6 +55,7 @@ impl Node {
         listener: Receiver<Arc<Vec<u8>>>,
         neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
         network: Vec<PublicKey>,
+        synchronizer: Synchronizer,
     ) -> Self {
         let blockchain = Blockchain::new();
         let utxo_pool = UtxoPool::new(network.clone());
@@ -73,6 +75,7 @@ impl Node {
             transaction_pool,
             wallet,
             miner,
+            synchronizer,
         }
     }
 
@@ -98,64 +101,13 @@ impl Node {
                 self.transaction_pool.remove_all(block.transactions());
                 self.blockchain.push(block);
             }
-            if let Ok(message) = self.listener.try_recv() {
-                match Message::deserialize(message.deref()) {
-                    Message::Transaction(transaction) => {
-                        if !self.transaction_pool.contains(&transaction)
-                            && self.utxo_pool.verify(&transaction).is_ok()
-                        {
-                            info!(
-                                "Node #{} --- Received new transaction:\n{}\n",
-                                self.id, transaction
-                            );
-                            self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                            self.transaction_pool.add(transaction.into_owned());
-                        }
-                    }
-                    Message::Block(block) => {
-                        if !self.blockchain.contains(&block) {
-                            if let Some(parent) = self.blockchain.parent(&block) {
-                                let (old_transactions, new_transactions) =
-                                    self.blockchain.transaction_delta(parent);
-                                self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
-                                self.utxo_pool.process_all(&new_transactions);
-                                if self.utxo_pool.validate(&block).is_ok() {
-                                    info!("Node #{} --- Received new block:\n{}\n", self.id, block);
-                                    self.propagate(Message::Block(Cow::Borrowed(&block)));
-                                    if block.height() <= self.blockchain.height() {
-                                        self.utxo_pool
-                                            .undo_all(&new_transactions, &self.blockchain);
-                                        self.utxo_pool.process_all(&old_transactions);
-                                    } else {
-                                        self.utxo_pool.process_all(block.transactions());
-                                        self.wallet.undo_all(&old_transactions, &self.blockchain);
-                                        self.wallet.process_all(&new_transactions);
-                                        self.wallet.process_all(block.transactions());
-                                        self.transaction_pool.add_all(old_transactions);
-                                        self.transaction_pool.remove_all(&new_transactions);
-                                        self.transaction_pool.remove_all(block.transactions());
-                                        self.miner.discard_block();
-                                    }
-                                    self.blockchain.push(block.into_owned());
-                                } else {
-                                    self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
-                                    self.utxo_pool.process_all(&old_transactions);
-                                }
-                            }
-                        }
-                    }
-                    Message::ShutDown => {
-                        info!(
-                            "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
-                            self.id,
-                            self.public_key,
-                            self.blockchain,
-                            self.transaction_pool,
-                            self.utxo_pool,
-                            self.wallet
-                        );
-                        return;
-                    }
+            if let Ok(bytes) = self.listener.try_recv() {
+                let message = Message::deserialize(bytes.deref());
+                if message == Message::ShutDown {
+                    self.process(message);
+                    return;
+                } else {
+                    self.process(message);
                 }
             }
         }
@@ -217,6 +169,82 @@ impl Node {
         }
     }
 
+    // TODO: Fragment this function
+    pub fn process(&mut self, message: Message) {
+        match message {
+            Message::Transaction(transaction) => {
+                if !self.transaction_pool.contains(&transaction)
+                    && self.utxo_pool.verify(&transaction).is_ok()
+                {
+                    info!(
+                        "Node #{} --- Received new transaction:\n{}\n",
+                        self.id, transaction
+                    );
+                    self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+                    self.transaction_pool.add(transaction.into_owned());
+                }
+            }
+            Message::Block(block) => {
+                if !self.blockchain.contains(&block) {
+                    if let Some(parent) = self.blockchain.parent(&block) {
+                        let (old_transactions, new_transactions) =
+                            self.blockchain.transaction_delta(parent);
+                        self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
+                        self.utxo_pool.process_all(&new_transactions);
+                        if self.utxo_pool.validate(&block).is_ok() {
+                            info!("Node #{} --- Received new block:\n{}\n", self.id, block);
+                            self.propagate(Message::Block(Cow::Borrowed(&block)));
+                            if block.height() <= self.blockchain.height() {
+                                self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                                self.utxo_pool.process_all(&old_transactions);
+                            } else {
+                                self.utxo_pool.process_all(block.transactions());
+                                self.wallet.undo_all(&old_transactions, &self.blockchain);
+                                self.wallet.process_all(&new_transactions);
+                                self.wallet.process_all(block.transactions());
+                                self.transaction_pool.add_all(old_transactions);
+                                self.transaction_pool.remove_all(&new_transactions);
+                                self.transaction_pool.remove_all(block.transactions());
+                                self.miner.discard_block();
+                            }
+                            self.blockchain.push(block.into_owned());
+                        } else {
+                            self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                            self.utxo_pool.process_all(&old_transactions);
+                        }
+                    }
+                }
+            }
+            Message::ShutDown => {
+                info!(
+                    "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
+                    self.id,
+                    self.public_key,
+                    self.blockchain,
+                    self.transaction_pool,
+                    self.utxo_pool,
+                    self.wallet
+                );
+                self.synchronizer.barrier().wait();
+                loop {
+                    let state = self.synchronizer.state();
+                    let mut state = state.lock().unwrap();
+                    while let Ok(bytes) = self.listener.try_recv() {
+                        let message = Message::deserialize(bytes.deref());
+                        self.process(message);
+                        for neighbour in self.neighbours.iter().map(|n| n.0) {
+                            state[neighbour] = true;
+                        }
+                    }
+                    state[self.id] = false;
+                    if state.iter().all(|&b| b == false) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     pub fn id(&self) -> usize {
         self.id
     }
@@ -255,5 +283,24 @@ impl Node {
 
     pub fn blockchain(&self) -> &Blockchain {
         &self.blockchain
+    }
+}
+
+pub struct Synchronizer {
+    barrier: Arc<Barrier>,
+    state: Arc<Mutex<Vec<bool>>>,
+}
+
+impl Synchronizer {
+    pub fn new(barrier: Arc<Barrier>, state: Arc<Mutex<Vec<bool>>>) -> Self {
+        Self { barrier, state }
+    }
+
+    pub fn barrier(&self) -> &Arc<Barrier> {
+        &self.barrier
+    }
+
+    pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {
+        Arc::clone(&self.state)
     }
 }

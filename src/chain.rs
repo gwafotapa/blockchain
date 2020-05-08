@@ -32,6 +32,7 @@ impl Blockchain {
     //     self.transaction_delta(old_top_hash)
     // }
 
+    // TODO: Remove the panic macros
     pub fn push(&mut self, block: Block) {
         if self.contains(&block) {
             panic!("Block already belongs to the blockchain");

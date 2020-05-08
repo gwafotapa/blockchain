@@ -5,11 +5,11 @@ use secp256k1::{PublicKey, Secp256k1, SecretKey};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::sync::mpsc::Sender;
-use std::sync::{mpsc, Arc};
+use std::sync::{mpsc, Arc, Barrier, Mutex};
 use std::thread::{self, JoinHandle};
 
 use crate::common::Message;
-use crate::node::Node;
+use crate::node::{Node, Synchronizer};
 
 type Vertex = usize;
 type Neighborhood = HashSet<Vertex>;
@@ -59,6 +59,8 @@ impl Network {
 
         let graph = random_graph(nodes);
         let mut network = Network::with_capacity(nodes);
+        let barrier = Arc::new(Barrier::new(nodes));
+        let state = Arc::new(Mutex::new(vec![true; nodes]));
         for id in (0..nodes).rev() {
             let public_key = public_keys[id];
             let secret_key = secret_keys[id];
@@ -68,6 +70,9 @@ impl Network {
                 .iter()
                 .map(|&x| (x, public_keys[x], senders[x].clone()))
                 .collect();
+            let barrier = Arc::clone(&barrier);
+            let state = Arc::clone(&state);
+            let synchronizer = Synchronizer::new(barrier, state);
             let node = Node::new(
                 id,
                 public_key,
@@ -76,6 +81,7 @@ impl Network {
                 listener,
                 neighbours,
                 public_keys.clone(),
+                synchronizer,
             );
             network.add(node);
         }
