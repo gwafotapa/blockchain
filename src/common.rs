@@ -7,6 +7,7 @@ use crate::transaction::Transaction;
 pub type Hash = GenericArray<u8, U32>;
 
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];
+pub const HEADER_BYTES: usize = 64;
 pub const MINE_NEW_BLOCK_PROBA: f64 = 1.0 / 100000.0;
 pub const NODES: usize = 4;
 pub const SIGNATURE_BYTES: usize = 64;

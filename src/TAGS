@@ -106,26 +106,27 @@ impl Eq for Blockchain {}Blockchain217,7050
 impl PartialEq for Blockchain {Blockchain219,7077
     fn eq(&self, other: &Self) -> bool {eq220,7109
 
-common.rs,1181
+common.rs,1238
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];GENESIS_BLOCK_HASH_PREV_BLOCK9,175
-pub const MINE_NEW_BLOCK_PROBA: f64 = 1.0 / 100000.0;MINE_NEW_BLOCK_PROBA10,238
-pub const NODES: usize = 4;NODES11,292
-pub const SIGNATURE_BYTES: usize = 64;SIGNATURE_BYTES12,320
-pub const SPEND_PROBA: f64 = 1.0 / 1000000.0;SPEND_PROBA13,359
-pub const TX_INPUT_BYTES: usize = UTXO_ID_BYTES + SIGNATURE_BYTES;TX_INPUT_BYTES14,405
-pub const TX_OUTPUT_BYTES: usize = UTXO_DATA_BYTES;TX_OUTPUT_BYTES15,472
-pub const TXS_PER_BLOCK: usize = 2;TXS_PER_BLOCK16,524
-pub const UTXO_AMOUNT_INIT: u32 = 10;UTXO_AMOUNT_INIT17,560
-pub const UTXO_DATA_BYTES: usize = 4 + 33;UTXO_DATA_BYTES18,598
-pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];UTXO_HASH_INIT19,641
-pub const UTXO_ID_BYTES: usize = 32 + 8;UTXO_ID_BYTES20,689
-const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN22,731
-pub enum Message<'a> {Message25,796
-impl<'a, B> From<B> for Message<'a>Message31,902
-    fn from(bytes: B) -> Self {from35,966
-impl<'a> Message<'a> {Message48,1384
-    pub fn serialize(&self) -> Vec<u8> {serialize49,1407
-    pub fn deserialize<T>(bytes: T) -> Selfdeserialize57,1669
+pub const HEADER_BYTES: usize = 64;HEADER_BYTES10,238
+pub const MINE_NEW_BLOCK_PROBA: f64 = 1.0 / 100000.0;MINE_NEW_BLOCK_PROBA11,274
+pub const NODES: usize = 4;NODES12,328
+pub const SIGNATURE_BYTES: usize = 64;SIGNATURE_BYTES13,356
+pub const SPEND_PROBA: f64 = 1.0 / 1000000.0;SPEND_PROBA14,395
+pub const TX_INPUT_BYTES: usize = UTXO_ID_BYTES + SIGNATURE_BYTES;TX_INPUT_BYTES15,441
+pub const TX_OUTPUT_BYTES: usize = UTXO_DATA_BYTES;TX_OUTPUT_BYTES16,508
+pub const TXS_PER_BLOCK: usize = 2;TXS_PER_BLOCK17,560
+pub const UTXO_AMOUNT_INIT: u32 = 10;UTXO_AMOUNT_INIT18,596
+pub const UTXO_DATA_BYTES: usize = 4 + 33;UTXO_DATA_BYTES19,634
+pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];UTXO_HASH_INIT20,677
+pub const UTXO_ID_BYTES: usize = 32 + 8;UTXO_ID_BYTES21,725
+const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN23,767
+pub enum Message<'a> {Message26,832
+impl<'a, B> From<B> for Message<'a>Message32,938
+    fn from(bytes: B) -> Self {from36,1002
+impl<'a> Message<'a> {Message49,1420
+    pub fn serialize(&self) -> Vec<u8> {serialize50,1443
+    pub fn deserialize<T>(bytes: T) -> Selfdeserialize58,1705
 
 transaction/pool.rs,1254
 pub struct TransactionPool {TransactionPool12,259
@@ -223,43 +224,42 @@ impl error::Error for BlockError {BlockError22,525
 impl From<TransactionError> for BlockError {BlockError31,784
     fn from(err: TransactionError) -> Self {from32,829
 
-block/mod.rs,1499
-// const GENESIS_BLOCK_HASH_MERKLE_ROOT: &[u8; 32] =GENESIS_BLOCK_HASH_MERKLE_ROOT14,315
-pub struct Block {Block18,475
-impl Block {Block24,577
-    pub fn genesis() -> Self {genesis25,590
-    pub fn new(height: usize, hash_prev_block: Hash, transactions: Vec<Transaction>) -> Self {new37,1000
-    pub fn get_utxo_from(&self, input: &TransactionInput) -> Option<Utxo> {get_utxo_from51,1473
-    // pub fn child(&self, transactions: Vec<Transaction>) -> Self {child65,1988
-    //     pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root69,2134
-    pub fn hash(&self) -> Hash {hash73,2244
-    pub fn serialize(&self) -> Vec<u8> {serialize81,2465
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize99,3214
-    pub fn is_genesis(&self) -> bool {is_genesis106,3331
-    pub fn transaction_count(&self) -> usize {transaction_count110,3402
-    pub fn id(&self) -> Hash {id114,3488
-    pub fn height(&self) -> usize {height118,3546
-    pub fn hash_prev_block(&self) -> Hash {hash_prev_block122,3609
-    pub fn transactions(&self) -> &Vec<Transaction> {transactions126,3698
-impl Eq for Block {}Block131,3788
-impl PartialEq for Block {Block133,3810
-    fn eq(&self, other: &Self) -> bool {eq134,3837
-impl<B> From<B> for BlockBlock139,3923
-    fn from(bytes: B) -> Self {from143,3977
-impl fmt::Display for Block {Block166,4716
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt167,4746
-pub mod error;error184,5246
-pub mod header;header185,5261
+block/mod.rs,1312
+pub struct Block {Block15,353
+impl Block {Block21,455
+    pub fn genesis() -> Self {genesis22,468
+    pub fn new(parent: &Block, transactions: Vec<Transaction>) -> Result<Self, BlockError> {new35,802
+    pub fn get_utxo_from(&self, input: &TransactionInput) -> Option<Utxo> {get_utxo_from47,1238
+    pub fn hash(&self) -> Hash {hash61,1753
+    pub fn serialize(&self) -> Vec<u8> {serialize69,1974
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize78,2325
+    pub fn is_genesis(&self) -> bool {is_genesis85,2442
+    pub fn transaction_count(&self) -> usize {transaction_count89,2513
+    pub fn id(&self) -> Hash {id93,2599
+    pub fn height(&self) -> usize {height97,2657
+    pub fn hash_prev_block(&self) -> Hash {hash_prev_block101,2720
+    pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root105,2809
+    pub fn transactions(&self) -> &Vec<Transaction> {transactions109,2900
+impl Eq for Block {}Block114,2990
+impl PartialEq for Block {Block116,3012
+    fn eq(&self, other: &Self) -> bool {eq117,3039
+impl<B> From<B> for BlockBlock122,3125
+    fn from(bytes: B) -> Self {from126,3179
+impl fmt::Display for Block {Block149,3938
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt150,3968
+pub mod error;error167,4468
+pub mod header;header168,4483
 
-block/header.rs,422
+block/header.rs,515
 pub struct BlockHeader {BlockHeader4,50
-impl BlockHeader {BlockHeader10,155
-    pub fn new(hash_prev_block: Hash) -> Self {new11,174
-    pub fn serialize(&self) -> Vec<u8> {serialize15,262
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize19,348
-    pub fn hash_prev_block(&self) -> Hash {hash_prev_block26,465
-impl<B> From<B> for BlockHeaderBlockHeader31,547
-    fn from(bytes: B) -> Self {from35,607
+impl BlockHeader {BlockHeader10,152
+    pub fn new(hash_prev_block: Hash, hash_merkle_root: Hash) -> Self {new11,171
+    pub fn serialize(&self) -> Vec<u8> {serialize18,334
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize25,513
+    pub fn hash_prev_block(&self) -> Hash {hash_prev_block32,630
+    pub fn hash_merkle_root(&self) -> Hash {hash_merkle_root36,710
+impl<B> From<B> for BlockHeaderBlockHeader41,794
+    fn from(bytes: B) -> Self {from45,854
 
 lib.rs,251
 pub mod block;block1,0
@@ -278,7 +278,7 @@ impl Miner {Miner11,172
     pub fn new() -> Self {new12,185
     pub fn mine(&mut self, top: &Block, transaction_pool: &TransactionPool) -> Option<Block> {mine16,248
     pub fn mine_from(&mut self, top: &Block, transaction_pool: &TransactionPool) {mine_from29,664
-    pub fn discard_block(&mut self) {discard_block40,1057
+    pub fn discard_block(&mut self) {discard_block40,1041
 
 utxo/id.rs,542
 pub struct UtxoId {UtxoId6,122

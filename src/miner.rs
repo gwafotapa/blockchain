@@ -34,7 +34,7 @@ impl Miner {
         }
         self.block = transaction_pool
             .select()
-            .map(|transactions| Block::new(1 + top.height(), top.hash(), transactions));
+            .map(|transactions| Block::new(top, transactions).unwrap());
     }
 
     pub fn discard_block(&mut self) {
