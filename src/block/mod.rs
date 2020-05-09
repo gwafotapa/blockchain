@@ -45,11 +45,9 @@ impl Block {
     }
 
     pub fn get_utxo_from(&self, input: &TransactionInput) -> Option<Utxo> {
-        let txid = input.utxo_id().txid();
-        let vout = input.utxo_id().vout();
         for transaction in &self.transactions {
-            if transaction.id() == txid {
-                let utxo_id = UtxoId::new(txid, vout);
+            if transaction.id() == input.txid() {
+                let utxo_id = UtxoId::new(input.txid(), input.vout());
                 let utxo_data = transaction.outputs()[input.vout()].0;
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 return Some(utxo);

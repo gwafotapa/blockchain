@@ -1,4 +1,5 @@
 /* TODO:
+ * - aggregate all errors
  * - write/complete tests
  * - deal with all the TODOs
  * - clean and refactor

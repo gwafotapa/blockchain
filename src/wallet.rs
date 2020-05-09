@@ -4,10 +4,10 @@ use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
 use std::fmt;
 
-use crate::chain::Blockchain;
-use crate::common::SPEND_PROBA;
+use crate::blockchain::Blockchain;
+use crate::common::{Hash, SPEND_PROBA, UTXO_HASH_INIT};
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
-use crate::utxo::{Utxo, UtxoData, UtxoId};
+use crate::utxo::{Utxo, UtxoData, UtxoId, UtxoPool};
 
 pub struct Wallet {
     public_key: PublicKey,
@@ -120,27 +120,49 @@ impl Wallet {
         }
     }
 
-    pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain) {
+    pub fn undo(
+        &mut self,
+        transaction: &Transaction,
+        blockchain: &Blockchain,
+        utxo_pool: &UtxoPool,
+    ) {
         for input in transaction.inputs() {
-            let utxo = blockchain.get_utxo_from(input);
-            self.add(utxo);
-        }
-        for (vout, output) in transaction.outputs().iter().enumerate() {
-            if output.public_key() != self.public_key() {
-                continue;
+            if input.txid() == Hash::from(UTXO_HASH_INIT) {
+                let utxo_id = UtxoId::new(input.txid(), input.vout());
+                let utxo_data = utxo_pool.initial_utxos()[&utxo_id];
+                let utxo = Utxo::new(utxo_id, utxo_data);
+                if utxo.public_key() == self.public_key() {
+                    self.add(utxo);
+                }
+            } else {
+                let utxo = blockchain.get_utxo_from(input, blockchain.top());
+                if utxo.public_key() == self.public_key() {
+                    self.add(utxo);
+                }
             }
-            let utxo = Utxo::new(
-                UtxoId::new(transaction.id(), vout),
-                UtxoData::new(output.amount(), *output.public_key()),
-            );
-            self.remove(&utxo);
+
+            for (vout, output) in transaction.outputs().iter().enumerate() {
+                if output.public_key() != self.public_key() {
+                    continue;
+                }
+                let utxo = Utxo::new(
+                    UtxoId::new(transaction.id(), vout),
+                    UtxoData::new(output.amount(), *output.public_key()),
+                );
+                self.remove(&utxo);
+            }
         }
     }
 
-    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {
+    pub fn undo_all(
+        &mut self,
+        transactions: &[Transaction],
+        blockchain: &Blockchain,
+        utxo_pool: &UtxoPool,
+    ) {
         // TODO: shouldn't I loop in reverse order ?? (same in utxo pool)
         for transaction in transactions {
-            self.undo(transaction, blockchain);
+            self.undo(transaction, blockchain, utxo_pool);
         }
     }
 

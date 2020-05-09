@@ -1,5 +1,5 @@
 pub mod block;
-pub mod chain;
+pub mod blockchain;
 pub mod common;
 pub mod miner;
 pub mod network;

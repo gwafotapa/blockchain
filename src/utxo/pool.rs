@@ -5,45 +5,49 @@ use std::fmt;
 
 use super::{Utxo, UtxoData, UtxoId};
 use crate::block::{Block, BlockError};
-use crate::chain::Blockchain;
+use crate::blockchain::Blockchain;
 use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
 use crate::transaction::{Transaction, TransactionError};
 
 #[derive(Debug)]
 pub struct UtxoPool {
-    data: HashMap<UtxoId, UtxoData>,
+    utxos: HashMap<UtxoId, UtxoData>,
+    initial_utxos: HashMap<UtxoId, UtxoData>,
 }
 
 impl UtxoPool {
     pub fn new(keys: Vec<PublicKey>) -> Self {
+        let utxos: HashMap<UtxoId, UtxoData> = keys
+            .into_iter()
+            .enumerate()
+            .map(|(n, pk)| {
+                (
+                    UtxoId::new(Hash::from(UTXO_HASH_INIT), n),
+                    UtxoData::new(UTXO_AMOUNT_INIT, pk),
+                )
+            })
+            .collect();
+        let initial_utxos = utxos.clone();
         Self {
-            data: keys
-                .into_iter()
-                .enumerate()
-                .map(|(n, pk)| {
-                    (
-                        UtxoId::new(Hash::from(UTXO_HASH_INIT), n),
-                        UtxoData::new(UTXO_AMOUNT_INIT, pk),
-                    )
-                })
-                .collect(),
+            utxos,
+            initial_utxos,
         }
     }
 
     pub fn add(&mut self, utxo: Utxo) {
-        self.data.insert(utxo.id, utxo.data);
+        self.utxos.insert(utxo.id, utxo.data);
     }
 
     pub fn remove(&mut self, utxo: &Utxo) -> Option<UtxoData> {
-        self.data.remove(utxo.id())
+        self.utxos.remove(utxo.id())
     }
 
     pub fn contains(&self, utxo: Utxo) -> bool {
-        self.data.contains_key(utxo.id())
+        self.utxos.contains_key(utxo.id())
     }
 
     pub fn owned_by(&self, pk: &PublicKey) -> Vec<Utxo> {
-        self.data
+        self.utxos
             .iter()
             .filter(|(_id, data)| data.public_key() == pk)
             .map(|(id, data)| Utxo::new(id.clone(), data.clone()))
@@ -52,20 +56,27 @@ impl UtxoPool {
 
     pub fn process(&mut self, transaction: &Transaction) {
         for input in transaction.inputs() {
-            self.data.remove(input.utxo_id());
+            self.utxos.remove(input.utxo_id());
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
             let utxo_id = UtxoId::new(transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             // TODO: use self.add instead and look in the rest of the file for such things
-            self.data.insert(utxo_id, utxo_data);
+            self.utxos.insert(utxo_id, utxo_data);
         }
     }
 
-    pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain) {
+    pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {
         for input in transaction.inputs() {
-            let utxo = blockchain.get_utxo_from(input);
-            self.add(utxo);
+            if input.txid() == Hash::from(UTXO_HASH_INIT) {
+                let utxo_id = UtxoId::new(input.txid(), input.vout());
+                let utxo_data = self.initial_utxos[&utxo_id];
+                let utxo = Utxo::new(utxo_id, utxo_data);
+                self.add(utxo);
+            } else {
+                let utxo = blockchain.get_utxo_from(input, block);
+                self.add(utxo);
+            }
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
             let utxo_id = UtxoId::new(transaction.id(), vout);
@@ -90,7 +101,7 @@ impl UtxoPool {
         let message = MessageToSign::from_slice(&hash).unwrap();
         let secp = Secp256k1::new();
         for input in transaction.inputs() {
-            if let Some(utxo_data) = self.data.get(input.utxo_id()) {
+            if let Some(utxo_data) = self.utxos.get(input.utxo_id()) {
                 secp.verify(&message, input.sig(), utxo_data.public_key())?;
             } else {
                 return Err(TransactionError::UnknownUtxo);
@@ -116,14 +127,23 @@ impl UtxoPool {
         }
     }
 
-    pub fn undo_all(&mut self, transactions: &[Transaction], blockchain: &Blockchain) {
+    pub fn undo_all(
+        &mut self,
+        transactions: &[Transaction],
+        blockchain: &Blockchain,
+        block: &Block,
+    ) {
         for transaction in transactions {
-            self.undo(transaction, blockchain);
+            self.undo(transaction, blockchain, block);
         }
     }
 
     pub fn size(&self) -> usize {
-        self.data.len()
+        self.utxos.len()
+    }
+
+    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {
+        &self.initial_utxos
     }
 }
 
@@ -131,8 +151,8 @@ impl Eq for UtxoPool {}
 
 impl PartialEq for UtxoPool {
     fn eq(&self, other: &Self) -> bool {
-        let p1: HashSet<UtxoId> = self.data.iter().map(|(id, _)| id).copied().collect();
-        let p2: HashSet<UtxoId> = other.data.iter().map(|(id, _)| id).copied().collect();
+        let p1: HashSet<UtxoId> = self.utxos.iter().map(|(id, _)| id).copied().collect();
+        let p2: HashSet<UtxoId> = other.utxos.iter().map(|(id, _)| id).copied().collect();
         p1.symmetric_difference(&p2).next().is_none()
     }
 }
@@ -140,7 +160,7 @@ impl PartialEq for UtxoPool {
 impl fmt::Display for UtxoPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Utxo pool ({}) {{", self.size())?;
-        for (utxo_id, utxo_data) in &self.data {
+        for (utxo_id, utxo_data) in &self.utxos {
             write!(
                 f,
                 "\n  txid: {}  vout:{}\n  public_key: {}  amount: {}\n",

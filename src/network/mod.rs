@@ -94,10 +94,15 @@ impl Network {
     pub fn run(&mut self) {
         for node in &mut self.nodes {
             let mut node = node.take().unwrap();
-            self.threads.push(Some(thread::spawn(move || {
-                node.run();
-                node
-            })));
+            let builder = thread::Builder::new().name(node.id().to_string());
+            self.threads.push(Some(
+                builder
+                    .spawn(move || {
+                        node.run();
+                        node
+                    })
+                    .unwrap(),
+            ));
         }
     }
 

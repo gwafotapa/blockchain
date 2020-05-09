@@ -1,4 +1,4 @@
-use log::info;
+use log::{info, warn};
 use secp256k1::{PublicKey, SecretKey};
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
@@ -7,7 +7,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
 use crate::block::Block;
-use crate::chain::Blockchain;
+use crate::blockchain::Blockchain;
 use crate::common::Message;
 use crate::miner::Miner;
 use crate::network::{Neighbour, Synchronizer};
@@ -84,7 +84,7 @@ impl Node {
                 self.utxo_pool.process_all(block.transactions());
                 self.wallet.process_all(block.transactions());
                 self.transaction_pool.remove_all(block.transactions());
-                self.blockchain.push(block);
+                self.blockchain.push(block).unwrap();
             }
             if let Ok(bytes) = self.listener.try_recv() {
                 match Message::deserialize(bytes.deref()) {
@@ -117,17 +117,28 @@ impl Node {
             if let Some(parent) = self.blockchain.parent(&block) {
                 let (old_transactions, new_transactions) =
                     self.blockchain.transaction_delta(parent);
-                self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
+                warn!("Node #{} -- old transactions:\n", self.id);
+                for transaction in &old_transactions {
+                    warn!("{}", transaction);
+                }
+                warn!("Node #{} -- new transactions:\n", self.id);
+                for transaction in &new_transactions {
+                    warn!("{}", transaction);
+                }
+                self.utxo_pool
+                    .undo_all(&old_transactions, &self.blockchain, self.blockchain.top());
                 self.utxo_pool.process_all(&new_transactions);
                 if self.utxo_pool.validate(&block).is_ok() {
                     info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                     self.propagate(Message::Block(Cow::Borrowed(&block)));
                     if block.height() <= self.blockchain.height() {
-                        self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                        self.utxo_pool
+                            .undo_all(&new_transactions, &self.blockchain, &parent);
                         self.utxo_pool.process_all(&old_transactions);
                     } else {
                         self.utxo_pool.process_all(block.transactions());
-                        self.wallet.undo_all(&old_transactions, &self.blockchain);
+                        self.wallet
+                            .undo_all(&old_transactions, &self.blockchain, &self.utxo_pool);
                         self.wallet.process_all(&new_transactions);
                         self.wallet.process_all(block.transactions());
                         self.transaction_pool.add_all(old_transactions);
@@ -135,9 +146,10 @@ impl Node {
                         self.transaction_pool.remove_all(block.transactions());
                         self.miner.discard_block();
                     }
-                    self.blockchain.push(block);
+                    self.blockchain.push(block).unwrap();
                 } else {
-                    self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                    self.utxo_pool
+                        .undo_all(&new_transactions, &self.blockchain, &parent);
                     self.utxo_pool.process_all(&old_transactions);
                 }
             }

@@ -15,7 +15,7 @@ fn consensus() {
     let mut network = Network::random(nodes);
     info!("Network:\n{:?}", network);
     network.run();
-    thread::sleep(Duration::from_secs(30));
+    thread::sleep(Duration::from_secs(5));
 
     info!("Network shutting down");
     network.broadcast(Message::ShutDown);
