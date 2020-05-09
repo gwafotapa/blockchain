@@ -9,7 +9,10 @@ use std::sync::{mpsc, Arc, Barrier, Mutex};
 use std::thread::{self, JoinHandle};
 
 use crate::common::Message;
-use crate::node::{Node, Synchronizer};
+use crate::node::Node;
+
+pub use self::neighbour::Neighbour;
+pub use self::synchronizer::Synchronizer;
 
 type Vertex = usize;
 type Neighborhood = HashSet<Vertex>;
@@ -68,7 +71,7 @@ impl Network {
             let listener = listeners.pop().unwrap();
             let neighbours = graph[&id]
                 .iter()
-                .map(|&x| (x, public_keys[x], senders[x].clone()))
+                .map(|&x| Neighbour::new(x, public_keys[x], senders[x].clone()))
                 .collect();
             let barrier = Arc::clone(&barrier);
             let state = Arc::clone(&state);
@@ -169,7 +172,7 @@ impl fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for node in &self.nodes {
             let node = node.as_ref().unwrap();
-            let neighborhood: Vec<usize> = node.neighbours().iter().map(|x| x.0).collect();
+            let neighborhood: Vec<usize> = node.neighbours().iter().map(|n| n.id()).collect();
             write!(
                 f,
                 "Node #{}  pk: {}  Neighbours: {:?}\n",
@@ -182,6 +185,9 @@ impl fmt::Debug for Network {
         Ok(())
     }
 }
+
+pub mod neighbour;
+pub mod synchronizer;
 
 #[cfg(test)]
 mod test {

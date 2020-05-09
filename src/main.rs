@@ -1,8 +1,8 @@
 /* TODO:
  * - write/complete tests
- * - complete function validating a new block
  * - deal with all the TODOs
  * - clean and refactor
+ * - if network is not a connected space, tests will very likely fail
  */
 use log::info;
 use std::thread;

@@ -1,18 +1,17 @@
 use log::info;
-use rand::seq::IteratorRandom;
-use rand::Rng;
-use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
-use sha2::{Digest, Sha256};
+use secp256k1::{PublicKey, SecretKey};
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Arc, Barrier, Mutex};
+use std::sync::Arc;
 
+use crate::block::Block;
 use crate::chain::Blockchain;
-use crate::common::{Message, SPEND_PROBA};
+use crate::common::Message;
 use crate::miner::Miner;
-use crate::transaction::{Transaction, TransactionInput, TransactionOutput, TransactionPool};
+use crate::network::{Neighbour, Synchronizer};
+use crate::transaction::{Transaction, TransactionPool};
 use crate::utxo::UtxoPool;
 use crate::wallet::Wallet;
 
@@ -22,28 +21,13 @@ pub struct Node {
     secret_key: SecretKey,
     sender: Sender<Arc<Vec<u8>>>,
     listener: Receiver<Arc<Vec<u8>>>,
-    neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
-    network: Vec<PublicKey>,
+    neighbours: Vec<Neighbour>,
     blockchain: Blockchain,
     utxo_pool: UtxoPool,
     transaction_pool: TransactionPool,
     wallet: Wallet,
     miner: Miner,
     synchronizer: Synchronizer,
-}
-
-impl Eq for Node {}
-
-impl PartialEq for Node {
-    fn eq(&self, other: &Node) -> bool {
-        self.public_key == other.public_key
-    }
-}
-
-impl Hash for Node {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.public_key.hash(state);
-    }
 }
 
 impl Node {
@@ -53,15 +37,17 @@ impl Node {
         secret_key: SecretKey,
         sender: Sender<Arc<Vec<u8>>>,
         listener: Receiver<Arc<Vec<u8>>>,
-        neighbours: Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)>,
-        network: Vec<PublicKey>,
+        neighbours: Vec<Neighbour>,
+        network_public_keys: Vec<PublicKey>,
         synchronizer: Synchronizer,
     ) -> Self {
-        let blockchain = Blockchain::new();
-        let utxo_pool = UtxoPool::new(network.clone());
-        let transaction_pool = TransactionPool::new();
-        let wallet = Wallet::new(public_key, utxo_pool.owned_by(&public_key));
-        let miner = Miner::new();
+        let utxo_pool = UtxoPool::new(network_public_keys.clone());
+        let wallet = Wallet::new(
+            public_key,
+            secret_key,
+            network_public_keys,
+            utxo_pool.owned_by(&public_key),
+        );
         Self {
             id,
             public_key,
@@ -69,19 +55,18 @@ impl Node {
             sender,
             listener,
             neighbours,
-            network,
-            blockchain,
+            blockchain: Blockchain::new(),
             utxo_pool,
-            transaction_pool,
+            transaction_pool: TransactionPool::new(),
             wallet,
-            miner,
+            miner: Miner::new(),
             synchronizer,
         }
     }
 
     pub fn run(&mut self) {
         loop {
-            if let Some(transaction) = self.initiate() {
+            if let Some(transaction) = self.wallet.initiate() {
                 info!(
                     "Node #{} --- New transaction:\n{}\n",
                     self.id(),
@@ -102,62 +87,59 @@ impl Node {
                 self.blockchain.push(block);
             }
             if let Ok(bytes) = self.listener.try_recv() {
-                let message = Message::deserialize(bytes.deref());
-                if message == Message::ShutDown {
-                    self.process(message);
+                match Message::deserialize(bytes.deref()) {
+                    Message::Transaction(transaction) => self.process_t(transaction.into_owned()),
+                    Message::Block(block) => self.process_b(block.into_owned()),
+                    Message::ShutDown => self.shut_down(),
+                }
+                if self.synchronizer.has_shut_down() {
                     return;
-                } else {
-                    self.process(message);
                 }
             }
         }
     }
 
-    pub fn initiate(&mut self) -> Option<Transaction> {
-        if self.wallet.utxos().is_empty() {
-            return None;
+    pub fn process_t(&mut self, transaction: Transaction) {
+        if !self.transaction_pool.contains(&transaction)
+            && self.utxo_pool.verify(&transaction).is_ok()
+        {
+            info!(
+                "Node #{} --- Received new transaction:\n{}\n",
+                self.id, transaction
+            );
+            self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+            self.transaction_pool.add(transaction);
         }
-        let mut rng = rand::thread_rng();
-        match rng.gen_bool(SPEND_PROBA) {
-            false => None,
-            true => {
-                let inputs_len = rng.gen_range(1, self.wallet().utxos().len() + 1);
-                let utxos = self
-                    .wallet
-                    .utxos()
-                    .iter()
-                    .choose_multiple(&mut rng, inputs_len);
-                let mut amount: u32 = utxos.iter().map(|u| u.amount()).sum();
-                let mut outputs = Vec::new();
-                loop {
-                    let amount1 = rng.gen_range(1, amount + 1);
-                    let recipient = *self.network.iter().choose(&mut rng).unwrap();
-                    let output = TransactionOutput::new(amount1, recipient);
-                    outputs.push(output);
-                    amount -= amount1;
-                    if amount == 0 {
-                        break;
+    }
+
+    pub fn process_b(&mut self, block: Block) {
+        if !self.blockchain.contains(&block) {
+            if let Some(parent) = self.blockchain.parent(&block) {
+                let (old_transactions, new_transactions) =
+                    self.blockchain.transaction_delta(parent);
+                self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
+                self.utxo_pool.process_all(&new_transactions);
+                if self.utxo_pool.validate(&block).is_ok() {
+                    info!("Node #{} --- Received new block:\n{}\n", self.id, block);
+                    self.propagate(Message::Block(Cow::Borrowed(&block)));
+                    if block.height() <= self.blockchain.height() {
+                        self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                        self.utxo_pool.process_all(&old_transactions);
+                    } else {
+                        self.utxo_pool.process_all(block.transactions());
+                        self.wallet.undo_all(&old_transactions, &self.blockchain);
+                        self.wallet.process_all(&new_transactions);
+                        self.wallet.process_all(block.transactions());
+                        self.transaction_pool.add_all(old_transactions);
+                        self.transaction_pool.remove_all(&new_transactions);
+                        self.transaction_pool.remove_all(block.transactions());
+                        self.miner.discard_block();
                     }
+                    self.blockchain.push(block);
+                } else {
+                    self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
+                    self.utxo_pool.process_all(&old_transactions);
                 }
-                let mut message = Vec::new();
-                for utxo in &utxos {
-                    message.extend(utxo.id().serialize());
-                }
-                for output in &outputs {
-                    message.extend(output.serialize());
-                }
-                let mut hasher = Sha256::new();
-                hasher.input(message);
-                let hash = hasher.result();
-                let message = MessageToSign::from_slice(&hash).unwrap();
-                let secp = Secp256k1::new();
-                let sig = secp.sign(&message, &self.secret_key);
-                let inputs = utxos
-                    .iter()
-                    .map(|u| TransactionInput::new(*u.id(), sig))
-                    .collect();
-                let transaction = Transaction::new(inputs, outputs);
-                Some(transaction)
             }
         }
     }
@@ -165,84 +147,40 @@ impl Node {
     pub fn propagate(&self, message: Message) {
         let bytes = Arc::new(message.serialize());
         for neighbour in self.neighbours.iter() {
-            neighbour.2.send(Arc::clone(&bytes)).unwrap();
+            neighbour.sender().send(Arc::clone(&bytes)).unwrap();
         }
     }
 
-    // TODO: Fragment this function
-    pub fn process(&mut self, message: Message) {
-        match message {
-            Message::Transaction(transaction) => {
-                if !self.transaction_pool.contains(&transaction)
-                    && self.utxo_pool.verify(&transaction).is_ok()
-                {
-                    info!(
-                        "Node #{} --- Received new transaction:\n{}\n",
-                        self.id, transaction
-                    );
-                    self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                    self.transaction_pool.add(transaction.into_owned());
+    pub fn shut_down(&mut self) {
+        info!(
+            "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
+            self.id,
+            self.public_key,
+            self.blockchain,
+            self.transaction_pool,
+            self.utxo_pool,
+            self.wallet
+        );
+        self.synchronizer.barrier().wait();
+        loop {
+            let state = self.synchronizer.state();
+            let mut state = state.lock().unwrap();
+            while let Ok(bytes) = self.listener.try_recv() {
+                match Message::deserialize(bytes.deref()) {
+                    Message::Transaction(transaction) => self.process_t(transaction.into_owned()),
+                    Message::Block(block) => self.process_b(block.into_owned()),
+                    Message::ShutDown => panic!("Unexpected shut down message"),
+                }
+                for neighbour in self.neighbours.iter().map(|n| n.id()) {
+                    state[neighbour] = true;
                 }
             }
-            Message::Block(block) => {
-                if !self.blockchain.contains(&block) {
-                    if let Some(parent) = self.blockchain.parent(&block) {
-                        let (old_transactions, new_transactions) =
-                            self.blockchain.transaction_delta(parent);
-                        self.utxo_pool.undo_all(&old_transactions, &self.blockchain);
-                        self.utxo_pool.process_all(&new_transactions);
-                        if self.utxo_pool.validate(&block).is_ok() {
-                            info!("Node #{} --- Received new block:\n{}\n", self.id, block);
-                            self.propagate(Message::Block(Cow::Borrowed(&block)));
-                            if block.height() <= self.blockchain.height() {
-                                self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
-                                self.utxo_pool.process_all(&old_transactions);
-                            } else {
-                                self.utxo_pool.process_all(block.transactions());
-                                self.wallet.undo_all(&old_transactions, &self.blockchain);
-                                self.wallet.process_all(&new_transactions);
-                                self.wallet.process_all(block.transactions());
-                                self.transaction_pool.add_all(old_transactions);
-                                self.transaction_pool.remove_all(&new_transactions);
-                                self.transaction_pool.remove_all(block.transactions());
-                                self.miner.discard_block();
-                            }
-                            self.blockchain.push(block.into_owned());
-                        } else {
-                            self.utxo_pool.undo_all(&new_transactions, &self.blockchain);
-                            self.utxo_pool.process_all(&old_transactions);
-                        }
-                    }
-                }
-            }
-            Message::ShutDown => {
-                info!(
-                    "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
-                    self.id,
-                    self.public_key,
-                    self.blockchain,
-                    self.transaction_pool,
-                    self.utxo_pool,
-                    self.wallet
-                );
-                self.synchronizer.barrier().wait();
-                loop {
-                    let state = self.synchronizer.state();
-                    let mut state = state.lock().unwrap();
-                    while let Ok(bytes) = self.listener.try_recv() {
-                        let message = Message::deserialize(bytes.deref());
-                        self.process(message);
-                        for neighbour in self.neighbours.iter().map(|n| n.0) {
-                            state[neighbour] = true;
-                        }
-                    }
-                    state[self.id] = false;
-                    if state.iter().all(|&b| b == false) {
-                        break;
-                    }
-                }
+            state[self.id] = false;
+            if state.iter().all(|&b| b == false) {
+                break;
             }
         }
+        self.synchronizer.shut_down();
     }
 
     pub fn id(&self) -> usize {
@@ -265,7 +203,7 @@ impl Node {
         &self.listener
     }
 
-    pub fn neighbours(&self) -> &Vec<(usize, PublicKey, Sender<Arc<Vec<u8>>>)> {
+    pub fn neighbours(&self) -> &Vec<Neighbour> {
         &self.neighbours
     }
 
@@ -286,21 +224,16 @@ impl Node {
     }
 }
 
-pub struct Synchronizer {
-    barrier: Arc<Barrier>,
-    state: Arc<Mutex<Vec<bool>>>,
+impl Eq for Node {}
+
+impl PartialEq for Node {
+    fn eq(&self, other: &Node) -> bool {
+        self.public_key == other.public_key
+    }
 }
 
-impl Synchronizer {
-    pub fn new(barrier: Arc<Barrier>, state: Arc<Mutex<Vec<bool>>>) -> Self {
-        Self { barrier, state }
-    }
-
-    pub fn barrier(&self) -> &Arc<Barrier> {
-        &self.barrier
-    }
-
-    pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {
-        Arc::clone(&self.state)
+impl Hash for Node {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.public_key.hash(state);
     }
 }
