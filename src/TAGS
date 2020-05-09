@@ -24,10 +24,10 @@ impl Blockchain {Blockchain17,366
     pub fn top_hash(&self) -> &BlockHash {top_hash120,3523
 impl fmt::Display for Blockchain {Blockchain125,3598
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt126,3633
-impl Eq for Blockchain {}Blockchain141,4082
-impl PartialEq for Blockchain {Blockchain143,4109
-    fn eq(&self, other: &Self) -> bool {eq144,4141
-pub mod error;error154,4486
+impl Eq for Blockchain {}Blockchain148,4288
+impl PartialEq for Blockchain {Blockchain150,4315
+    fn eq(&self, other: &Self) -> bool {eq151,4347
+pub mod error;error161,4692
 
 node.rs,1261
 pub struct Node {Node18,469

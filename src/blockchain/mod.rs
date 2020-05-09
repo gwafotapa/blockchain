@@ -124,8 +124,15 @@ impl Blockchain {
 
 impl fmt::Display for Blockchain {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Blockchain ({}) {{", self.len())?;
-        for (_, block) in &self.chain {
+        write!(
+            f,
+            "Blockchain (blocks: {}, length: {}) {{",
+            self.chain.len(),
+            self.len()
+        )?;
+        let mut chain: Vec<_> = self.chain.iter().map(|(_, b)| b).collect();
+        chain.sort_by_key(|b| b.height());
+        for block in &chain {
             write!(
                 f,
                 "\n  height: {}\n  id: {}\n  parent: {}\n",
