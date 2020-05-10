@@ -1,9 +1,11 @@
 use log::info;
+use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
 
 use blockchain::common::{Message, NODES};
 use blockchain::network::Network;
+use blockchain::utxo::Utxo;
 
 pub mod common;
 
@@ -31,5 +33,18 @@ fn consensus() {
             assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
             assert_eq!(nodes[i].blockchain(), nodes[i + 1].blockchain());
         }
+        let mut wallet_utxos_count = 0;
+        for i in 0..nodes.len() {
+            let wallet: HashSet<Utxo> = nodes[i].wallet().utxos().iter().copied().collect();
+            wallet_utxos_count += wallet.len();
+            let utxo_pool: HashSet<Utxo> = nodes[i]
+                .utxo_pool()
+                .utxos()
+                .iter()
+                .map(|(id, data)| Utxo::new(*id, *data))
+                .collect();
+            assert!(wallet.is_subset(&utxo_pool));
+        }
+        assert_eq!(nodes[0].utxo_pool().utxos().len(), wallet_utxos_count);
     }
 }

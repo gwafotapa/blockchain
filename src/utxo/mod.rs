@@ -6,7 +6,7 @@ use crate::common::Hash;
 
 pub use self::pool::UtxoPool;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug, Hash)]
 pub struct Utxo {
     id: UtxoId,
     data: UtxoData,

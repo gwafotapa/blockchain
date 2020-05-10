@@ -145,6 +145,10 @@ impl UtxoPool {
     pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {
         &self.initial_utxos
     }
+
+    pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {
+        &self.utxos
+    }
 }
 
 impl Eq for UtxoPool {}

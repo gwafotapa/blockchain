@@ -3,7 +3,7 @@ use std::convert::TryInto;
 
 use crate::common::UTXO_DATA_BYTES;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Hash)]
 pub struct UtxoData {
     amount: u32,
     public_key: PublicKey,

@@ -298,19 +298,19 @@ impl<B> From<B> for UtxoIdUtxoId39,726
 //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt52,1048
 
 utxo/data.rs,589
-pub struct UtxoData {UtxoData7,121
-impl UtxoData {UtxoData12,190
-    pub fn new(amount: u32, public_key: PublicKey) -> Self {new13,206
-    pub fn serialize(&self) -> Vec<u8> {serialize17,310
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize24,541
-    pub fn amount(&self) -> u32 {amount31,658
-    pub fn public_key(&self) -> &PublicKey {public_key35,719
-impl<B> From<B> for UtxoDataUtxoData40,798
-    fn from(bytes: B) -> Self {from44,855
-// impl fmt::Display for UtxoData {UtxoData52,1133
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt53,1169
+pub struct UtxoData {UtxoData7,127
+impl UtxoData {UtxoData12,196
+    pub fn new(amount: u32, public_key: PublicKey) -> Self {new13,212
+    pub fn serialize(&self) -> Vec<u8> {serialize17,316
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize24,547
+    pub fn amount(&self) -> u32 {amount31,664
+    pub fn public_key(&self) -> &PublicKey {public_key35,725
+impl<B> From<B> for UtxoDataUtxoData40,804
+    fn from(bytes: B) -> Self {from44,861
+// impl fmt::Display for UtxoData {UtxoData52,1139
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt53,1175
 
-utxo/pool.rs,1300
+utxo/pool.rs,1371
 pub struct UtxoPool {UtxoPool13,397
 impl UtxoPool {UtxoPool18,506
     pub fn new(keys: Vec<PublicKey>) -> Self {new19,522
@@ -326,27 +326,28 @@ impl UtxoPool {UtxoPool18,506
     pub fn undo_all(undo_all130,4485
     pub fn size(&self) -> usize {size141,4741
     pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos145,4807
-impl Eq for UtxoPool {}UtxoPool150,4908
-impl PartialEq for UtxoPool {UtxoPool152,4933
-    fn eq(&self, other: &Self) -> bool {eq153,4963
-impl fmt::Display for UtxoPool {UtxoPool160,5248
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt161,5281
+    pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {utxos149,4906
+impl Eq for UtxoPool {}UtxoPool154,4991
+impl PartialEq for UtxoPool {UtxoPool156,5016
+    fn eq(&self, other: &Self) -> bool {eq157,5046
+impl fmt::Display for UtxoPool {UtxoPool164,5331
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt165,5364
 
 utxo/mod.rs,729
-pub struct Utxo {Utxo10,164
-impl Utxo {Utxo15,221
-    pub fn new(id: UtxoId, data: UtxoData) -> Self {new16,233
-    pub fn id(&self) -> &UtxoId {id20,319
-    pub fn data(&self) -> &UtxoData {data24,377
-    pub fn txid(&self) -> Hash {txid29,491
-    pub fn vout(&self) -> usize {vout33,554
-    pub fn amount(&self) -> u32 {amount37,618
-    pub fn public_key(&self) -> &PublicKey {public_key41,686
-impl Eq for Utxo {}Utxo46,772
-impl PartialEq for Utxo {Utxo48,793
-    fn eq(&self, other: &Self) -> bool {eq49,819
-// impl fmt::Display for Utxo {Utxo54,897
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt55,929
-pub mod data;data67,1281
-pub mod id;id68,1295
-pub mod pool;pool69,1307
+pub struct Utxo {Utxo10,176
+impl Utxo {Utxo15,233
+    pub fn new(id: UtxoId, data: UtxoData) -> Self {new16,245
+    pub fn id(&self) -> &UtxoId {id20,331
+    pub fn data(&self) -> &UtxoData {data24,389
+    pub fn txid(&self) -> Hash {txid29,503
+    pub fn vout(&self) -> usize {vout33,566
+    pub fn amount(&self) -> u32 {amount37,630
+    pub fn public_key(&self) -> &PublicKey {public_key41,698
+impl Eq for Utxo {}Utxo46,784
+impl PartialEq for Utxo {Utxo48,805
+    fn eq(&self, other: &Self) -> bool {eq49,831
+// impl fmt::Display for Utxo {Utxo54,909
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt55,941
+pub mod data;data67,1293
+pub mod id;id68,1307
+pub mod pool;pool69,1319
