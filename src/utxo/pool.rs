@@ -9,7 +9,7 @@ use crate::blockchain::Blockchain;
 use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
 use crate::transaction::{Transaction, TransactionError};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct UtxoPool {
     utxos: HashMap<UtxoId, UtxoData>,
     initial_utxos: HashMap<UtxoId, UtxoData>,
@@ -54,7 +54,7 @@ impl UtxoPool {
             .collect()
     }
 
-    pub fn process(&mut self, transaction: &Transaction) {
+    pub fn process_t(&mut self, transaction: &Transaction) {
         for input in transaction.inputs() {
             self.utxos.remove(input.utxo_id());
         }
@@ -66,7 +66,19 @@ impl UtxoPool {
         }
     }
 
-    pub fn undo(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {
+    pub fn process(&mut self, block: &Block) {
+        for transaction in block.transactions() {
+            self.process_t(transaction);
+        }
+    }
+
+    pub fn process_all(&mut self, blocks: &[Block]) {
+        for block in blocks {
+            self.process(block);
+        }
+    }
+
+    pub fn undo_t(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {
         for input in transaction.inputs() {
             if input.txid() == Hash::from(UTXO_HASH_INIT) {
                 let utxo_id = UtxoId::new(input.txid(), input.vout());
@@ -82,7 +94,20 @@ impl UtxoPool {
             let utxo_id = UtxoId::new(transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             let utxo = Utxo::new(utxo_id, utxo_data);
-            self.remove(&utxo);
+            self.remove(&utxo)
+                .ok_or("Utxo cannot be removed from the pool");
+        }
+    }
+
+    pub fn undo(&mut self, block: &Block, blockchain: &Blockchain) {
+        for transaction in block.transactions() {
+            self.undo_t(transaction, blockchain, block);
+        }
+    }
+
+    pub fn undo_all(&mut self, blocks: &[Block], blockchain: &Blockchain) {
+        for block in blocks.iter().rev() {
+            self.undo(block, blockchain);
         }
     }
 
@@ -119,23 +144,6 @@ impl UtxoPool {
             self.verify(transaction)?;
         }
         Ok(())
-    }
-
-    pub fn process_all(&mut self, transactions: &[Transaction]) {
-        for transaction in transactions {
-            self.process(transaction);
-        }
-    }
-
-    pub fn undo_all(
-        &mut self,
-        transactions: &[Transaction],
-        blockchain: &Blockchain,
-        block: &Block,
-    ) {
-        for transaction in transactions {
-            self.undo(transaction, blockchain, block);
-        }
     }
 
     pub fn size(&self) -> usize {

@@ -44,6 +44,7 @@ impl Block {
         })
     }
 
+    // TODO: does tx has vout outputs ?
     pub fn get_utxo_from(&self, input: &TransactionInput) -> Option<Utxo> {
         for transaction in &self.transactions {
             if transaction.id() == input.txid() {

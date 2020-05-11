@@ -81,9 +81,9 @@ impl Node {
             {
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
-                self.utxo_pool.process_all(block.transactions());
-                self.wallet.process_all(block.transactions());
-                self.transaction_pool.remove_all(block.transactions());
+                self.utxo_pool.process(&block);
+                self.wallet.process(&block);
+                self.transaction_pool.process(&block);
                 self.blockchain.push(block).unwrap();
             }
             if let Ok(bytes) = self.listener.try_recv() {
@@ -115,42 +115,38 @@ impl Node {
     pub fn process_b(&mut self, block: Block) {
         if !self.blockchain.contains(&block) {
             if let Some(parent) = self.blockchain.parent(&block) {
-                let (old_transactions, new_transactions) =
-                    self.blockchain.transaction_delta(parent);
-                warn!("Node #{} -- old transactions:\n", self.id);
-                for transaction in &old_transactions {
-                    warn!("{}", transaction);
-                }
-                warn!("Node #{} -- new transactions:\n", self.id);
-                for transaction in &new_transactions {
-                    warn!("{}", transaction);
-                }
-                self.utxo_pool
-                    .undo_all(&old_transactions, &self.blockchain, self.blockchain.top());
-                self.utxo_pool.process_all(&new_transactions);
+                let (old_blocks, new_blocks) = self.blockchain.block_delta(parent);
+                // warn!("Node #{} -- old transactions:\n", self.id);
+                // for transaction in &old_blocks {
+                //     warn!("{}", transaction);
+                // }
+                // warn!("Node #{} -- new transactions:\n", self.id);
+                // for transaction in &new_blocks {
+                //     warn!("{}", transaction);
+                // }
+                self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
+                self.utxo_pool.process_all(&new_blocks);
                 if self.utxo_pool.validate(&block).is_ok() {
                     info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                     self.propagate(Message::Block(Cow::Borrowed(&block)));
                     if block.height() <= self.blockchain.height() {
-                        self.utxo_pool
-                            .undo_all(&new_transactions, &self.blockchain, &parent);
-                        self.utxo_pool.process_all(&old_transactions);
+                        self.utxo_pool.undo_all(&new_blocks, &self.blockchain);
+                        self.utxo_pool.process_all(&old_blocks);
                     } else {
-                        self.utxo_pool.process_all(block.transactions());
+                        self.utxo_pool.process(&block);
                         self.wallet
-                            .undo_all(&old_transactions, &self.blockchain, &self.utxo_pool);
-                        self.wallet.process_all(&new_transactions);
-                        self.wallet.process_all(block.transactions());
-                        self.transaction_pool.add_all(old_transactions);
-                        self.transaction_pool.remove_all(&new_transactions);
-                        self.transaction_pool.remove_all(block.transactions());
+                            .undo_all(&old_blocks, &self.blockchain, &self.utxo_pool);
+                        self.wallet.process_all(&new_blocks);
+                        self.wallet.process(&block);
+                        self.transaction_pool.undo_all(&old_blocks);
+                        self.transaction_pool.process_all(&new_blocks);
+                        self.transaction_pool.process(&block);
                         self.miner.discard_block();
                     }
                     self.blockchain.push(block).unwrap();
                 } else {
-                    self.utxo_pool
-                        .undo_all(&new_transactions, &self.blockchain, &parent);
-                    self.utxo_pool.process_all(&old_transactions);
+                    self.utxo_pool.undo_all(&new_blocks, &self.blockchain);
+                    self.utxo_pool.process_all(&old_blocks);
                 }
             }
         }
@@ -165,13 +161,14 @@ impl Node {
 
     pub fn shut_down(&mut self) {
         info!(
-            "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
+            "Node {} shutting down\nPublic key: {}\n",
+            // "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
             self.id,
             self.public_key,
-            self.blockchain,
-            self.transaction_pool,
-            self.utxo_pool,
-            self.wallet
+            // self.blockchain,
+            // self.transaction_pool,
+            // self.utxo_pool,
+            // self.wallet
         );
         self.synchronizer.barrier().wait();
         loop {

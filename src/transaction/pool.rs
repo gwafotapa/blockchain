@@ -4,6 +4,7 @@ use std::fmt;
 use std::iter::FromIterator;
 use std::ops::Index;
 
+use crate::block::Block;
 use crate::common::TXS_PER_BLOCK;
 use crate::transaction::Transaction;
 
@@ -54,17 +55,41 @@ impl TransactionPool {
         )
     }
 
-    pub fn add_all(&mut self, transactions: Vec<Transaction>) {
-        for transaction in transactions {
-            self.add(transaction)
-        }
-    }
-
-    pub fn remove_all(&mut self, transactions: &[Transaction]) {
-        for transaction in transactions {
+    pub fn process(&mut self, block: &Block) {
+        for transaction in block.transactions() {
             self.remove(transaction);
         }
     }
+
+    pub fn process_all(&mut self, blocks: &[Block]) {
+        for block in blocks {
+            self.process(block);
+        }
+    }
+
+    pub fn undo(&mut self, block: &Block) {
+        for transaction in block.transactions() {
+            self.add(transaction.clone());
+        }
+    }
+
+    pub fn undo_all(&mut self, blocks: &[Block]) {
+        for block in blocks.iter().rev() {
+            self.undo(block);
+        }
+    }
+
+    // pub fn add_all(&mut self, transactions: Vec<Transaction>) {
+    //     for transaction in transactions {
+    //         self.add(transaction)
+    //     }
+    // }
+
+    // pub fn remove_all(&mut self, transactions: &[Transaction]) {
+    //     for transaction in transactions {
+    //         self.remove(transaction);
+    //     }
+    // }
 
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions

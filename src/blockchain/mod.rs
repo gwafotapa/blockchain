@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 
 use self::error::BlockchainError;
@@ -37,25 +37,28 @@ impl Blockchain {
         Ok(())
     }
 
-    pub fn transaction_delta(&self, new_top: &Block) -> (Vec<Transaction>, Vec<Transaction>) {
+    /// Finds the two shortest lists of blocks joining the given block to the blockchain's top
+    ///
+    /// Computes the closest common parent A of the blockchain's top block B and the given block C,
+    /// then returns two lists of transactions:
+    /// - the list of blocks between B (included) and A (not included) in decreasing height.
+    /// - the list of blocks between C (included) and A (not included) in decreasing height.
+    // TODO: take two blocks as parameters or at least rename 'new_top' as 'block'
+    pub fn block_delta(&self, new_top: &Block) -> (Vec<Block>, Vec<Block>) {
         let old_top = self.top();
         let parent = self.common_parent(old_top, new_top).unwrap();
-        let old_transactions = self.new_transactions_between(parent, old_top);
-        let new_transactions = self.new_transactions_between(parent, new_top);
-        (old_transactions, new_transactions)
+        let old_blocks = self.blocks_between(parent, old_top);
+        let new_blocks = self.blocks_between(parent, new_top);
+        (old_blocks, new_blocks)
     }
 
-    fn new_transactions_between<'a>(
-        &'a self,
-        parent: &'a Block,
-        mut child: &'a Block,
-    ) -> Vec<Transaction> {
-        let mut transactions = vec![];
+    fn blocks_between<'a>(&'a self, parent: &'a Block, mut child: &'a Block) -> Vec<Block> {
+        let mut blocks = VecDeque::new();
         while child != parent {
-            transactions.extend(child.transactions().clone());
+            blocks.push_front(child.clone());
             child = self.parent(child).unwrap();
         }
-        transactions
+        Vec::from(blocks)
     }
 
     pub fn contains(&self, block: &Block) -> bool {
