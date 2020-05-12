@@ -1,10 +1,14 @@
+use hex::ToHex;
 use std::error;
 use std::fmt;
+
+use crate::common::Hash;
 
 #[derive(Debug)]
 pub enum TransactionError {
     UnknownUtxo,
     InvalidSignature(secp256k1::Error),
+    PoolSpentUtxo(Hash),
 }
 
 impl fmt::Display for TransactionError {
@@ -12,6 +16,10 @@ impl fmt::Display for TransactionError {
         match *self {
             TransactionError::UnknownUtxo => write!(f, "Unknown utxo"),
             TransactionError::InvalidSignature(err) => err.fmt(f),
+            TransactionError::PoolSpentUtxo(txid) => {
+                write!(f, "This utxo is already spent by pool transaction ")?;
+                txid.write_hex(f)
+            }
         }
     }
 }
@@ -21,6 +29,7 @@ impl error::Error for TransactionError {
         match self {
             TransactionError::UnknownUtxo => None,
             TransactionError::InvalidSignature(err) => err.source(),
+            TransactionError::PoolSpentUtxo(_) => None,
         }
     }
 }

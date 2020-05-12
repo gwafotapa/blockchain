@@ -6,7 +6,7 @@ use std::ops::Index;
 
 use crate::block::Block;
 use crate::common::TXS_PER_BLOCK;
-use crate::transaction::Transaction;
+use crate::transaction::{Transaction, TransactionError};
 
 // TODO: Should it be a vector or a hashmap ?
 #[derive(Debug)]
@@ -35,8 +35,21 @@ impl TransactionPool {
             .map(|i| self.transactions.remove(i))
     }
 
-    pub fn contains(&self, transaction: &Transaction) -> bool {
-        self.transactions.contains(transaction)
+    // pub fn contains(&self, transaction: &Transaction) -> bool {
+    //     self.transactions.contains(transaction)
+    // }
+
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
+        for pool_transaction in self.transactions() {
+            for pool_input in pool_transaction.inputs() {
+                for input in transaction.inputs() {
+                    if input.utxo_id() == pool_input.utxo_id() {
+                        return Err(TransactionError::PoolSpentUtxo(pool_transaction.id()));
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn position(&self, transaction: &Transaction) -> Option<usize> {
