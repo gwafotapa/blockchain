@@ -92,10 +92,10 @@ impl Node {
                 match Message::deserialize(bytes.deref()) {
                     Message::Transaction(transaction) => self.process_t(transaction.into_owned()),
                     Message::Block(block) => self.process_b(block.into_owned()),
-                    Message::ShutDown => self.shut_down(),
-                }
-                if self.synchronizer.has_shut_down() {
-                    return;
+                    Message::ShutDown => {
+                        self.shut_down();
+                        return;
+                    }
                 }
             }
         }
@@ -194,7 +194,6 @@ impl Node {
                 break;
             }
         }
-        self.synchronizer.shut_down();
     }
 
     pub fn id(&self) -> usize {

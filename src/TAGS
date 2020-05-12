@@ -35,25 +35,25 @@ pub struct Node {Node18,469
 impl Node {Node33,825
     pub fn new(new34,837
     pub fn run(&mut self) {run67,1747
-    pub fn process_t(&mut self, transaction: Transaction) {process_t104,3294
-    pub fn process_b(&mut self, block: Block) {process_b118,3820
-    pub fn propagate(&self, message: Message) {propagate160,5825
-    pub fn shut_down(&mut self) {shut_down167,6057
-    pub fn id(&self) -> usize {id200,7318
-    pub fn public_key(&self) -> &PublicKey {public_key204,7373
-    pub fn secret_key(&self) -> &SecretKey {secret_key208,7450
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender212,7527
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener216,7607
-    pub fn neighbours(&self) -> &Vec<Neighbour> {neighbours220,7693
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool224,7775
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool228,7849
-    pub fn wallet(&self) -> &Wallet {wallet232,7944
-    pub fn blockchain(&self) -> &Blockchain {blockchain236,8010
-impl Eq for Node {}Node241,8090
-impl PartialEq for Node {Node243,8111
-    fn eq(&self, other: &Node) -> bool {eq244,8137
-impl Hash for Node {Node249,8231
-    fn hash<H: Hasher>(&self, state: &mut H) {hash250,8252
+    pub fn process_t(&mut self, transaction: Transaction) {process_t104,3273
+    pub fn process_b(&mut self, block: Block) {process_b118,3799
+    pub fn propagate(&self, message: Message) {propagate160,5804
+    pub fn shut_down(&mut self) {shut_down167,6036
+    pub fn id(&self) -> usize {id199,7258
+    pub fn public_key(&self) -> &PublicKey {public_key203,7313
+    pub fn secret_key(&self) -> &SecretKey {secret_key207,7390
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender211,7467
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener215,7547
+    pub fn neighbours(&self) -> &Vec<Neighbour> {neighbours219,7633
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool223,7715
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool227,7789
+    pub fn wallet(&self) -> &Wallet {wallet231,7884
+    pub fn blockchain(&self) -> &Blockchain {blockchain235,7950
+impl Eq for Node {}Node240,8030
+impl PartialEq for Node {Node242,8051
+    fn eq(&self, other: &Node) -> bool {eq243,8077
+impl Hash for Node {Node248,8171
+    fn hash<H: Hasher>(&self, state: &mut H) {hash249,8192
 
 network/neighbour.rs,343
 pub struct Neighbour {Neighbour5,76
@@ -63,14 +63,12 @@ impl Neighbour {Neighbour11,178
     pub fn public_key(&self) -> &PublicKey {public_key24,431
     pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender28,508
 
-network/synchronizer.rs,410
+network/synchronizer.rs,295
 pub struct Synchronizer {Synchronizer3,39
-impl Synchronizer {Synchronizer9,150
-    pub fn new(barrier: Arc<Barrier>, state: Arc<Mutex<Vec<bool>>>) -> Self {new10,170
-    pub fn barrier(&self) -> &Arc<Barrier> {barrier18,350
-    pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {state22,424
-    pub fn shut_down(&mut self) {shut_down26,514
-    pub fn has_shut_down(&self) -> bool {has_shut_down30,586
+impl Synchronizer {Synchronizer8,129
+    pub fn new(barrier: Arc<Barrier>, state: Arc<Mutex<Vec<bool>>>) -> Self {new9,149
+    pub fn barrier(&self) -> &Arc<Barrier> {barrier13,266
+    pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {state17,340
 
 network/mod.rs,876
 pub struct Network {Network21,518
