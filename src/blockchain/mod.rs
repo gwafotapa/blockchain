@@ -65,6 +65,19 @@ impl Blockchain {
         self.chain.contains_key(&block.hash())
     }
 
+    pub fn contains_t(&self, transaction: &Transaction) -> bool {
+        let mut block = self.top();
+        loop {
+            if block.contains(transaction) {
+                return true;
+            }
+            if block.is_genesis() {
+                return false;
+            }
+            block = self.parent(block).unwrap();
+        }
+    }
+
     pub fn parent(&self, block: &Block) -> Option<&Block> {
         self.chain.get(&block.hash_prev_block())
     }

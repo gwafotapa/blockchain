@@ -67,13 +67,15 @@ impl Node {
     pub fn run(&mut self) {
         loop {
             if let Some(transaction) = self.wallet.initiate() {
-                info!(
-                    "Node #{} --- New transaction:\n{}\n",
-                    self.id(),
-                    transaction
-                );
-                self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                self.transaction_pool.add(transaction);
+                if !self.transaction_pool.contains(&transaction) {
+                    info!(
+                        "Node #{} --- New transaction:\n{}\n",
+                        self.id(),
+                        transaction
+                    );
+                    self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+                    self.transaction_pool.add(transaction);
+                }
             }
             if let Some(block) = self
                 .miner
@@ -101,6 +103,7 @@ impl Node {
 
     pub fn process_t(&mut self, transaction: Transaction) {
         if !self.transaction_pool.contains(&transaction)
+            && !self.blockchain.contains_t(&transaction)
             && self.utxo_pool.verify(&transaction).is_ok()
         {
             info!(
@@ -116,14 +119,16 @@ impl Node {
         if !self.blockchain.contains(&block) {
             if let Some(parent) = self.blockchain.parent(&block) {
                 let (old_blocks, new_blocks) = self.blockchain.block_delta(parent);
-                // warn!("Node #{} -- old transactions:\n", self.id);
-                // for transaction in &old_blocks {
-                //     warn!("{}", transaction);
-                // }
-                // warn!("Node #{} -- new transactions:\n", self.id);
-                // for transaction in &new_blocks {
-                //     warn!("{}", transaction);
-                // }
+
+                warn!("Node #{} -- old blocks:\n", self.id);
+                for block in &old_blocks {
+                    warn!("{}", block);
+                }
+                warn!("Node #{} -- new blocks:\n", self.id);
+                for block in &new_blocks {
+                    warn!("{}", block);
+                }
+
                 self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
                 self.utxo_pool.process_all(&new_blocks);
                 if self.utxo_pool.validate(&block).is_ok() {

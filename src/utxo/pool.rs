@@ -95,7 +95,8 @@ impl UtxoPool {
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             let utxo = Utxo::new(utxo_id, utxo_data);
             self.remove(&utxo)
-                .ok_or("Utxo cannot be removed from the pool");
+                .ok_or("Utxo cannot be removed from the pool")
+                .unwrap();
         }
     }
 

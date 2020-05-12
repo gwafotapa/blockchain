@@ -81,6 +81,10 @@ impl Block {
         Self::from(bytes)
     }
 
+    pub fn contains(&self, transaction: &Transaction) -> bool {
+        self.transactions().contains(transaction)
+    }
+
     pub fn is_genesis(&self) -> bool {
         self.height == 0
     }
