@@ -120,16 +120,6 @@ impl Node {
             if let Some(parent) = self.blockchain.parent(&block) {
                 let (old_blocks, new_blocks) =
                     self.blockchain.block_delta(self.blockchain.top(), parent);
-
-                // warn!("Node #{} -- old blocks:\n", self.id);
-                // for block in &old_blocks {
-                //     warn!("{}", block);
-                // }
-                // warn!("Node #{} -- new blocks:\n", self.id);
-                // for block in &new_blocks {
-                //     warn!("{}", block);
-                // }
-
                 self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
                 self.utxo_pool.process_all(&new_blocks);
                 if self.utxo_pool.validate(&block).is_ok() {
@@ -168,13 +158,7 @@ impl Node {
     pub fn shut_down(&mut self) {
         info!(
             "Node {} shutting down\nPublic key: {}\n",
-            // "Node {} shutting down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
-            self.id,
-            self.public_key,
-            // self.blockchain,
-            // self.transaction_pool,
-            // self.utxo_pool,
-            // self.wallet
+            self.id, self.public_key,
         );
         self.synchronizer.barrier().wait();
         loop {

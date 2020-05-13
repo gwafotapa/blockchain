@@ -49,7 +49,7 @@ impl Block {
     pub fn get_utxo(&self, utxo_id: &UtxoId) -> Option<Utxo> {
         for transaction in &self.transactions {
             if transaction.id() == utxo_id.txid() {
-                let utxo_data = transaction.outputs()[utxo_id.vout()].0;
+                let utxo_data = transaction.outputs()[utxo_id.vout()].into();
                 let utxo = Utxo::new(*utxo_id, utxo_data);
                 return Some(utxo);
             }

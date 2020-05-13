@@ -1,4 +1,6 @@
+use hex::ToHex;
 use secp256k1::Signature;
+use std::fmt;
 
 use crate::constants::{TX_INPUT_BYTES, UTXO_ID_BYTES};
 use crate::utxo::UtxoId;
@@ -58,8 +60,10 @@ where
     }
 }
 
-// impl fmt::Display for TransactionInput {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "{}\n{}\n{}\n      sig: {}", self.utxo_id, self.sig)
-//     }
-// }
+impl fmt::Display for TransactionInput {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Transaction input {{\n  txid: ")?;
+        self.txid().write_hex(f)?;
+        write!(f, "\n  vout: {}\n  sig: {}\n}}", self.vout(), self.sig)
+    }
+}

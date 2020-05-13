@@ -35,10 +35,6 @@ impl TransactionPool {
             .map(|i| self.transactions.remove(i))
     }
 
-    // pub fn contains(&self, transaction: &Transaction) -> bool {
-    //     self.transactions.contains(transaction)
-    // }
-
     pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
         for pool_transaction in self.transactions() {
             for pool_input in pool_transaction.inputs() {
@@ -91,18 +87,6 @@ impl TransactionPool {
             self.undo(block);
         }
     }
-
-    // pub fn add_all(&mut self, transactions: Vec<Transaction>) {
-    //     for transaction in transactions {
-    //         self.add(transaction)
-    //     }
-    // }
-
-    // pub fn remove_all(&mut self, transactions: &[Transaction]) {
-    //     for transaction in transactions {
-    //         self.remove(transaction);
-    //     }
-    // }
 
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions

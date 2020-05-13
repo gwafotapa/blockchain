@@ -97,34 +97,6 @@ impl Transaction {
     }
 }
 
-// impl<B> From<B> for Transaction
-// where
-//     B: AsRef<[u8]>,
-// {
-//     fn from(bytes: B) -> Self {
-//         let bytes = bytes.as_ref();
-//         let mut i = 1;
-//         let size = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
-//         i += 8;
-//         let inputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
-//         i += 8;
-//         let outputs_len = usize::from_be_bytes(bytes[i..i + 8].try_into().unwrap());
-//         i += 8;
-//         let inputs = bytes[i..]
-//             .chunks_exact(TX_INPUT_BYTES)
-//             .take(inputs_len)
-//             .map(|c| TransactionInput::deserialize(c))
-//             .collect();
-//         i += inputs_len * TX_INPUT_BYTES;
-//         let outputs = bytes[i..]
-//             .chunks_exact(TX_OUTPUT_BYTES)
-//             .take(outputs_len)
-//             .map(|c| TransactionOutput::deserialize(c))
-//             .collect();
-//         Self::new(inputs, outputs)
-//     }
-// }
-
 impl Eq for Transaction {}
 
 impl PartialEq for Transaction {

@@ -1,10 +1,10 @@
 use secp256k1::PublicKey;
+use std::fmt;
 
 use crate::utxo::UtxoData;
 
-// TODO: Is the wrapper really necessary ? Should the field be public ?
-#[derive(Clone, Debug)]
-pub struct TransactionOutput(pub UtxoData);
+#[derive(Clone, Copy, Debug)]
+pub struct TransactionOutput(UtxoData);
 
 impl TransactionOutput {
     pub fn new(amount: u32, public_key: PublicKey) -> Self {
@@ -22,6 +22,10 @@ impl TransactionOutput {
         Self(UtxoData::deserialize(bytes))
     }
 
+    pub fn utxo_data(&self) -> &UtxoData {
+        &self.0
+    }
+
     pub fn amount(&self) -> u32 {
         self.0.amount()
     }
@@ -31,8 +35,19 @@ impl TransactionOutput {
     }
 }
 
-// impl fmt::Display for TransactionOutput {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         self.0.fmt(f)
-//     }
-// }
+impl From<UtxoData> for TransactionOutput {
+    fn from(utxo_data: UtxoData) -> Self {
+        Self(utxo_data)
+    }
+}
+
+impl fmt::Display for TransactionOutput {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Transaction output {{\n  amount: {}\n  pulic_key: {}\n}}",
+            self.amount(),
+            self.public_key()
+        )
+    }
+}

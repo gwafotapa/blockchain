@@ -1,7 +1,9 @@
 use secp256k1::PublicKey;
 use std::convert::TryInto;
+use std::fmt;
 
 use crate::constants::UTXO_DATA_BYTES;
+use crate::transaction::TransactionOutput;
 
 #[derive(Clone, Copy, Debug, Hash)]
 pub struct UtxoData {
@@ -49,12 +51,18 @@ where
     }
 }
 
-// impl fmt::Display for UtxoData {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(
-//             f,
-//             "amount: {:>7}\t\tpublic_key: {}",
-//             self.amount, self.public_key
-//         )
-//     }
-// }
+impl From<TransactionOutput> for UtxoData {
+    fn from(transaction_output: TransactionOutput) -> Self {
+        *transaction_output.utxo_data()
+    }
+}
+
+impl fmt::Display for UtxoData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Utxo data {{\n  amount: {}\n  pulic_key: {}\n}}",
+            self.amount, self.public_key
+        )
+    }
+}

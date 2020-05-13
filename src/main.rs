@@ -1,4 +1,7 @@
 /* TODO:
+ * - transaction/pool.rs
+ * - use &Hash instead of Hash and check for other Copy types that could do the same
+ *
  * - aggregate all errors
  * - write/complete tests
  * - deal with all the TODOs
