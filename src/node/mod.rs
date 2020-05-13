@@ -6,9 +6,9 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
+use self::message::Message;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
-use crate::common::Message;
 use crate::miner::Miner;
 use crate::network::{Neighbour, Synchronizer};
 use crate::transaction::{Transaction, TransactionPool};
@@ -251,3 +251,5 @@ impl Hash for Node {
         self.public_key.hash(state);
     }
 }
+
+pub mod message;

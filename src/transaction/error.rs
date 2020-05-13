@@ -2,7 +2,7 @@ use hex::ToHex;
 use std::error;
 use std::fmt;
 
-use crate::common::Hash;
+use crate::Hash;
 
 #[derive(Debug)]
 pub enum TransactionError {

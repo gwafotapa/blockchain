@@ -6,9 +6,10 @@ use std::fmt;
 
 use crate::block::Block;
 use crate::blockchain::Blockchain;
-use crate::common::{Hash, SPEND_PROBA, UTXO_HASH_INIT};
+use crate::constants::{SPEND_PROBA, UTXO_HASH_INIT};
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
 use crate::utxo::{Utxo, UtxoData, UtxoId, UtxoPool};
+use crate::Hash;
 
 pub struct Wallet {
     public_key: PublicKey,

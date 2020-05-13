@@ -2,7 +2,7 @@ use secp256k1::PublicKey;
 
 pub use self::data::UtxoData;
 pub use self::id::UtxoId;
-use crate::common::Hash;
+use crate::Hash;
 
 pub use self::pool::UtxoPool;
 

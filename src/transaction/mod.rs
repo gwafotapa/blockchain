@@ -6,7 +6,8 @@ use std::hash::{Hash as HashTrait, Hasher};
 use std::iter;
 
 use self::merkle_tree::MergeHash;
-use crate::common::{Hash, TX_INPUT_BYTES, TX_OUTPUT_BYTES};
+use crate::constants::{TX_INPUT_BYTES, TX_OUTPUT_BYTES};
+use crate::Hash;
 
 pub use self::error::TransactionError;
 pub use self::input::TransactionInput;

@@ -1,7 +1,7 @@
 use rand::Rng;
 
 use crate::block::Block;
-use crate::common::MINE_NEW_BLOCK_PROBA;
+use crate::constants::MINE_NEW_BLOCK_PROBA;
 use crate::transaction::TransactionPool;
 
 pub struct Miner {

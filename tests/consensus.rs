@@ -3,8 +3,9 @@ use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
 
-use blockchain::common::{Message, NODES};
+use blockchain::constants::NODES;
 use blockchain::network::Network;
+use blockchain::node::message::Message;
 use blockchain::utxo::Utxo;
 
 pub mod common;

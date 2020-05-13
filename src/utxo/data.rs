@@ -1,7 +1,7 @@
 use secp256k1::PublicKey;
 use std::convert::TryInto;
 
-use crate::common::UTXO_DATA_BYTES;
+use crate::constants::UTXO_DATA_BYTES;
 
 #[derive(Clone, Copy, Debug, Hash)]
 pub struct UtxoData {

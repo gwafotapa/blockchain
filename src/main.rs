@@ -9,8 +9,9 @@ use log::info;
 use std::thread;
 use std::time::Duration;
 
-use blockchain::common::{Message, NODES};
+use blockchain::constants::NODES;
 use blockchain::network::Network;
+use blockchain::node::message::Message;
 
 fn main() {
     env_logger::init();

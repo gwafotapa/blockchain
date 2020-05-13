@@ -1,7 +1,7 @@
 use merkle_cbt::merkle_tree::Merge;
 use sha2::{Digest, Sha256};
 
-use crate::common::Hash;
+use crate::Hash;
 
 pub struct MergeHash {}
 

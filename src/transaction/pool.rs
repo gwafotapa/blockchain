@@ -5,7 +5,7 @@ use std::iter::FromIterator;
 use std::ops::Index;
 
 use crate::block::Block;
-use crate::common::TXS_PER_BLOCK;
+use crate::constants::TXS_PER_BLOCK;
 use crate::transaction::{Transaction, TransactionError};
 
 // TODO: Should it be a vector or a hashmap ?

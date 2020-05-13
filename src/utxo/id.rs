@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
-use crate::common::{Hash, UTXO_ID_BYTES};
+use crate::constants::UTXO_ID_BYTES;
+use crate::Hash;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UtxoId {

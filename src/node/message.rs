@@ -1,24 +1,7 @@
-use generic_array::{typenum::U32, GenericArray};
 use std::borrow::Cow;
 
 use crate::block::Block;
 use crate::transaction::Transaction;
-
-pub type Hash = GenericArray<u8, U32>;
-
-pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];
-pub const HEADER_BYTES: usize = 64;
-pub const MINE_NEW_BLOCK_PROBA: f64 = 1.0 / 1.0;
-pub const NODES: usize = 4;
-pub const SIGNATURE_BYTES: usize = 64;
-pub const SPEND_PROBA: f64 = 1.0 / 1000.0;
-pub const TX_INPUT_BYTES: usize = UTXO_ID_BYTES + SIGNATURE_BYTES;
-pub const TX_OUTPUT_BYTES: usize = UTXO_DATA_BYTES;
-pub const TXS_PER_BLOCK: usize = 2;
-pub const UTXO_AMOUNT_INIT: u32 = 10;
-pub const UTXO_DATA_BYTES: usize = 4 + 33;
-pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];
-pub const UTXO_ID_BYTES: usize = 32 + 8;
 
 const SHUT_DOWN: &[u8] = b"Shut down";
 

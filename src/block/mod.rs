@@ -5,9 +5,10 @@ use std::fmt;
 use std::iter;
 
 use self::header::BlockHeader;
-use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK, HEADER_BYTES};
+use crate::constants::{GENESIS_BLOCK_HASH_PREV_BLOCK, HEADER_BYTES};
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
+use crate::Hash;
 
 pub use self::error::BlockError;
 

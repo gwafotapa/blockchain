@@ -1,7 +1,8 @@
 use secp256k1::Signature;
 
-use crate::common::{Hash, TX_INPUT_BYTES, UTXO_ID_BYTES};
+use crate::constants::{TX_INPUT_BYTES, UTXO_ID_BYTES};
 use crate::utxo::UtxoId;
+use crate::Hash;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TransactionInput {

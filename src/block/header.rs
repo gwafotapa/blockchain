@@ -1,4 +1,4 @@
-use crate::common::Hash;
+use crate::Hash;
 
 #[derive(Clone, Debug)]
 pub struct BlockHeader {

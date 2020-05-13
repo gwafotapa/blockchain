@@ -4,9 +4,9 @@ use std::fmt;
 
 use self::error::BlockchainError;
 use crate::block::Block;
-use crate::common::Hash as BlockHash;
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
+use crate::Hash as BlockHash;
 
 #[derive(Debug)]
 pub struct Blockchain {

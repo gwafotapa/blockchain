@@ -8,7 +8,7 @@ use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc, Barrier, Mutex};
 use std::thread::{self, JoinHandle};
 
-use crate::common::Message;
+use crate::node::message::Message;
 use crate::node::Node;
 
 pub use self::neighbour::Neighbour;

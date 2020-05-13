@@ -6,8 +6,9 @@ use std::fmt;
 use super::{Utxo, UtxoData, UtxoId};
 use crate::block::{Block, BlockError};
 use crate::blockchain::Blockchain;
-use crate::common::{Hash, UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
+use crate::constants::{UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
 use crate::transaction::{Transaction, TransactionError};
+use crate::Hash;
 
 #[derive(Clone, Debug)]
 pub struct UtxoPool {
