@@ -143,7 +143,7 @@ impl Wallet {
                 }
             } else {
                 // TODO: blockchain.top() is not necessary
-                let utxo = blockchain.get_utxo_from(input, blockchain.top());
+                let utxo = blockchain.get_utxo(input.utxo_id(), blockchain.top());
                 if utxo.public_key() == self.public_key() {
                     self.add(utxo);
                 }

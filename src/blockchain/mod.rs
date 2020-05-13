@@ -5,8 +5,8 @@ use std::fmt;
 use self::error::BlockchainError;
 use crate::block::Block;
 use crate::common::Hash as BlockHash;
-use crate::transaction::{Transaction, TransactionInput};
-use crate::utxo::Utxo;
+use crate::transaction::Transaction;
+use crate::utxo::{Utxo, UtxoId};
 
 #[derive(Debug)]
 pub struct Blockchain {
@@ -37,22 +37,19 @@ impl Blockchain {
         Ok(())
     }
 
-    /// Finds the two shortest lists of blocks joining the given block to the blockchain's top
+    /// Finds the two shortest lists of consecutive blocks joining two blocks
     ///
-    /// Computes the closest common parent A of the blockchain's top block B and the given block C,
-    /// then returns two lists of transactions:
+    /// Computes the closest common parent A of the two given blocks B and C, then returns:
     /// - the list of blocks between B (included) and A (not included) in decreasing height.
     /// - the list of blocks between C (included) and A (not included) in decreasing height.
-    // TODO: take two blocks as parameters or at least rename 'new_top' as 'block'
-    pub fn block_delta(&self, new_top: &Block) -> (Vec<Block>, Vec<Block>) {
-        let old_top = self.top();
-        let parent = self.common_parent(old_top, new_top).unwrap();
-        let old_blocks = self.blocks_between(parent, old_top);
-        let new_blocks = self.blocks_between(parent, new_top);
-        (old_blocks, new_blocks)
+    pub fn block_delta(&self, block1: &Block, block2: &Block) -> (Vec<Block>, Vec<Block>) {
+        let parent = self.common_parent(block1, block2).unwrap();
+        let list1 = self.range_of_blocks(block1, parent);
+        let list2 = self.range_of_blocks(block2, parent);
+        (list1, list2)
     }
 
-    fn blocks_between<'a>(&'a self, parent: &'a Block, mut child: &'a Block) -> Vec<Block> {
+    fn range_of_blocks<'a>(&'a self, mut child: &'a Block, parent: &'a Block) -> Vec<Block> {
         let mut blocks = VecDeque::new();
         while child != parent {
             blocks.push_front(child.clone());
@@ -94,6 +91,7 @@ impl Blockchain {
         } else if self.parent(block1).is_none() || self.parent(block2).is_none() {
             return None;
         }
+
         while block1 != block2 {
             match block1.height().cmp(&block2.height()) {
                 Ordering::Less => block2 = self.parent(block2).unwrap(),
@@ -107,10 +105,9 @@ impl Blockchain {
         Some(block1)
     }
 
-    // TODO: Should return an option
-    pub fn get_utxo_from<'a>(&'a self, input: &TransactionInput, mut block: &'a Block) -> Utxo {
+    pub fn get_utxo<'a>(&'a self, utxo_id: &UtxoId, mut block: &'a Block) -> Utxo {
         loop {
-            if let Some(utxo) = block.get_utxo_from(input) {
+            if let Some(utxo) = block.get_utxo(utxo_id) {
                 return utxo;
             }
             block = self.parent(block).unwrap();

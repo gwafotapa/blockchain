@@ -86,7 +86,7 @@ impl UtxoPool {
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 self.add(utxo);
             } else {
-                let utxo = blockchain.get_utxo_from(input, block);
+                let utxo = blockchain.get_utxo(input.utxo_id(), block);
                 self.add(utxo);
             }
         }

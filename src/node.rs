@@ -1,4 +1,4 @@
-use log::{info, warn};
+use log::info;
 use secp256k1::{PublicKey, SecretKey};
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
@@ -118,7 +118,8 @@ impl Node {
     pub fn process_b(&mut self, block: Block) {
         if !self.blockchain.contains(&block) {
             if let Some(parent) = self.blockchain.parent(&block) {
-                let (old_blocks, new_blocks) = self.blockchain.block_delta(parent);
+                let (old_blocks, new_blocks) =
+                    self.blockchain.block_delta(self.blockchain.top(), parent);
 
                 // warn!("Node #{} -- old blocks:\n", self.id);
                 // for block in &old_blocks {

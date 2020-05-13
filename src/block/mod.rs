@@ -6,7 +6,7 @@ use std::iter;
 
 use self::header::BlockHeader;
 use crate::common::{Hash, GENESIS_BLOCK_HASH_PREV_BLOCK, HEADER_BYTES};
-use crate::transaction::{Transaction, TransactionInput};
+use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
 
 pub use self::error::BlockError;
@@ -45,12 +45,11 @@ impl Block {
     }
 
     // TODO: does tx has vout outputs ?
-    pub fn get_utxo_from(&self, input: &TransactionInput) -> Option<Utxo> {
+    pub fn get_utxo(&self, utxo_id: &UtxoId) -> Option<Utxo> {
         for transaction in &self.transactions {
-            if transaction.id() == input.txid() {
-                let utxo_id = UtxoId::new(input.txid(), input.vout());
-                let utxo_data = transaction.outputs()[input.vout()].0;
-                let utxo = Utxo::new(utxo_id, utxo_data);
+            if transaction.id() == utxo_id.txid() {
+                let utxo_data = transaction.outputs()[utxo_id.vout()].0;
+                let utxo = Utxo::new(*utxo_id, utxo_data);
                 return Some(utxo);
             }
         }
