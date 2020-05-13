@@ -9,6 +9,8 @@ pub enum TransactionError {
     UnknownUtxo,
     InvalidSignature(secp256k1::Error),
     PoolSpentUtxo(Hash),
+    PoolHasTransaction,
+    UnknownTransaction,
 }
 
 impl fmt::Display for TransactionError {
@@ -20,6 +22,13 @@ impl fmt::Display for TransactionError {
                 write!(f, "This utxo is already spent by pool transaction ")?;
                 txid.write_hex(f)
             }
+            TransactionError::PoolHasTransaction => write!(
+                f,
+                "Cannot add transaction because it is already in the pool"
+            ),
+            TransactionError::UnknownTransaction => {
+                write!(f, "Cannot remove transaction because it is not in the pool")
+            }
         }
     }
 }
@@ -30,6 +39,8 @@ impl error::Error for TransactionError {
             TransactionError::UnknownUtxo => None,
             TransactionError::InvalidSignature(err) => err.source(),
             TransactionError::PoolSpentUtxo(_) => None,
+            TransactionError::PoolHasTransaction => None,
+            TransactionError::UnknownTransaction => None,
         }
     }
 }

@@ -1,23 +1,20 @@
-use rand::seq::SliceRandom;
+use rand::seq::IteratorRandom;
 use std::collections::HashSet;
 use std::fmt;
-use std::iter::FromIterator;
-use std::ops::Index;
 
 use crate::block::Block;
 use crate::constants::TXS_PER_BLOCK;
 use crate::transaction::{Transaction, TransactionError};
 
-// TODO: Should it be a vector or a hashmap ?
 #[derive(Debug)]
 pub struct TransactionPool {
-    transactions: Vec<Transaction>,
+    transactions: HashSet<Transaction>,
 }
 
 impl TransactionPool {
     pub fn new() -> Self {
         Self {
-            transactions: Vec::new(),
+            transactions: HashSet::new(),
         }
     }
 
@@ -25,14 +22,20 @@ impl TransactionPool {
         self.transactions.len()
     }
 
-    // TODO: use push instead of add ?
-    pub fn add(&mut self, transaction: Transaction) {
-        self.transactions.push(transaction);
+    pub fn add(&mut self, transaction: Transaction) -> Result<(), TransactionError> {
+        if self.transactions.insert(transaction) {
+            Ok(())
+        } else {
+            Err(TransactionError::PoolHasTransaction)
+        }
     }
 
-    pub fn remove(&mut self, transaction: &Transaction) -> Option<Transaction> {
-        self.position(transaction)
-            .map(|i| self.transactions.remove(i))
+    pub fn remove(&mut self, transaction: &Transaction) -> Result<(), TransactionError> {
+        if self.transactions.remove(transaction) {
+            Ok(())
+        } else {
+            Err(TransactionError::UnknownTransaction)
+        }
     }
 
     pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
@@ -48,25 +51,29 @@ impl TransactionPool {
         Ok(())
     }
 
-    pub fn position(&self, transaction: &Transaction) -> Option<usize> {
-        self.transactions.iter().position(|tx| tx == transaction)
-    }
-
     pub fn select(&self) -> Option<Vec<Transaction>> {
         if self.size() < TXS_PER_BLOCK {
             return None;
         }
         Some(
             self.transactions
+                .iter()
                 .choose_multiple(&mut rand::thread_rng(), TXS_PER_BLOCK)
-                .cloned()
+                .iter()
+                .map(|&tx| tx.clone())
                 .collect(),
         )
     }
 
+    /// Remove the block transactions from the pool
+    ///
+    /// When a fork occurs, valid received transactions may be deemed invalid if they concern
+    /// the other chain. For this reason, there may be no transaction to remove from the pool
+    /// when adopting the new chain in the event we lose the race. Hence the ok() call instead
+    /// of unwrap().
     pub fn process(&mut self, block: &Block) {
         for transaction in block.transactions() {
-            self.remove(transaction);
+            self.remove(transaction).ok();
         }
     }
 
@@ -78,7 +85,7 @@ impl TransactionPool {
 
     pub fn undo(&mut self, block: &Block) {
         for transaction in block.transactions() {
-            self.add(transaction.clone());
+            self.add(transaction.clone()).unwrap();
         }
     }
 
@@ -88,7 +95,7 @@ impl TransactionPool {
         }
     }
 
-    pub fn transactions(&self) -> &Vec<Transaction> {
+    pub fn transactions(&self) -> &HashSet<Transaction> {
         &self.transactions
     }
 }
@@ -107,16 +114,9 @@ impl Eq for TransactionPool {}
 
 impl PartialEq for TransactionPool {
     fn eq(&self, other: &Self) -> bool {
-        let p1 = HashSet::<Transaction>::from_iter(self.transactions().iter().cloned());
-        let p2 = HashSet::<Transaction>::from_iter(other.transactions().iter().cloned());
-        p1.symmetric_difference(&p2).next().is_none()
-    }
-}
-
-impl Index<usize> for TransactionPool {
-    type Output = Transaction;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.transactions[index]
+        self.transactions
+            .symmetric_difference(&other.transactions)
+            .next()
+            .is_none()
     }
 }

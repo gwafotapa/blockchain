@@ -1,4 +1,4 @@
-use rand::seq::SliceRandom;
+use rand::seq::SliceRandom; // TODO: use iteratorrandom instead ?
 use rand::Rng;
 use rand_core::RngCore;
 use secp256k1::{PublicKey, Secp256k1, SecretKey};

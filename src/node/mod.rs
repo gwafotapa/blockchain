@@ -74,7 +74,7 @@ impl Node {
                         transaction
                     );
                     self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                    self.transaction_pool.add(transaction);
+                    self.transaction_pool.add(transaction).unwrap();
                 }
             }
             if let Some(block) = self
@@ -111,7 +111,7 @@ impl Node {
                 self.id, transaction
             );
             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-            self.transaction_pool.add(transaction);
+            self.transaction_pool.add(transaction).unwrap();
         }
     }
 
