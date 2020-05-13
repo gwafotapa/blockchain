@@ -6,6 +6,7 @@ use std::fmt;
 pub enum BlockError {
     WrongTransactionCount,
     InvalidTransaction(TransactionError),
+    DuplicateUtxo,
 }
 
 impl fmt::Display for BlockError {
@@ -15,6 +16,9 @@ impl fmt::Display for BlockError {
                 write!(f, "Number of transactions is not a power of 2")
             }
             BlockError::InvalidTransaction(err) => err.fmt(f),
+            BlockError::DuplicateUtxo => {
+                write!(f, "Block has transaction inputs with the same utxo")
+            }
         }
     }
 }
@@ -24,6 +28,7 @@ impl error::Error for BlockError {
         match self {
             BlockError::WrongTransactionCount => None,
             BlockError::InvalidTransaction(err) => err.source(),
+            BlockError::DuplicateUtxo => None,
         }
     }
 }

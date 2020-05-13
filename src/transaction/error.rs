@@ -11,6 +11,8 @@ pub enum TransactionError {
     PoolSpentUtxo(Hash),
     PoolHasTransaction,
     UnknownTransaction,
+    PoolHasUtxo,
+    DuplicateUtxo,
 }
 
 impl fmt::Display for TransactionError {
@@ -29,6 +31,12 @@ impl fmt::Display for TransactionError {
             TransactionError::UnknownTransaction => {
                 write!(f, "Cannot remove transaction because it is not in the pool")
             }
+            TransactionError::PoolHasUtxo => {
+                write!(f, "Cannot add utxo because it is already in the pool")
+            }
+            TransactionError::DuplicateUtxo => {
+                write!(f, "Transaction inputs contain two copies of the same utxo")
+            }
         }
     }
 }
@@ -41,6 +49,8 @@ impl error::Error for TransactionError {
             TransactionError::PoolSpentUtxo(_) => None,
             TransactionError::PoolHasTransaction => None,
             TransactionError::UnknownTransaction => None,
+            TransactionError::PoolHasUtxo => None,
+            TransactionError::DuplicateUtxo => None,
         }
     }
 }

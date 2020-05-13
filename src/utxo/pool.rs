@@ -35,12 +35,18 @@ impl UtxoPool {
         }
     }
 
-    pub fn add(&mut self, utxo: Utxo) {
-        self.utxos.insert(utxo.id, utxo.data);
+    // TODO: TransactionError ? or another type of error ?
+    pub fn add(&mut self, utxo: Utxo) -> Result<(), TransactionError> {
+        match self.utxos.insert(utxo.id, utxo.data) {
+            None => Ok(()),
+            Some(_) => Err(TransactionError::PoolHasUtxo),
+        }
     }
 
-    pub fn remove(&mut self, utxo: &Utxo) -> Option<UtxoData> {
-        self.utxos.remove(utxo.id())
+    pub fn remove(&mut self, utxo: &Utxo) -> Result<UtxoData, TransactionError> {
+        self.utxos
+            .remove(utxo.id())
+            .ok_or(TransactionError::UnknownUtxo)
     }
 
     pub fn contains(&self, utxo: Utxo) -> bool {
@@ -62,8 +68,8 @@ impl UtxoPool {
         for (vout, output) in transaction.outputs().iter().enumerate() {
             let utxo_id = UtxoId::new(transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
-            // TODO: use self.add instead and look in the rest of the file for such things
-            self.utxos.insert(utxo_id, utxo_data);
+            let utxo = Utxo::new(utxo_id, utxo_data);
+            self.add(utxo).unwrap();
         }
     }
 
@@ -85,19 +91,17 @@ impl UtxoPool {
                 let utxo_id = UtxoId::new(input.txid(), input.vout());
                 let utxo_data = self.initial_utxos[&utxo_id];
                 let utxo = Utxo::new(utxo_id, utxo_data);
-                self.add(utxo);
+                self.add(utxo).unwrap();
             } else {
                 let utxo = blockchain.get_utxo(input.utxo_id(), block);
-                self.add(utxo);
+                self.add(utxo).unwrap();
             }
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
             let utxo_id = UtxoId::new(transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             let utxo = Utxo::new(utxo_id, utxo_data);
-            self.remove(&utxo)
-                .ok_or("Utxo cannot be removed from the pool")
-                .unwrap();
+            self.remove(&utxo).unwrap();
         }
     }
 
@@ -113,8 +117,15 @@ impl UtxoPool {
         }
     }
 
-    // TODO: Need to check each input is only used once
     pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
+        let input_utxos: HashSet<_> = transaction.inputs().iter().map(|i| *i.utxo_id()).collect();
+        if input_utxos.len() != transaction.inputs().len() {
+            return Err(TransactionError::DuplicateUtxo);
+        }
+        self.authenticate(transaction)
+    }
+
+    pub fn authenticate(&self, transaction: &Transaction) -> Result<(), TransactionError> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
             message.extend(utxo_id.serialize());
@@ -137,13 +148,23 @@ impl UtxoPool {
         Ok(())
     }
 
-    // TODO: Need to check no two transactions share an input
     pub fn validate(&self, block: &Block) -> Result<(), BlockError> {
         if !block.transaction_count().is_power_of_two() {
             return Err(BlockError::WrongTransactionCount);
         }
+        let mut input_count = 0;
+        let mut input_utxos = HashSet::new();
         for transaction in block.transactions() {
-            self.verify(transaction)?;
+            input_count += transaction.inputs().len();
+            for input in transaction.inputs() {
+                input_utxos.insert(input.utxo_id());
+            }
+        }
+        if input_utxos.len() != input_count {
+            return Err(BlockError::DuplicateUtxo);
+        }
+        for transaction in block.transactions() {
+            self.authenticate(transaction)?;
         }
         Ok(())
     }
@@ -178,7 +199,7 @@ impl fmt::Display for UtxoPool {
             write!(
                 f,
                 "\n  txid: {}  vout:{}\n  public_key: {}  amount: {}\n",
-                format!("{:#x}", utxo_id.txid()),
+                format!("{:x}", utxo_id.txid()),
                 utxo_id.vout(),
                 utxo_data.public_key(),
                 utxo_data.amount()

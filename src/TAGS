@@ -134,7 +134,7 @@ pub const UTXO_HASH_INIT: [u8; 32] = [0u8; 32];UTXO_HASH_INIT12,494
 pub const UTXO_ID_BYTES: usize = 32 + 8;UTXO_ID_BYTES13,542
 
 main.rs,24
-fn main() {main19,468
+fn main() {main19,490
 
 transaction/pool.rs,1202
 pub struct TransactionPool {TransactionPool10,214
@@ -158,12 +158,12 @@ impl PartialEq for TransactionPool {TransactionPool115,3258
 
 transaction/error.rs,464
 pub enum TransactionError {TransactionError8,82
-impl fmt::Display for TransactionError {TransactionError16,243
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt17,284
-impl error::Error for TransactionError {TransactionError36,1027
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source37,1068
-impl From<secp256k1::Error> for TransactionError {TransactionError48,1464
-    fn from(err: secp256k1::Error) -> Self {from49,1515
+impl fmt::Display for TransactionError {TransactionError18,279
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt19,320
+impl error::Error for TransactionError {TransactionError44,1350
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source45,1391
+impl From<secp256k1::Error> for TransactionError {TransactionError58,1891
+    fn from(err: secp256k1::Error) -> Self {from59,1942
 
 transaction/mod.rs,1194
 pub struct Transaction {Transaction18,454
@@ -223,14 +223,14 @@ pub struct MergeHash {}MergeHash6,83
 impl Merge for MergeHash {MergeHash8,108
     fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {merge11,158
 
-block/error.rs,412
+block/error.rs,413
 pub enum BlockError {BlockError6,97
-impl fmt::Display for BlockError {BlockError11,191
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt12,226
-impl error::Error for BlockError {BlockError22,525
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source23,560
-impl From<TransactionError> for BlockError {BlockError31,784
-    fn from(err: TransactionError) -> Self {from32,829
+impl fmt::Display for BlockError {BlockError12,210
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt13,245
+impl error::Error for BlockError {BlockError26,678
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source27,713
+impl From<TransactionError> for BlockError {BlockError36,984
+    fn from(err: TransactionError) -> Self {from37,1029
 
 block/mod.rs,1376
 pub struct Block {Block16,347
@@ -289,18 +289,18 @@ impl Miner {Miner11,175
     pub fn mine_from(&mut self, top: &Block, transaction_pool: &TransactionPool) {mine_from29,667
     pub fn discard_block(&mut self) {discard_block40,1044
 
-utxo/id.rs,542
-pub struct UtxoId {UtxoId7,134
-impl UtxoId {UtxoId12,190
-    pub fn new(txid: Hash, vout: usize) -> Self {new13,204
-    pub fn serialize(&self) -> Vec<u8> {serialize17,289
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize24,502
-    pub fn txid(&self) -> Hash {txid31,619
-    pub fn vout(&self) -> usize {vout35,677
-impl<B> From<B> for UtxoIdUtxoId40,738
-    fn from(bytes: B) -> Self {from44,793
-// impl fmt::Display for UtxoId {UtxoId52,1026
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt53,1060
+utxo/id.rs,536
+pub struct UtxoId {UtxoId8,148
+impl UtxoId {UtxoId13,204
+    pub fn new(txid: Hash, vout: usize) -> Self {new14,218
+    pub fn serialize(&self) -> Vec<u8> {serialize18,303
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize25,516
+    pub fn txid(&self) -> Hash {txid32,633
+    pub fn vout(&self) -> usize {vout36,691
+impl<B> From<B> for UtxoIdUtxoId41,752
+    fn from(bytes: B) -> Self {from45,807
+impl fmt::Display for UtxoId {UtxoId53,1040
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt54,1071
 
 utxo/data.rs,718
 pub struct UtxoData {UtxoData9,187
@@ -317,46 +317,47 @@ impl From<TransactionOutput> for UtxoData {UtxoData54,1199
 impl fmt::Display for UtxoData {UtxoData60,1353
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt61,1386
 
-utxo/pool.rs,1568
+utxo/pool.rs,1732
 pub struct UtxoPool {UtxoPool14,418
 impl UtxoPool {UtxoPool19,527
     pub fn new(keys: Vec<PublicKey>) -> Self {new20,543
-    pub fn add(&mut self, utxo: Utxo) {add38,1038
-    pub fn remove(&mut self, utxo: &Utxo) -> Option<UtxoData> {remove42,1132
-    pub fn contains(&self, utxo: Utxo) -> bool {contains46,1240
-    pub fn owned_by(&self, pk: &PublicKey) -> Vec<Utxo> {owned_by50,1339
-    pub fn process_t(&mut self, transaction: &Transaction) {process_t58,1592
-    pub fn process(&mut self, block: &Block) {process70,2132
-    pub fn process_all(&mut self, blocks: &[Block]) {process_all76,2287
-    pub fn undo_t(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {undo_t82,2421
-    pub fn undo(&mut self, block: &Block, blockchain: &Blockchain) {undo104,3405
-    pub fn undo_all(&mut self, blocks: &[Block], blockchain: &Blockchain) {undo_all110,3598
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {verify117,3832
-    pub fn validate(&self, block: &Block) -> Result<(), BlockError> {validate141,4782
-    pub fn size(&self) -> usize {size151,5100
-    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos155,5166
-    pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {utxos159,5265
-impl Eq for UtxoPool {}UtxoPool164,5350
-impl PartialEq for UtxoPool {UtxoPool166,5375
-    fn eq(&self, other: &Self) -> bool {eq167,5405
-impl fmt::Display for UtxoPool {UtxoPool174,5690
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt175,5723
+    pub fn add(&mut self, utxo: Utxo) -> Result<(), TransactionError> {add39,1097
+    pub fn remove(&mut self, utxo: &Utxo) -> Result<UtxoData, TransactionError> {remove46,1327
+    pub fn contains(&self, utxo: Utxo) -> bool {contains52,1516
+    pub fn owned_by(&self, pk: &PublicKey) -> Vec<Utxo> {owned_by56,1615
+    pub fn process_t(&mut self, transaction: &Transaction) {process_t64,1868
+    pub fn process(&mut self, block: &Block) {process76,2357
+    pub fn process_all(&mut self, blocks: &[Block]) {process_all82,2512
+    pub fn undo_t(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {undo_t88,2646
+    pub fn undo(&mut self, block: &Block, blockchain: &Blockchain) {undo108,3568
+    pub fn undo_all(&mut self, blocks: &[Block], blockchain: &Blockchain) {undo_all114,3761
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {verify120,3939
+    pub fn authenticate(&self, transaction: &Transaction) -> Result<(), TransactionError> {authenticate128,4298
+    pub fn validate(&self, block: &Block) -> Result<(), BlockError> {validate151,5192
+    pub fn size(&self) -> usize {size172,5932
+    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos176,5998
+    pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {utxos180,6097
+impl Eq for UtxoPool {}UtxoPool185,6182
+impl PartialEq for UtxoPool {UtxoPool187,6207
+    fn eq(&self, other: &Self) -> bool {eq188,6237
+impl fmt::Display for UtxoPool {UtxoPool195,6522
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt196,6555
 
-utxo/mod.rs,729
-pub struct Utxo {Utxo10,168
-impl Utxo {Utxo15,225
-    pub fn new(id: UtxoId, data: UtxoData) -> Self {new16,237
-    pub fn id(&self) -> &UtxoId {id20,323
-    pub fn data(&self) -> &UtxoData {data24,381
-    pub fn txid(&self) -> Hash {txid29,495
-    pub fn vout(&self) -> usize {vout33,558
-    pub fn amount(&self) -> u32 {amount37,622
-    pub fn public_key(&self) -> &PublicKey {public_key41,690
-impl Eq for Utxo {}Utxo46,776
-impl PartialEq for Utxo {Utxo48,797
-    fn eq(&self, other: &Self) -> bool {eq49,823
-// impl fmt::Display for Utxo {Utxo54,901
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt55,933
-pub mod data;data67,1285
-pub mod id;id68,1299
-pub mod pool;pool69,1311
+utxo/mod.rs,723
+pub struct Utxo {Utxo11,182
+impl Utxo {Utxo16,239
+    pub fn new(id: UtxoId, data: UtxoData) -> Self {new17,251
+    pub fn id(&self) -> &UtxoId {id21,337
+    pub fn data(&self) -> &UtxoData {data25,395
+    pub fn txid(&self) -> Hash {txid30,509
+    pub fn vout(&self) -> usize {vout34,572
+    pub fn amount(&self) -> u32 {amount38,636
+    pub fn public_key(&self) -> &PublicKey {public_key42,704
+impl Eq for Utxo {}Utxo47,790
+impl PartialEq for Utxo {Utxo49,811
+    fn eq(&self, other: &Self) -> bool {eq50,837
+impl fmt::Display for Utxo {Utxo55,915
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt56,944
+pub mod data;data68,1262
+pub mod id;id69,1276
+pub mod pool;pool70,1288

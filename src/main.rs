@@ -1,8 +1,8 @@
 /* TODO:
- * - transaction/pool.rs
+ * - Hash display using format! or write_hex ?
  * - use &Hash instead of Hash and check for other Copy types that could do the same
- *
  * - aggregate all errors
+ *
  * - write/complete tests
  * - deal with all the TODOs
  * - clean and refactor
