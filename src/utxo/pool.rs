@@ -53,7 +53,7 @@ impl UtxoPool {
         self.utxos.contains_key(utxo.id())
     }
 
-    pub fn owned_by(&self, pk: &PublicKey) -> Vec<Utxo> {
+    pub fn owned_by(&self, pk: &PublicKey) -> HashSet<Utxo> {
         self.utxos
             .iter()
             .filter(|(_id, data)| data.public_key() == pk)
@@ -86,6 +86,13 @@ impl UtxoPool {
     }
 
     pub fn undo_t(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {
+        for (vout, output) in transaction.outputs().iter().enumerate() {
+            let utxo_id = UtxoId::new(transaction.id(), vout);
+            let utxo_data = UtxoData::new(output.amount(), *output.public_key());
+            let utxo = Utxo::new(utxo_id, utxo_data);
+            self.remove(&utxo).unwrap();
+        }
+
         for input in transaction.inputs() {
             if input.txid() == Hash::from(UTXO_HASH_INIT) {
                 let utxo_id = UtxoId::new(input.txid(), input.vout());
@@ -96,12 +103,6 @@ impl UtxoPool {
                 let utxo = blockchain.get_utxo(input.utxo_id(), block);
                 self.add(utxo).unwrap();
             }
-        }
-        for (vout, output) in transaction.outputs().iter().enumerate() {
-            let utxo_id = UtxoId::new(transaction.id(), vout);
-            let utxo_data = UtxoData::new(output.amount(), *output.public_key());
-            let utxo = Utxo::new(utxo_id, utxo_data);
-            self.remove(&utxo).unwrap();
         }
     }
 

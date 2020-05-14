@@ -13,6 +13,8 @@ pub enum TransactionError {
     UnknownTransaction,
     PoolHasUtxo,
     DuplicateUtxo,
+    WrongPublicKey,
+    WalletHasUtxo,
 }
 
 impl fmt::Display for TransactionError {
@@ -37,6 +39,12 @@ impl fmt::Display for TransactionError {
             TransactionError::DuplicateUtxo => {
                 write!(f, "Transaction inputs contain two copies of the same utxo")
             }
+            TransactionError::WrongPublicKey => {
+                write!(f, "Cannot add utxo to the wallet: public keys differ")
+            }
+            TransactionError::WalletHasUtxo => {
+                write!(f, "Cannot add utxo because the wallet already has it")
+            }
         }
     }
 }
@@ -51,6 +59,8 @@ impl error::Error for TransactionError {
             TransactionError::UnknownTransaction => None,
             TransactionError::PoolHasUtxo => None,
             TransactionError::DuplicateUtxo => None,
+            TransactionError::WrongPublicKey => None,
+            TransactionError::WalletHasUtxo => None,
         }
     }
 }

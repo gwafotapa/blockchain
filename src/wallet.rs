@@ -2,12 +2,13 @@ use rand::seq::IteratorRandom;
 use rand::Rng;
 use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use std::fmt;
 
 use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::constants::{SPEND_PROBA, UTXO_HASH_INIT};
-use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
+use crate::transaction::{Transaction, TransactionError, TransactionInput, TransactionOutput};
 use crate::utxo::{Utxo, UtxoData, UtxoId, UtxoPool};
 use crate::Hash;
 
@@ -15,7 +16,7 @@ pub struct Wallet {
     public_key: PublicKey,
     secret_key: SecretKey,
     recipients: Vec<PublicKey>,
-    utxos: Vec<Utxo>,
+    utxos: HashSet<Utxo>,
 }
 
 impl Wallet {
@@ -23,7 +24,7 @@ impl Wallet {
         public_key: PublicKey,
         secret_key: SecretKey,
         recipients: Vec<PublicKey>,
-        utxos: Vec<Utxo>,
+        utxos: HashSet<Utxo>,
     ) -> Self {
         Self {
             public_key,
@@ -33,26 +34,39 @@ impl Wallet {
         }
     }
 
-    // TODO: add or push ? Harmonize between all files
-    pub fn add(&mut self, utxo: Utxo) {
+    // TODO: TransactionError or another kind of error ?
+    pub fn add(&mut self, utxo: Utxo) -> Result<(), TransactionError> {
         if utxo.public_key() != self.public_key() {
-            panic!("Invalid public key")
+            Err(TransactionError::WrongPublicKey)
+        } else {
+            if self.utxos.insert(utxo) {
+                Ok(())
+            } else {
+                Err(TransactionError::WalletHasUtxo)
+            }
         }
-        self.utxos.push(utxo);
     }
 
-    pub fn remove(&mut self, utxo: &Utxo) {
-        self.utxos
-            .iter()
-            .position(|u| u == utxo)
-            .and_then(|i| Some(self.utxos.remove(i)));
+    pub fn remove(&mut self, utxo: &Utxo) -> Result<(), TransactionError> {
+        if self.utxos.remove(utxo) {
+            Ok(())
+        } else {
+            Err(TransactionError::UnknownUtxo)
+        }
     }
 
-    pub fn remove_utxo_with(&mut self, input: &TransactionInput) {
-        self.utxos
+    pub fn remove_if_utxo_from(&mut self, input: &TransactionInput) -> bool {
+        if let Some(utxo) = self
+            .utxos
             .iter()
-            .position(|utxo| utxo.id() == input.utxo_id())
-            .and_then(|i| Some(self.utxos.remove(i)));
+            .filter(|utxo| utxo.id() == input.utxo_id())
+            .copied()
+            .last()
+        {
+            self.remove(&utxo).is_ok()
+        } else {
+            false
+        }
     }
 
     pub fn initiate(&mut self) -> Option<Transaction> {
@@ -102,7 +116,7 @@ impl Wallet {
 
     pub fn process_t(&mut self, transaction: &Transaction) {
         for input in transaction.inputs() {
-            self.remove_utxo_with(input);
+            self.remove_if_utxo_from(input);
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
             if output.public_key() != self.public_key() {
@@ -112,7 +126,7 @@ impl Wallet {
                 UtxoId::new(transaction.id(), vout),
                 UtxoData::new(output.amount(), *output.public_key()),
             );
-            self.add(utxo);
+            self.add(utxo).unwrap();
         }
     }
 
@@ -134,31 +148,30 @@ impl Wallet {
         blockchain: &Blockchain,
         utxo_pool: &UtxoPool,
     ) {
+        for (vout, output) in transaction.outputs().iter().enumerate() {
+            if output.public_key() != self.public_key() {
+                continue;
+            }
+            let utxo = Utxo::new(
+                UtxoId::new(transaction.id(), vout),
+                UtxoData::new(output.amount(), *output.public_key()),
+            );
+            self.remove(&utxo).unwrap();
+        }
+
         for input in transaction.inputs() {
             if input.txid() == Hash::from(UTXO_HASH_INIT) {
                 let utxo_id = UtxoId::new(input.txid(), input.vout());
                 let utxo_data = utxo_pool.initial_utxos()[&utxo_id];
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 if utxo.public_key() == self.public_key() {
-                    self.add(utxo);
+                    self.add(utxo).unwrap();
                 }
             } else {
-                // TODO: blockchain.top() is not necessary
                 let utxo = blockchain.get_utxo(input.utxo_id(), blockchain.top());
                 if utxo.public_key() == self.public_key() {
-                    self.add(utxo);
+                    self.add(utxo).unwrap();
                 }
-            }
-
-            for (vout, output) in transaction.outputs().iter().enumerate() {
-                if output.public_key() != self.public_key() {
-                    continue;
-                }
-                let utxo = Utxo::new(
-                    UtxoId::new(transaction.id(), vout),
-                    UtxoData::new(output.amount(), *output.public_key()),
-                );
-                self.remove(&utxo);
             }
         }
     }
@@ -179,7 +192,7 @@ impl Wallet {
         &self.public_key
     }
 
-    pub fn utxos(&self) -> &Vec<Utxo> {
+    pub fn utxos(&self) -> &HashSet<Utxo> {
         &self.utxos
     }
 }
