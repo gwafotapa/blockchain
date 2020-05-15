@@ -1,7 +1,5 @@
 /* TODO:
- * - clean and refactor module 'wallet'
  * - Hash display using format! or write_hex ?
- * - use &Hash instead of Hash and check for other Copy types that could do the same
  * - aggregate all errors
  *
  * - write/complete tests

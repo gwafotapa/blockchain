@@ -66,7 +66,7 @@ impl UtxoPool {
             self.utxos.remove(input.utxo_id());
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {
-            let utxo_id = UtxoId::new(transaction.id(), vout);
+            let utxo_id = UtxoId::new(*transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             let utxo = Utxo::new(utxo_id, utxo_data);
             self.add(utxo).unwrap();
@@ -87,15 +87,15 @@ impl UtxoPool {
 
     pub fn undo_t(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {
         for (vout, output) in transaction.outputs().iter().enumerate() {
-            let utxo_id = UtxoId::new(transaction.id(), vout);
+            let utxo_id = UtxoId::new(*transaction.id(), vout);
             let utxo_data = UtxoData::new(output.amount(), *output.public_key());
             let utxo = Utxo::new(utxo_id, utxo_data);
             self.remove(&utxo).unwrap();
         }
 
         for input in transaction.inputs() {
-            if input.txid() == Hash::from(UTXO_HASH_INIT) {
-                let utxo_id = UtxoId::new(input.txid(), input.vout());
+            if *input.txid() == Hash::from(UTXO_HASH_INIT) {
+                let utxo_id = UtxoId::new(*input.txid(), input.vout());
                 let utxo_data = self.initial_utxos[&utxo_id];
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 self.add(utxo).unwrap();

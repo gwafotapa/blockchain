@@ -29,12 +29,12 @@ impl BlockHeader {
         Self::from(bytes)
     }
 
-    pub fn hash_prev_block(&self) -> Hash {
-        self.hash_prev_block
+    pub fn hash_prev_block(&self) -> &Hash {
+        &self.hash_prev_block
     }
 
-    pub fn hash_merkle_root(&self) -> Hash {
-        self.hash_merkle_root
+    pub fn hash_merkle_root(&self) -> &Hash {
+        &self.hash_merkle_root
     }
 }
 

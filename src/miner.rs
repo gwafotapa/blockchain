@@ -28,7 +28,7 @@ impl Miner {
 
     pub fn mine_from(&mut self, top: &Block, transaction_pool: &TransactionPool) {
         if let Some(block) = self.block.as_ref() {
-            if block.hash_prev_block() == top.hash() {
+            if block.hash_prev_block() == &top.hash() {
                 return;
             }
         }

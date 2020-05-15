@@ -123,7 +123,7 @@ impl Wallet {
                 continue;
             }
             let utxo = Utxo::new(
-                UtxoId::new(transaction.id(), vout),
+                UtxoId::new(*transaction.id(), vout),
                 UtxoData::new(output.amount(), *output.public_key()),
             );
             self.add(utxo).unwrap();
@@ -153,15 +153,15 @@ impl Wallet {
                 continue;
             }
             let utxo = Utxo::new(
-                UtxoId::new(transaction.id(), vout),
+                UtxoId::new(*transaction.id(), vout),
                 UtxoData::new(output.amount(), *output.public_key()),
             );
             self.remove(&utxo).unwrap();
         }
 
         for input in transaction.inputs() {
-            if input.txid() == Hash::from(UTXO_HASH_INIT) {
-                let utxo_id = UtxoId::new(input.txid(), input.vout());
+            if *input.txid() == Hash::from(UTXO_HASH_INIT) {
+                let utxo_id = UtxoId::new(*input.txid(), input.vout());
                 let utxo_data = utxo_pool.initial_utxos()[&utxo_id];
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 if utxo.public_key() == self.public_key() {

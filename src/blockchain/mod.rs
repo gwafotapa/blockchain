@@ -76,7 +76,7 @@ impl Blockchain {
     }
 
     pub fn parent(&self, block: &Block) -> Option<&Block> {
-        self.chain.get(&block.hash_prev_block())
+        self.chain.get(block.hash_prev_block())
     }
 
     pub fn common_parent<'a>(

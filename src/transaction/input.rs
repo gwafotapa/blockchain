@@ -39,7 +39,7 @@ impl TransactionInput {
         &self.sig
     }
 
-    pub fn txid(&self) -> Hash {
+    pub fn txid(&self) -> &Hash {
         self.utxo_id.txid()
     }
 

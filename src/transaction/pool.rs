@@ -43,7 +43,7 @@ impl TransactionPool {
             for pool_input in pool_transaction.inputs() {
                 for input in transaction.inputs() {
                     if input.utxo_id() == pool_input.utxo_id() {
-                        return Err(TransactionError::PoolSpentUtxo(pool_transaction.id()));
+                        return Err(TransactionError::PoolSpentUtxo(*pool_transaction.id()));
                     }
                 }
             }
