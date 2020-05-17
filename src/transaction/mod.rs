@@ -9,10 +9,8 @@ use self::merkle_tree::MergeHash;
 use crate::constants::{TX_INPUT_BYTES, TX_OUTPUT_BYTES};
 use crate::Hash;
 
-pub use self::error::TransactionError;
 pub use self::input::TransactionInput;
 pub use self::output::TransactionOutput;
-pub use self::pool::TransactionPool;
 
 #[derive(Clone, Debug)]
 pub struct Transaction {
@@ -111,9 +109,9 @@ impl fmt::Display for Transaction {
         for (i, input) in self.inputs().iter().enumerate() {
             write!(
                 f,
-                "  Input {}:  txid: {}  vout: {}\n",
+                "  Input {}:  txid: {:x}  vout: {}\n",
                 i,
-                format!("{:#x}", input.txid()),
+                input.txid(),
                 input.vout(),
             )?;
         }
@@ -136,8 +134,6 @@ impl HashTrait for Transaction {
     }
 }
 
-pub mod error;
 pub mod input;
 pub mod merkle_tree;
 pub mod output;
-pub mod pool;

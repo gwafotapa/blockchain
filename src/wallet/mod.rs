@@ -5,11 +5,13 @@ use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::fmt;
 
+use self::error::WalletError;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::constants::{SPEND_PROBA, UTXO_HASH_INIT};
-use crate::transaction::{Transaction, TransactionError, TransactionInput, TransactionOutput};
-use crate::utxo::{Utxo, UtxoData, UtxoId, UtxoPool};
+use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
+use crate::utxo::{Utxo, UtxoData, UtxoId};
+use crate::utxo_pool::UtxoPool;
 use crate::Hash;
 
 pub struct Wallet {
@@ -34,24 +36,23 @@ impl Wallet {
         }
     }
 
-    // TODO: TransactionError or another kind of error ?
-    pub fn add(&mut self, utxo: Utxo) -> Result<(), TransactionError> {
+    pub fn add(&mut self, utxo: Utxo) -> Result<(), WalletError> {
         if utxo.public_key() != self.public_key() {
-            Err(TransactionError::WrongPublicKey)
+            Err(WalletError::WrongPublicKey)
         } else {
             if self.utxos.insert(utxo) {
                 Ok(())
             } else {
-                Err(TransactionError::WalletHasUtxo)
+                Err(WalletError::KnownUtxo)
             }
         }
     }
 
-    pub fn remove(&mut self, utxo: &Utxo) -> Result<(), TransactionError> {
+    pub fn remove(&mut self, utxo: &Utxo) -> Result<(), WalletError> {
         if self.utxos.remove(utxo) {
             Ok(())
         } else {
-            Err(TransactionError::UnknownUtxo)
+            Err(WalletError::UnknownUtxo)
         }
     }
 
@@ -203,8 +204,8 @@ impl fmt::Display for Wallet {
         for utxo in &self.utxos {
             write!(
                 f,
-                "\n  txid: {}  vout:{}\n  public_key: {}  amount: {}\n",
-                format!("{:#x}", utxo.txid()),
+                "\n  txid: {:x}  vout:{}\n  public_key: {}  amount: {}\n",
+                utxo.txid(),
                 utxo.vout(),
                 utxo.public_key(),
                 utxo.amount()
@@ -213,3 +214,5 @@ impl fmt::Display for Wallet {
         write!(f, "}}\n")
     }
 }
+
+pub mod error;

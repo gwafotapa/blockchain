@@ -1,11 +1,11 @@
 /* TODO:
- * - Hash display using format! or write_hex ?
- * - aggregate all errors
- *
- * - write/complete tests
+ * - pub uses
  * - deal with all the TODOs
  * - clean and refactor
+ * - write/complete tests
  * - if network is not a connected space, tests will very likely fail
+ * - implement mining proof of work
+ * - add enemy nodes
  */
 use log::info;
 use std::thread;

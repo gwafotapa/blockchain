@@ -54,9 +54,8 @@ impl fmt::Display for UtxoId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Utxo id {{\n  txid: {}\n  vout: {}\n}}",
-            format!("{:x}", self.txid),
-            self.vout
+            "Utxo id {{\n  txid: {:x}\n  vout: {}\n}}",
+            self.txid, self.vout
         )
     }
 }

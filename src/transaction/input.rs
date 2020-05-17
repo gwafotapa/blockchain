@@ -1,4 +1,3 @@
-use hex::ToHex;
 use secp256k1::Signature;
 use std::fmt;
 
@@ -62,8 +61,12 @@ where
 
 impl fmt::Display for TransactionInput {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Transaction input {{\n  txid: ")?;
-        self.txid().write_hex(f)?;
-        write!(f, "\n  vout: {}\n  sig: {}\n}}", self.vout(), self.sig)
+        write!(
+            f,
+            "Transaction input {{\n  txid: {:x}\n  vout: {}\n  sig: {}\n}}",
+            self.txid(),
+            self.vout(),
+            self.sig
+        )
     }
 }

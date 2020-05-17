@@ -3,11 +3,12 @@ use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
-use super::{Utxo, UtxoData, UtxoId};
-use crate::block::{Block, BlockError};
+use self::error::UtxoPoolError;
+use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::constants::{UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
-use crate::transaction::{Transaction, TransactionError};
+use crate::transaction::Transaction;
+use crate::utxo::{Utxo, UtxoData, UtxoId};
 use crate::Hash;
 
 #[derive(Clone, Debug)]
@@ -35,18 +36,17 @@ impl UtxoPool {
         }
     }
 
-    // TODO: TransactionError ? or another type of error ?
-    pub fn add(&mut self, utxo: Utxo) -> Result<(), TransactionError> {
-        match self.utxos.insert(utxo.id, utxo.data) {
+    pub fn add(&mut self, utxo: Utxo) -> Result<(), UtxoPoolError> {
+        match self.utxos.insert(*utxo.id(), *utxo.data()) {
             None => Ok(()),
-            Some(_) => Err(TransactionError::PoolHasUtxo),
+            Some(_) => Err(UtxoPoolError::KnownUtxo),
         }
     }
 
-    pub fn remove(&mut self, utxo: &Utxo) -> Result<UtxoData, TransactionError> {
+    pub fn remove(&mut self, utxo: &Utxo) -> Result<UtxoData, UtxoPoolError> {
         self.utxos
             .remove(utxo.id())
-            .ok_or(TransactionError::UnknownUtxo)
+            .ok_or(UtxoPoolError::UnknownUtxo)
     }
 
     pub fn contains(&self, utxo: Utxo) -> bool {
@@ -118,15 +118,15 @@ impl UtxoPool {
         }
     }
 
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
         let input_utxos: HashSet<_> = transaction.inputs().iter().map(|i| *i.utxo_id()).collect();
         if input_utxos.len() != transaction.inputs().len() {
-            return Err(TransactionError::DuplicateUtxo);
+            return Err(UtxoPoolError::TransactionHasDoubleSpending);
         }
         self.authenticate(transaction)
     }
 
-    pub fn authenticate(&self, transaction: &Transaction) -> Result<(), TransactionError> {
+    pub fn authenticate(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
             message.extend(utxo_id.serialize());
@@ -143,15 +143,15 @@ impl UtxoPool {
             if let Some(utxo_data) = self.utxos.get(input.utxo_id()) {
                 secp.verify(&message, input.sig(), utxo_data.public_key())?;
             } else {
-                return Err(TransactionError::UnknownUtxo);
+                return Err(UtxoPoolError::TransactionHasUnknownUtxo);
             }
         }
         Ok(())
     }
 
-    pub fn validate(&self, block: &Block) -> Result<(), BlockError> {
+    pub fn validate(&self, block: &Block) -> Result<(), UtxoPoolError> {
         if !block.transaction_count().is_power_of_two() {
-            return Err(BlockError::WrongTransactionCount);
+            return Err(UtxoPoolError::WrongTransactionCount);
         }
         let mut input_count = 0;
         let mut input_utxos = HashSet::new();
@@ -162,7 +162,7 @@ impl UtxoPool {
             }
         }
         if input_utxos.len() != input_count {
-            return Err(BlockError::DuplicateUtxo);
+            return Err(UtxoPoolError::BlockHasDoubleSpending);
         }
         for transaction in block.transactions() {
             self.authenticate(transaction)?;
@@ -199,8 +199,8 @@ impl fmt::Display for UtxoPool {
         for (utxo_id, utxo_data) in &self.utxos {
             write!(
                 f,
-                "\n  txid: {}  vout:{}\n  public_key: {}  amount: {}\n",
-                format!("{:x}", utxo_id.txid()),
+                "\n  txid: {:x}  vout:{}\n  public_key: {}  amount: {}\n",
+                utxo_id.txid(),
                 utxo_id.vout(),
                 utxo_data.public_key(),
                 utxo_data.amount()
@@ -209,3 +209,5 @@ impl fmt::Display for UtxoPool {
         write!(f, "}}\n")
     }
 }
+
+pub mod error;

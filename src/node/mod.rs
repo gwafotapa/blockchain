@@ -6,13 +6,15 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
+// TODO: add pub uses to lighten uses
 use self::message::Message;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::miner::Miner;
 use crate::network::{Neighbour, Synchronizer};
-use crate::transaction::{Transaction, TransactionPool};
-use crate::utxo::UtxoPool;
+use crate::transaction::Transaction;
+use crate::transaction_pool::TransactionPool;
+use crate::utxo_pool::UtxoPool;
 use crate::wallet::Wallet;
 
 pub struct Node {

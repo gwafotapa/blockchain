@@ -1,4 +1,3 @@
-use hex::ToHex;
 use sha2::{Digest, Sha256};
 use std::convert::TryInto;
 use std::fmt;
@@ -153,15 +152,13 @@ impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Block {{\n  height: {}\n  hash_prev_block: {}\n  transactions: {}\n",
+            "Block {{\n  height: {}\n  hash_prev_block: {:x}\n  transactions: {}\n",
             self.height,
-            format!("{:#x}", self.hash_prev_block()),
+            self.hash_prev_block(),
             self.transaction_count()
         )?;
         for transaction in &self.transactions {
-            write!(f, "    ")?;
-            transaction.id().write_hex(f)?;
-            write!(f, "\n")?;
+            write!(f, "    {:x}\n", transaction.id())?;
         }
         write!(f, "}}\n")
     }

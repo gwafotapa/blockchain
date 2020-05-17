@@ -7,7 +7,7 @@ use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
 
 use blockchain::transaction::{Transaction, TransactionInput, TransactionOutput};
-use blockchain::utxo::UtxoPool;
+use blockchain::utxo_pool::UtxoPool;
 
 pub mod common;
 pub const NODES: usize = 10;

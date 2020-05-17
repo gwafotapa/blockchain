@@ -2,9 +2,10 @@ use rand::seq::IteratorRandom;
 use std::collections::HashSet;
 use std::fmt;
 
+use self::error::TransactionPoolError;
 use crate::block::Block;
 use crate::constants::TXS_PER_BLOCK;
-use crate::transaction::{Transaction, TransactionError};
+use crate::transaction::Transaction;
 
 #[derive(Debug)]
 pub struct TransactionPool {
@@ -22,28 +23,28 @@ impl TransactionPool {
         self.transactions.len()
     }
 
-    pub fn add(&mut self, transaction: Transaction) -> Result<(), TransactionError> {
+    pub fn add(&mut self, transaction: Transaction) -> Result<(), TransactionPoolError> {
         if self.transactions.insert(transaction) {
             Ok(())
         } else {
-            Err(TransactionError::PoolHasTransaction)
+            Err(TransactionPoolError::KnownTransaction)
         }
     }
 
-    pub fn remove(&mut self, transaction: &Transaction) -> Result<(), TransactionError> {
+    pub fn remove(&mut self, transaction: &Transaction) -> Result<(), TransactionPoolError> {
         if self.transactions.remove(transaction) {
             Ok(())
         } else {
-            Err(TransactionError::UnknownTransaction)
+            Err(TransactionPoolError::UnknownTransaction)
         }
     }
 
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionError> {
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {
         for pool_transaction in self.transactions() {
             for pool_input in pool_transaction.inputs() {
                 for input in transaction.inputs() {
                     if input.utxo_id() == pool_input.utxo_id() {
-                        return Err(TransactionError::PoolSpentUtxo(*pool_transaction.id()));
+                        return Err(TransactionPoolError::UnknownUtxo(*pool_transaction.id()));
                     }
                 }
             }
@@ -104,7 +105,7 @@ impl fmt::Display for TransactionPool {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Transaction pool ({}) {{\n", self.size())?;
         for transaction in &self.transactions {
-            write!(f, "  {}\n", format!("{:#x}", transaction.id()))?;
+            write!(f, "  {:x}\n", transaction.id())?;
         }
         write!(f, "}}\n")
     }
@@ -120,3 +121,5 @@ impl PartialEq for TransactionPool {
             .is_none()
     }
 }
+
+pub mod error;

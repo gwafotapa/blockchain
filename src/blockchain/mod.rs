@@ -148,10 +148,10 @@ impl fmt::Display for Blockchain {
         for block in &chain {
             write!(
                 f,
-                "\n  height: {}\n  id: {}\n  parent: {}\n",
+                "\n  height: {}\n  id: {:x}\n  parent: {:x}\n",
                 block.height(),
-                format!("{:#x}", block.id()),
-                format!("{:#x}", block.hash_prev_block())
+                block.id(),
+                block.hash_prev_block()
             )?;
         }
         write!(f, "}}\n")

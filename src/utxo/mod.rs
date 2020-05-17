@@ -5,8 +5,6 @@ pub use self::id::UtxoId;
 use crate::Hash;
 use std::fmt;
 
-pub use self::pool::UtxoPool;
-
 #[derive(Clone, Copy, Debug, Hash)]
 pub struct Utxo {
     id: UtxoId,
@@ -55,8 +53,8 @@ impl fmt::Display for Utxo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Utxo {{\n  txid: {}\n  vout: {}\n  amount: {}\n  public_key: {}\n}}\n",
-            format!("{:x}", self.txid()),
+            "Utxo {{\n  txid: {:x}\n  vout: {}\n  amount: {}\n  public_key: {}\n}}\n",
+            self.txid(),
             self.vout(),
             self.amount(),
             self.public_key()
@@ -66,4 +64,3 @@ impl fmt::Display for Utxo {
 
 pub mod data;
 pub mod id;
-pub mod pool;
