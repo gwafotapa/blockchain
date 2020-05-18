@@ -3,13 +3,12 @@ use std::convert::TryInto;
 use std::fmt;
 use std::iter;
 
+use self::error::BlockError;
 use self::header::BlockHeader;
 use crate::constants::{GENESIS_BLOCK_HASH_PREV_BLOCK, HEADER_BYTES};
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
 use crate::Hash;
-
-pub use self::error::BlockError;
 
 #[derive(Clone, Debug)]
 pub struct Block {
@@ -44,10 +43,9 @@ impl Block {
         })
     }
 
-    // TODO: does tx has vout outputs ?
     pub fn get_utxo(&self, utxo_id: &UtxoId) -> Option<Utxo> {
         for transaction in &self.transactions {
-            if transaction.id() == utxo_id.txid() {
+            if utxo_id.txid() == transaction.id() && utxo_id.vout() < transaction.outputs().len() {
                 let utxo_data = transaction.outputs()[utxo_id.vout()].into();
                 let utxo = Utxo::new(*utxo_id, utxo_data);
                 return Some(utxo);

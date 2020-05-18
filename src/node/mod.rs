@@ -6,7 +6,6 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
-// TODO: add pub uses to lighten uses
 use self::message::Message;
 use crate::block::Block;
 use crate::blockchain::Blockchain;

@@ -1,11 +1,12 @@
 /* TODO:
- * - pub uses
- * - deal with all the TODOs
- * - clean and refactor
- * - write/complete tests
- * - if network is not a connected space, tests will very likely fail
  * - implement mining proof of work
  * - add enemy nodes
+ * - deal with all the TODOs
+ * - remove commented code
+ * - clean and refactor
+ * - pub uses
+ * - write/complete tests
+ * - if network is not a connected space, tests will very likely fail
  */
 use log::info;
 use std::thread;
