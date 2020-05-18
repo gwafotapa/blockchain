@@ -4,7 +4,7 @@ use std::fmt;
 use std::iter;
 
 use self::error::BlockError;
-use self::header::BlockHeader;
+use self::header::{BlockHeader, Target};
 use crate::constants::{GENESIS_BLOCK_HASH_PREV_BLOCK, HEADER_BYTES};
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
@@ -60,6 +60,14 @@ impl Block {
         let hash = hasher.result_reset();
         hasher.input(hash);
         hasher.result()
+    }
+
+    pub fn target(&self) -> Target {
+        self.header.target()
+    }
+
+    pub fn inc_nonce(&mut self) {
+        self.header.inc_nonce()
     }
 
     pub fn serialize(&self) -> Vec<u8> {

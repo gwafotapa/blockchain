@@ -1,5 +1,6 @@
 /* TODO:
  * - implement mining proof of work
+ * - Modify serialization of objects whose size is known at compile time by returning an array instead of a vec
  * - add enemy nodes
  * - deal with all the TODOs
  * - remove commented code

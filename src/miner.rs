@@ -1,7 +1,4 @@
-use rand::Rng;
-
 use crate::block::Block;
-use crate::constants::MINE_NEW_BLOCK_PROBA;
 use crate::transaction_pool::TransactionPool;
 
 pub struct Miner {
@@ -15,11 +12,12 @@ impl Miner {
 
     pub fn mine(&mut self, top: &Block, transaction_pool: &TransactionPool) -> Option<Block> {
         self.mine_from(top, transaction_pool);
-        if self.block.is_some() {
-            let mut rng = rand::thread_rng();
-            match rng.gen_bool(MINE_NEW_BLOCK_PROBA) {
-                true => self.block.take(),
-                false => None,
+        if let Some(block) = self.block.as_mut() {
+            if block.hash() < block.target().hash() {
+                self.block.take()
+            } else {
+                block.inc_nonce();
+                None
             }
         } else {
             None
