@@ -48,7 +48,9 @@ fn consensus() {
                 continue;
             }
             assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
-            assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
+
+            // TODO: wrong assumption. Transaction pools may differ.
+            // assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
         }
         if consensus {
             let mut wallet_utxos_count = 0;

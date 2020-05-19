@@ -5,6 +5,7 @@ use std::fmt;
 pub enum BlockchainError {
     KnownBlock,
     OrphanBlock,
+    KnownTransactionId,
 }
 
 impl fmt::Display for BlockchainError {
@@ -18,6 +19,9 @@ impl fmt::Display for BlockchainError {
                 f,
                 "Blockchain: cannot add block to the blockchain that does not have the block's parent"
             ),
+            Self::KnownTransactionId => write!(
+                f,
+                "Blockchain: block contains a transaction whose id already belongs to the blockchain")
         }
     }
 }
@@ -27,6 +31,7 @@ impl error::Error for BlockchainError {
         match self {
             Self::KnownBlock => None,
             Self::OrphanBlock => None,
+            Self::KnownTransactionId => None,
         }
     }
 }

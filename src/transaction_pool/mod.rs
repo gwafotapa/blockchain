@@ -89,16 +89,20 @@ impl TransactionPool {
         }
     }
 
-    pub fn undo(&mut self, block: &Block) {
-        for transaction in block.transactions() {
-            self.add(transaction.clone()).unwrap();
-        }
-    }
+    // pub fn undo(&mut self, block: &Block) {
+    //     for transaction in block.transactions() {
+    //         self.add(transaction.clone()).unwrap();
+    //     }
+    // }
 
-    pub fn undo_all(&mut self, blocks: &[Block]) {
-        for block in blocks.iter().rev() {
-            self.undo(block);
-        }
+    // pub fn undo_all(&mut self, blocks: &[Block]) {
+    //     for block in blocks.iter().rev() {
+    //         self.undo(block);
+    //     }
+    // }
+
+    pub fn clear(&mut self) {
+        self.transactions.clear()
     }
 
     pub fn transactions(&self) -> &HashSet<Transaction> {

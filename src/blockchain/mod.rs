@@ -59,14 +59,13 @@ impl Blockchain {
     }
 
     pub fn contains(&self, block_id: BlockHash) -> bool {
-        // self.chain.contains_key(&block.hash())
         self.chain
             .iter()
             .any(|(_hash, block)| block.id() == block_id)
     }
 
-    pub fn contains_tx(&self, txid: &TransactionId) -> bool {
-        let mut block = self.top();
+    pub fn contains_tx(&self, txid: &TransactionId, top: &Block) -> bool {
+        let mut block = top;
         loop {
             if block.contains(txid) {
                 return true;
@@ -115,6 +114,15 @@ impl Blockchain {
             }
             block = self.parent(block).unwrap();
         }
+    }
+
+    pub fn verify_txids_of(&self, block: &Block, top: &Block) -> Result<(), BlockchainError> {
+        for transaction in block.transactions() {
+            if self.contains_tx(transaction.id(), top) {
+                return Err(BlockchainError::KnownTransactionId);
+            }
+        }
+        Ok(())
     }
 
     pub fn top(&self) -> &Block {

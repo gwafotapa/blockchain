@@ -1,4 +1,4 @@
-use log::info;
+use log::{info, warn};
 use rand::seq::SliceRandom;
 use secp256k1::{PublicKey, SecretKey};
 use std::borrow::Cow;
@@ -73,7 +73,9 @@ impl Node {
         loop {
             if let Some(transaction) = self.wallet.initiate() {
                 if self.transaction_pool.verify(&transaction).is_ok()
-                    && !self.blockchain.contains_tx(transaction.id())
+                    && !self
+                        .blockchain
+                        .contains_tx(transaction.id(), self.blockchain.top())
                 {
                     info!(
                         "Node #{} --- New transaction:\n{}\n",
@@ -115,7 +117,9 @@ impl Node {
 
     pub fn process_t(&mut self, transaction: Transaction) {
         if self.transaction_pool.verify(&transaction).is_ok()
-            && !self.blockchain.contains_tx(transaction.id())
+            && !self
+                .blockchain
+                .contains_tx(transaction.id(), self.blockchain.top())
             && self.utxo_pool.verify(&transaction).is_ok()
         {
             info!(
@@ -132,10 +136,22 @@ impl Node {
             if let Some(parent) = self.blockchain.parent(&block) {
                 let (old_blocks, new_blocks) =
                     self.blockchain.block_delta(self.blockchain.top(), parent);
+                // info!("old blocks: {:?}", old_blocks);
+                // info!("new blocks: {:?}", new_blocks);
                 self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
                 self.utxo_pool.process_all(&new_blocks);
-                if self.utxo_pool.validate(&block).is_ok() {
+                if self.utxo_pool.validate(&block).is_ok()
+                    && self.blockchain.verify_txids_of(&block, parent).is_ok()
+                {
                     // TODO: name validate_transactions
+                    // validating a block means:
+                    // - checking the id is not already in the blockchain (done)
+                    // - checking each utxo is only used once (done)
+                    // - checking the number of transactions is power of 2 (done)
+                    // - for each transaction:
+                    //   - checking its id is not already in the blockchain (done)
+                    //   - checking its utxos are unspent (done)
+                    //   - checking its signature is valid (done)
                     info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                     self.propagate(Message::Block(Cow::Borrowed(&block)));
                     if block.height() <= self.blockchain.height() {
@@ -147,9 +163,13 @@ impl Node {
                             .undo_all(&old_blocks, &self.blockchain, &self.utxo_pool);
                         self.wallet.process_all(&new_blocks);
                         self.wallet.process(&block);
-                        self.transaction_pool.undo_all(&old_blocks);
-                        self.transaction_pool.process_all(&new_blocks);
-                        self.transaction_pool.process(&block);
+
+                        // self.transaction_pool.undo_all(&old_blocks);
+                        self.transaction_pool.clear();
+
+                        // self.transaction_pool.process_all(&new_blocks);
+                        // self.transaction_pool.process(&block);
+
                         self.miner.discard_block();
                     }
                     self.blockchain.push(block).unwrap();
@@ -209,7 +229,7 @@ impl Node {
             if self.transaction_pool.verify(&tx1).is_ok()
                 && self.transaction_pool.verify(&tx2).is_ok()
             {
-                info!(
+                warn!(
                     "Node #{} --- Double spend --- New transactions:\n{}\n{}\n",
                     self.id(),
                     tx1,
