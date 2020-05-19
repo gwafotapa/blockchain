@@ -87,8 +87,8 @@ impl Block {
         Self::from(bytes)
     }
 
-    pub fn contains(&self, transaction: &Transaction) -> bool {
-        self.transactions().contains(transaction)
+    pub fn contains(&self, txid: &Hash) -> bool {
+        self.transactions().iter().any(|tx| tx.id() == txid)
     }
 
     pub fn is_genesis(&self) -> bool {

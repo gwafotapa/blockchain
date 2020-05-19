@@ -4,9 +4,9 @@ use std::fmt;
 
 use self::error::BlockchainError;
 use crate::block::Block;
-use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
 use crate::Hash as BlockHash;
+use crate::Hash as TransactionId;
 
 #[derive(Debug)]
 pub struct Blockchain {
@@ -62,10 +62,10 @@ impl Blockchain {
         self.chain.contains_key(&block.hash())
     }
 
-    pub fn contains_t(&self, transaction: &Transaction) -> bool {
+    pub fn contains_tx(&self, txid: &TransactionId) -> bool {
         let mut block = self.top();
         loop {
-            if block.contains(transaction) {
+            if block.contains(txid) {
                 return true;
             }
             if block.is_genesis() {

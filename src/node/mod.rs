@@ -72,7 +72,9 @@ impl Node {
     pub fn run(&mut self) {
         loop {
             if let Some(transaction) = self.wallet.initiate() {
-                if self.transaction_pool.verify(&transaction).is_ok() {
+                if self.transaction_pool.verify(&transaction).is_ok()
+                    && !self.blockchain.contains_tx(transaction.id())
+                {
                     // TODO: also check transaction id is not already in the blockchain
                     info!(
                         "Node #{} --- New transaction:\n{}\n",
@@ -113,7 +115,7 @@ impl Node {
 
     pub fn process_t(&mut self, transaction: Transaction) {
         if self.transaction_pool.verify(&transaction).is_ok()
-            && !self.blockchain.contains_t(&transaction) // TODO: transaction id instead
+            && !self.blockchain.contains_tx(transaction.id())
             && self.utxo_pool.verify(&transaction).is_ok()
         {
             info!(
