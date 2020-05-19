@@ -1,5 +1,4 @@
 /* TODO:
- * - Modify serialization of objects whose size is known at compile time by returning an array instead of a vec
  * - add enemy nodes
  * - deal with all the TODOs
  * - remove commented code
@@ -24,7 +23,7 @@ fn main() {
     //     value => value,
     // };
     let nodes = NODES;
-    let mut network = Network::random(nodes);
+    let mut network = Network::random(nodes, 0);
     info!("Network:\n{:?}", network);
     network.run();
     thread::sleep(Duration::from_secs(10));

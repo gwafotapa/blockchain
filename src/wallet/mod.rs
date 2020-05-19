@@ -115,8 +115,51 @@ impl Wallet {
         }
     }
 
+    pub fn double_spend(&mut self) -> Option<(Transaction, Transaction)> {
+        if self.utxos().is_empty() || self.recipients.len() < 2 {
+            return None;
+        }
+        let mut rng = rand::thread_rng();
+        match rng.gen_bool(SPEND_PROBA) {
+            false => None,
+            true => {
+                let utxo = self.utxos().iter().choose(&mut rng).unwrap();
+                let recipients = self.recipients.iter().choose_multiple(&mut rng, 2);
+
+                let output1 = TransactionOutput::new(utxo.amount(), *recipients[0]);
+                let outputs1 = vec![output1];
+                let mut message1 = Vec::new();
+                message1.extend(utxo.id().serialize());
+                message1.extend(output1.serialize());
+                let mut hasher = Sha256::new();
+                hasher.input(message1);
+                let hash1 = hasher.result_reset();
+                let message1 = MessageToSign::from_slice(&hash1).unwrap();
+                let secp = Secp256k1::new();
+                let sig1 = secp.sign(&message1, &self.secret_key);
+                let inputs1 = vec![TransactionInput::new(*utxo.id(), sig1)];
+                let transaction1 = Transaction::new(inputs1, outputs1);
+
+                let output2 = TransactionOutput::new(utxo.amount(), *recipients[1]);
+                let outputs2 = vec![output2];
+                let mut message2 = Vec::new();
+                message2.extend(utxo.id().serialize());
+                message2.extend(output2.serialize());
+                hasher.input(message2);
+                let hash2 = hasher.result();
+                let message2 = MessageToSign::from_slice(&hash2).unwrap();
+                let sig2 = secp.sign(&message2, &self.secret_key);
+                let inputs2 = vec![TransactionInput::new(*utxo.id(), sig2)];
+                let transaction2 = Transaction::new(inputs2, outputs2);
+
+                Some((transaction1, transaction2))
+            }
+        }
+    }
+
     pub fn process_t(&mut self, transaction: &Transaction) {
         for input in transaction.inputs() {
+            // TODO: add a method of TransactionInput returning the utxo
             self.remove_if_utxo_from(input);
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {

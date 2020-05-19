@@ -9,7 +9,7 @@ use std::sync::{mpsc, Arc, Barrier, Mutex};
 use std::thread::{self, JoinHandle};
 
 use crate::node::message::Message;
-use crate::node::Node;
+use crate::node::{Behaviour, Node};
 
 pub use self::neighbour::Neighbour;
 pub use self::synchronizer::Synchronizer;
@@ -38,7 +38,8 @@ impl Network {
         self.nodes.push(Some(node));
     }
 
-    pub fn random(nodes: usize) -> Self {
+    pub fn random(honest: usize, malicious: usize) -> Self {
+        let nodes = honest + malicious;
         let secp = Secp256k1::new();
         let mut rng = rand::thread_rng();
         let mut public_keys = Vec::with_capacity(nodes);
@@ -76,6 +77,11 @@ impl Network {
             let barrier = Arc::clone(&barrier);
             let state = Arc::clone(&state);
             let synchronizer = Synchronizer::new(barrier, state);
+            let integrity = if id < honest {
+                Behaviour::Honest
+            } else {
+                Behaviour::Malicious
+            };
             let node = Node::new(
                 id,
                 public_key,
@@ -85,6 +91,7 @@ impl Network {
                 neighbours,
                 public_keys.clone(),
                 synchronizer,
+                integrity,
             );
             network.add(node);
         }

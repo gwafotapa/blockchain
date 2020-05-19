@@ -15,7 +15,7 @@ fn consensus() {
     common::log_setup();
 
     let nodes = NODES;
-    let mut network = Network::random(nodes);
+    let mut network = Network::random(nodes, 0);
     info!("Network:\n{:?}", network);
     network.run();
     thread::sleep(Duration::from_secs(5));

@@ -66,6 +66,7 @@ impl TransactionPool {
         )
     }
 
+    // TODO: redo documentation
     /// Remove the block transactions from the pool
     ///
     /// When a fork occurs, valid received transactions may be deemed invalid if they concern
@@ -73,8 +74,12 @@ impl TransactionPool {
     /// when adopting the new chain in the event we lose the race. Hence the ok() call instead
     /// of unwrap().
     pub fn process(&mut self, block: &Block) {
-        for transaction in block.transactions() {
-            self.remove(transaction).ok();
+        // for transaction in block.transactions() {
+        //     self.remove(transaction).ok();
+        // }
+        for block_transaction in block.transactions() {
+            self.transactions_mut()
+                .retain(|tx| !tx.shares_utxo_with(block_transaction));
         }
     }
 
@@ -98,6 +103,10 @@ impl TransactionPool {
 
     pub fn transactions(&self) -> &HashSet<Transaction> {
         &self.transactions
+    }
+
+    pub fn transactions_mut(&mut self) -> &mut HashSet<Transaction> {
+        &mut self.transactions
     }
 }
 

@@ -1,4 +1,5 @@
 use log::info;
+use rand::seq::SliceRandom;
 use secp256k1::{PublicKey, SecretKey};
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
@@ -29,6 +30,7 @@ pub struct Node {
     wallet: Wallet,
     miner: Miner,
     synchronizer: Synchronizer,
+    integrity: Behaviour,
 }
 
 impl Node {
@@ -41,6 +43,7 @@ impl Node {
         neighbours: Vec<Neighbour>,
         network_public_keys: Vec<PublicKey>,
         synchronizer: Synchronizer,
+        integrity: Behaviour,
     ) -> Self {
         let utxo_pool = UtxoPool::new(network_public_keys.clone());
         let wallet = Wallet::new(
@@ -62,6 +65,7 @@ impl Node {
             wallet,
             miner: Miner::new(),
             synchronizer,
+            integrity,
         }
     }
 
@@ -69,6 +73,7 @@ impl Node {
         loop {
             if let Some(transaction) = self.wallet.initiate() {
                 if self.transaction_pool.verify(&transaction).is_ok() {
+                    // TODO: also check transaction id is not already in the blockchain
                     info!(
                         "Node #{} --- New transaction:\n{}\n",
                         self.id(),
@@ -82,6 +87,7 @@ impl Node {
                 .miner
                 .mine(self.blockchain.top(), &self.transaction_pool)
             {
+                // TODO: check block id is not already in the blockchain
                 info!("Node #{} --- New block:\n{}\n", self.id, block);
                 self.propagate(Message::Block(Cow::Borrowed(&block)));
                 self.utxo_pool.process(&block);
@@ -99,12 +105,15 @@ impl Node {
                     }
                 }
             }
+            if self.integrity == Behaviour::Malicious {
+                self.double_spend()
+            }
         }
     }
 
     pub fn process_t(&mut self, transaction: Transaction) {
         if self.transaction_pool.verify(&transaction).is_ok()
-            && !self.blockchain.contains_t(&transaction)
+            && !self.blockchain.contains_t(&transaction) // TODO: transaction id instead
             && self.utxo_pool.verify(&transaction).is_ok()
         {
             info!(
@@ -118,12 +127,14 @@ impl Node {
 
     pub fn process_b(&mut self, block: Block) {
         if !self.blockchain.contains(&block) {
+            // TODO: check block id instead
             if let Some(parent) = self.blockchain.parent(&block) {
                 let (old_blocks, new_blocks) =
                     self.blockchain.block_delta(self.blockchain.top(), parent);
                 self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
                 self.utxo_pool.process_all(&new_blocks);
                 if self.utxo_pool.validate(&block).is_ok() {
+                    // TODO: name validate_transactions
                     info!("Node #{} --- Received new block:\n{}\n", self.id, block);
                     self.propagate(Message::Block(Cow::Borrowed(&block)));
                     if block.height() <= self.blockchain.height() {
@@ -156,6 +167,11 @@ impl Node {
         }
     }
 
+    pub fn send(&self, message: &Message, neighbour: &Neighbour) {
+        let bytes = Arc::new(message.serialize());
+        neighbour.sender().send(Arc::clone(&bytes)).unwrap();
+    }
+
     pub fn shut_down(&mut self) {
         info!(
             "Node {} shutting down\nPublic key: {}\n",
@@ -178,6 +194,31 @@ impl Node {
             state[self.id] = false;
             if state.iter().all(|&b| b == false) {
                 break;
+            }
+        }
+    }
+
+    pub fn double_spend(&mut self) {
+        let mut rng = rand::thread_rng();
+        let mut neighbours = self.neighbours.choose_multiple(&mut rng, 2);
+        if neighbours.len() == 1 {
+            return;
+        }
+        if let Some((tx1, tx2)) = self.wallet.double_spend() {
+            if self.transaction_pool.verify(&tx1).is_ok()
+                && self.transaction_pool.verify(&tx2).is_ok()
+            {
+                info!(
+                    "Node #{} --- Double spend --- New transactions:\n{}\n{}\n",
+                    self.id(),
+                    tx1,
+                    tx2
+                );
+                let msg1 = Message::Transaction(Cow::Borrowed(&tx1));
+                let msg2 = Message::Transaction(Cow::Borrowed(&tx2));
+                self.send(&msg1, neighbours.next().unwrap());
+                self.send(&msg2, neighbours.next().unwrap());
+                self.transaction_pool.add(tx1).unwrap();
             }
         }
     }
@@ -238,3 +279,9 @@ impl Hash for Node {
 }
 
 pub mod message;
+
+#[derive(Eq, PartialEq)]
+pub enum Behaviour {
+    Honest,
+    Malicious,
+}

@@ -78,6 +78,17 @@ impl Transaction {
         merkle_tree.root()
     }
 
+    pub fn shares_utxo_with(&self, other: &Transaction) -> bool {
+        for self_input in self.inputs() {
+            for other_input in other.inputs() {
+                if self_input.utxo_id() == other_input.utxo_id() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
     pub fn bytes(&self) -> usize {
         1 + 3 * 8 + self.inputs.len() * TX_INPUT_BYTES + self.outputs.len() * TX_OUTPUT_BYTES
     }
