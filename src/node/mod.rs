@@ -75,7 +75,6 @@ impl Node {
                 if self.transaction_pool.verify(&transaction).is_ok()
                     && !self.blockchain.contains_tx(transaction.id())
                 {
-                    // TODO: also check transaction id is not already in the blockchain
                     info!(
                         "Node #{} --- New transaction:\n{}\n",
                         self.id(),
@@ -89,13 +88,14 @@ impl Node {
                 .miner
                 .mine(self.blockchain.top(), &self.transaction_pool)
             {
-                // TODO: check block id is not already in the blockchain
-                info!("Node #{} --- New block:\n{}\n", self.id, block);
-                self.propagate(Message::Block(Cow::Borrowed(&block)));
-                self.utxo_pool.process(&block);
-                self.wallet.process(&block);
-                self.transaction_pool.process(&block);
-                self.blockchain.push(block).unwrap();
+                if !self.blockchain.contains(block.id()) {
+                    info!("Node #{} --- New block:\n{}\n", self.id, block);
+                    self.propagate(Message::Block(Cow::Borrowed(&block)));
+                    self.utxo_pool.process(&block);
+                    self.wallet.process(&block);
+                    self.transaction_pool.process(&block);
+                    self.blockchain.push(block).unwrap();
+                }
             }
             if let Ok(bytes) = self.listener.try_recv() {
                 match Message::deserialize(bytes.deref()) {
@@ -128,8 +128,7 @@ impl Node {
     }
 
     pub fn process_b(&mut self, block: Block) {
-        if !self.blockchain.contains(&block) {
-            // TODO: check block id instead
+        if !self.blockchain.contains(block.id()) {
             if let Some(parent) = self.blockchain.parent(&block) {
                 let (old_blocks, new_blocks) =
                     self.blockchain.block_delta(self.blockchain.top(), parent);

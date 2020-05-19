@@ -24,7 +24,7 @@ impl Blockchain {
     }
 
     pub fn push(&mut self, block: Block) -> Result<(), BlockchainError> {
-        if self.contains(&block) {
+        if self.contains(block.id()) {
             return Err(BlockchainError::KnownBlock);
         }
         if self.parent(&block).is_none() {
@@ -58,8 +58,11 @@ impl Blockchain {
         Vec::from(blocks)
     }
 
-    pub fn contains(&self, block: &Block) -> bool {
-        self.chain.contains_key(&block.hash())
+    pub fn contains(&self, block_id: BlockHash) -> bool {
+        // self.chain.contains_key(&block.hash())
+        self.chain
+            .iter()
+            .any(|(_hash, block)| block.id() == block_id)
     }
 
     pub fn contains_tx(&self, txid: &TransactionId) -> bool {
