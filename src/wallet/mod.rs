@@ -159,7 +159,6 @@ impl Wallet {
 
     pub fn process_t(&mut self, transaction: &Transaction) {
         for input in transaction.inputs() {
-            // TODO: add a method of TransactionInput returning the utxo
             self.remove_if_utxo_from(input);
         }
         for (vout, output) in transaction.outputs().iter().enumerate() {

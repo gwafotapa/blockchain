@@ -165,7 +165,19 @@ impl Node {
                         self.wallet.process(&block);
 
                         // self.transaction_pool.undo_all(&old_blocks);
+                        // TODO: Add a function ?
                         self.transaction_pool.clear();
+                        for mut block in old_blocks {
+                            while let Some(transaction) = block.transactions_mut().pop() {
+                                if !self
+                                    .blockchain
+                                    .contains_tx(transaction.id(), self.blockchain.top())
+                                    && self.utxo_pool.verify(&transaction).is_ok()
+                                {
+                                    self.transaction_pool.add(transaction).unwrap();
+                                }
+                            }
+                        }
 
                         // self.transaction_pool.process_all(&new_blocks);
                         // self.transaction_pool.process(&block);

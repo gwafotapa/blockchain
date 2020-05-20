@@ -1,11 +1,11 @@
 /* TODO:
- * - add enemy nodes
+ * - clean and refactor
  * - deal with all the TODOs
  * - remove commented code
- * - clean and refactor
- * - pub uses
+ * - ensure the network is a connected space
  * - write/complete tests
- * - if network is not a connected space, tests will very likely fail
+ * - add enemy nodes
+ * - pub uses
  */
 use log::info;
 use std::thread;

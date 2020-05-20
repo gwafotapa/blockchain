@@ -118,6 +118,10 @@ impl Block {
     pub fn transactions(&self) -> &Vec<Transaction> {
         &self.transactions
     }
+
+    pub fn transactions_mut(&mut self) -> &mut Vec<Transaction> {
+        &mut self.transactions
+    }
 }
 
 impl Eq for Block {}
