@@ -386,19 +386,19 @@ impl fmt::Display for UtxoId {UtxoId53,1042
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt54,1073
 
 utxo/data.rs,718
-pub struct UtxoData {UtxoData9,187
-impl UtxoData {UtxoData14,256
-    pub fn new(amount: u32, public_key: PublicKey) -> Self {new15,272
-    pub fn serialize(&self) -> Vec<u8> {serialize19,376
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize26,607
-    pub fn amount(&self) -> u32 {amount33,724
-    pub fn public_key(&self) -> &PublicKey {public_key37,785
-impl<B> From<B> for UtxoDataUtxoData42,864
-    fn from(bytes: B) -> Self {from46,921
-impl From<TransactionOutput> for UtxoData {UtxoData54,1199
-    fn from(transaction_output: TransactionOutput) -> Self {from55,1243
-impl fmt::Display for UtxoData {UtxoData60,1353
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt61,1386
+pub struct UtxoData {UtxoData9,202
+impl UtxoData {UtxoData14,271
+    pub fn new(amount: u32, public_key: PublicKey) -> Self {new15,287
+    pub fn serialize(&self) -> Vec<u8> {serialize19,391
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize26,622
+    pub fn amount(&self) -> u32 {amount33,739
+    pub fn public_key(&self) -> &PublicKey {public_key37,800
+impl<B> From<B> for UtxoDataUtxoData42,879
+    fn from(bytes: B) -> Self {from46,936
+impl From<TransactionOutput> for UtxoData {UtxoData54,1214
+    fn from(transaction_output: TransactionOutput) -> Self {from55,1258
+impl fmt::Display for UtxoData {UtxoData60,1368
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt61,1401
 
 utxo/mod.rs,696
 pub struct Utxo {Utxo9,151

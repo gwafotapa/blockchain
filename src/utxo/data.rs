@@ -5,7 +5,7 @@ use std::fmt;
 use crate::constants::UTXO_DATA_BYTES;
 use crate::transaction::TransactionOutput;
 
-#[derive(Clone, Copy, Debug, Hash)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct UtxoData {
     amount: u32,
     public_key: PublicKey,

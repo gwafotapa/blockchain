@@ -1,97 +1,51 @@
-// use log::info;
-
-use rand::seq::IteratorRandom;
+use log::info;
 use rand::Rng;
 use rand_core::RngCore;
-use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
-use sha2::{Digest, Sha256};
+use secp256k1::{PublicKey, Secp256k1, SecretKey};
 
-use blockchain::transaction::{Transaction, TransactionInput, TransactionOutput};
-use blockchain::utxo_pool::UtxoPool;
+use blockchain::utxo::{UtxoData, UtxoId};
+use blockchain::Hash;
 
 pub mod common;
-pub const NODES: usize = 10;
-pub const TRANSACTIONS: usize = 10;
 
-// #[test]
-// fn test_utxo_pool_add_remove() {
-//     common::log_setup();
+#[test]
+fn test_utxo_id_ser_deser() {
+    common::log_setup();
+    let utxo_id = random_utxo_id(1000);
+    let utxo_id2 = UtxoId::deserialize(utxo_id.serialize());
+    assert_eq!(utxo_id, utxo_id2);
+}
 
-//     let keys = generate_keys(NODES);
-//     let public_keys = keys.iter().map(|(pk, _sk)| pk).copied().collect();
-//     let utxo_pool = UtxoPool::new(public_keys);
-//     let transactions = generate_transactions(keys, utxo_pool);
-//     let utxo_pool_clone = utxo_pool.clone();
-//     utxo_pool.process_all(&transactions);
-//     utxo_pool.undo_all(&transactions);
-//     assert_eq!(utxo_pool, utxo_pool_clone);
-// }
+fn random_utxo_id(vout_max: usize) -> UtxoId {
+    let txid = random_hash();
+    let vout = rand::thread_rng().gen_range(0, vout_max);
+    UtxoId::new(txid, vout)
+}
 
-// fn generate_keys(nodes: usize) -> Vec<(PublicKey, SecretKey)> {
-//     let mut rng = rand::thread_rng();
-//     let secp = Secp256k1::new();
-//     let mut keys = Vec::new();
-//     for node in 0..nodes {
-//         let mut secret_key = [0u8; 32];
-//         rng.fill_bytes(&mut secret_key);
-//         let secret_key = SecretKey::from_slice(&secret_key).unwrap();
-//         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
-//         keys.push((public_key, secret_key));
-//     }
-//     keys
-// }
+fn random_hash() -> Hash {
+    let mut hash = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut hash);
+    Hash::from(hash)
+}
 
-// fn generate_transactions(
-//     keys: Vec<(PublicKey, SecretKey)>,
-//     utxo_pool: UtxoPool,
-// ) -> Vec<Transaction> {
-//     let mut rng = rand::thread_rng();
-//     let public_keys: Vec<_> = keys.iter().map(|(pk, _sk)| pk).copied().collect();
-//     let mut utxos;
-//     let mut key;
-//     loop {
-//         key = keys.iter().choose(&mut rng).unwrap();
-//         utxos = utxo_pool.owned_by(&key.0);
-//         if !utxos.is_empty() {
-//             break;
-//         }
-//     }
+#[test]
+fn test_utxo_data_ser_deser() {
+    common::log_setup();
+    let utxo_data = random_utxo_data(1000000);
+    let utxo_data2 = UtxoData::deserialize(utxo_data.serialize());
+    assert_eq!(utxo_data, utxo_data2);
+}
 
-//     let transactions = Vec::new();
-//     for i in 0..TRANSACTIONS {
-//         let inputs_len = rng.gen_range(1, utxos.len() + 1);
-//         let utxos = utxos.iter().choose_multiple(&mut rng, inputs_len);
-//         let mut amount: u32 = utxos.iter().map(|u| u.amount()).sum();
-//         let mut outputs = Vec::new();
-//         loop {
-//             let amount1 = rng.gen_range(1, amount + 1);
-//             let recipient = *public_keys.iter().choose(&mut rng).unwrap();
-//             let output = TransactionOutput::new(amount1, recipient);
-//             outputs.push(output);
-//             amount -= amount1;
-//             if amount == 0 {
-//                 break;
-//             }
-//         }
-//         let mut message = Vec::new();
-//         for utxo in &utxos {
-//             message.extend(utxo.id().serialize());
-//         }
-//         for output in &outputs {
-//             message.extend(output.serialize());
-//         }
-//         let mut hasher = Sha256::new();
-//         hasher.input(message);
-//         let hash = hasher.result();
-//         let message = MessageToSign::from_slice(&hash).unwrap();
-//         let secp = Secp256k1::new();
-//         let sig = secp.sign(&message, &key.1);
-//         let inputs = utxos
-//             .iter()
-//             .map(|u| TransactionInput::new(*u.id(), sig))
-//             .collect();
-//         let transaction = Transaction::new(inputs, outputs);
-//         transactions.push(transaction);
-//     }
-//     transactions
-// }
+fn random_utxo_data(amount_max: u32) -> UtxoData {
+    let amount = rand::thread_rng().gen_range(0, amount_max);
+    let public_key = random_public_key();
+    UtxoData::new(amount, public_key)
+}
+
+fn random_public_key() -> PublicKey {
+    let mut secret_key = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut secret_key);
+    let secret_key = SecretKey::from_slice(&secret_key).unwrap();
+    let secp = Secp256k1::new();
+    PublicKey::from_secret_key(&secp, &secret_key)
+}
