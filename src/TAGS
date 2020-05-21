@@ -185,28 +185,28 @@ pub mod error;error260,8816
 main.rs,24
 fn main() {main18,366
 
-transaction/mod.rs,1229
+transaction/mod.rs,1230
 pub struct Transaction {Transaction16,378
-impl Transaction {Transaction22,492
-    pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {new23,511
-    pub fn serialize(&self) -> Vec<u8> {serialize39,976
-    pub fn deserialize<B>(bytes: B) -> (Self, usize)deserialize49,1407
-    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root75,2316
-    pub fn shares_utxo_with(&self, other: &Transaction) -> bool {shares_utxo_with81,2558
-    pub fn bytes(&self) -> usize {bytes92,2877
-    pub fn id(&self) -> &Hash {id96,3013
-    pub fn inputs(&self) -> &Vec<TransactionInput> {inputs100,3069
-    pub fn outputs(&self) -> &Vec<TransactionOutput> {outputs104,3150
-impl Eq for Transaction {}Transaction109,3236
-impl PartialEq for Transaction {Transaction111,3264
-    fn eq(&self, other: &Self) -> bool {eq112,3297
-impl fmt::Display for Transaction {Transaction117,3375
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt118,3411
-impl HashTrait for Transaction {Transaction142,4084
-    fn hash<H: Hasher>(&self, state: &mut H) {hash143,4117
-pub mod input;input148,4202
-pub mod merkle_tree;merkle_tree149,4217
-pub mod output;output150,4238
+impl Transaction {Transaction25,711
+    pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {new26,730
+    pub fn serialize(&self) -> Vec<u8> {serialize42,1195
+    pub fn deserialize<B>(bytes: B) -> (Self, usize)deserialize52,1626
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root78,2535
+    pub fn shares_utxo_with(&self, other: &Transaction) -> bool {shares_utxo_with84,2777
+    pub fn bytes(&self) -> usize {bytes95,3096
+    pub fn id(&self) -> &Hash {id99,3232
+    pub fn inputs(&self) -> &Vec<TransactionInput> {inputs103,3288
+    pub fn outputs(&self) -> &Vec<TransactionOutput> {outputs107,3369
+impl Eq for Transaction {}Transaction112,3455
+impl PartialEq for Transaction {Transaction114,3483
+    fn eq(&self, other: &Self) -> bool {eq115,3516
+impl fmt::Display for Transaction {Transaction120,3594
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt121,3630
+impl HashTrait for Transaction {Transaction145,4303
+    fn hash<H: Hasher>(&self, state: &mut H) {hash146,4336
+pub mod input;input151,4421
+pub mod merkle_tree;merkle_tree152,4436
+pub mod output;output153,4457
 
 transaction/output.rs,738
 pub struct TransactionOutput(UtxoData);TransactionOutput7,114

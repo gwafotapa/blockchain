@@ -19,6 +19,9 @@ pub struct Transaction {
     outputs: Vec<TransactionOutput>,
 }
 
+// TODO: Check transaction has at least 1 input and 1 output ? (and add a unitary test)
+// Also check the sum of the inputs amount equals the sum of the outputs amount.
+// And that all inputs share a common public key.
 impl Transaction {
     pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {
         let mut hasher = Sha256::new();
