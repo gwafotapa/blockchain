@@ -1,7 +1,6 @@
 use rand::seq::IteratorRandom;
 use rand::Rng;
-use secp256k1::{Message as MessageToSign, PublicKey, Secp256k1, SecretKey};
-use sha2::{Digest, Sha256};
+use secp256k1::{PublicKey, SecretKey};
 use std::collections::HashSet;
 use std::fmt;
 
@@ -80,6 +79,7 @@ impl Wallet {
             true => {
                 let inputs_len = rng.gen_range(1, self.utxos().len() + 1);
                 let utxos = self.utxos().iter().choose_multiple(&mut rng, inputs_len);
+                let utxo_ids = utxos.iter().map(|u| *u.utxo_id()).collect();
                 let mut amount: u32 = utxos.iter().map(|u| u.amount()).sum();
                 let mut outputs = Vec::new();
                 loop {
@@ -92,24 +92,7 @@ impl Wallet {
                         break;
                     }
                 }
-                let mut message = Vec::new();
-                for utxo in &utxos {
-                    message.extend(utxo.id().serialize());
-                }
-                for output in &outputs {
-                    message.extend(output.serialize());
-                }
-                let mut hasher = Sha256::new();
-                hasher.input(message);
-                let hash = hasher.result();
-                let message = MessageToSign::from_slice(&hash).unwrap();
-                let secp = Secp256k1::new();
-                let sig = secp.sign(&message, &self.secret_key);
-                let inputs = utxos
-                    .iter()
-                    .map(|u| TransactionInput::new(*u.id(), sig))
-                    .collect();
-                let transaction = Transaction::new(inputs, outputs);
+                let transaction = Transaction::sign(utxo_ids, outputs, &self.secret_key);
                 Some(transaction)
             }
         }
@@ -124,33 +107,16 @@ impl Wallet {
             false => None,
             true => {
                 let utxo = self.utxos().iter().choose(&mut rng).unwrap();
+                let utxo_ids = vec![*utxo.utxo_id()];
                 let recipients = self.recipients.iter().choose_multiple(&mut rng, 2);
 
                 let output1 = TransactionOutput::new(utxo.amount(), *recipients[0]);
                 let outputs1 = vec![output1];
-                let mut message1 = Vec::new();
-                message1.extend(utxo.id().serialize());
-                message1.extend(output1.serialize());
-                let mut hasher = Sha256::new();
-                hasher.input(message1);
-                let hash1 = hasher.result_reset();
-                let message1 = MessageToSign::from_slice(&hash1).unwrap();
-                let secp = Secp256k1::new();
-                let sig1 = secp.sign(&message1, &self.secret_key);
-                let inputs1 = vec![TransactionInput::new(*utxo.id(), sig1)];
-                let transaction1 = Transaction::new(inputs1, outputs1);
+                let transaction1 = Transaction::sign(utxo_ids.clone(), outputs1, &self.secret_key);
 
                 let output2 = TransactionOutput::new(utxo.amount(), *recipients[1]);
                 let outputs2 = vec![output2];
-                let mut message2 = Vec::new();
-                message2.extend(utxo.id().serialize());
-                message2.extend(output2.serialize());
-                hasher.input(message2);
-                let hash2 = hasher.result();
-                let message2 = MessageToSign::from_slice(&hash2).unwrap();
-                let sig2 = secp.sign(&message2, &self.secret_key);
-                let inputs2 = vec![TransactionInput::new(*utxo.id(), sig2)];
-                let transaction2 = Transaction::new(inputs2, outputs2);
+                let transaction2 = Transaction::sign(utxo_ids, outputs2, &self.secret_key);
 
                 Some((transaction1, transaction2))
             }

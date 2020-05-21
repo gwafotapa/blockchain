@@ -39,6 +39,14 @@ impl Utxo {
     pub fn public_key(&self) -> &PublicKey {
         &self.data.public_key()
     }
+
+    pub fn utxo_id(&self) -> &UtxoId {
+        &self.id
+    }
+
+    pub fn utxo_data(&self) -> &UtxoData {
+        &self.data
+    }
 }
 
 impl Eq for Utxo {}

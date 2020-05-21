@@ -1,4 +1,5 @@
 use merkle_cbt::merkle_tree::CBMT;
+use secp256k1::{Message as MessageToSign, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
 use std::convert::TryInto;
 use std::fmt;
@@ -7,6 +8,7 @@ use std::iter;
 
 use self::merkle_tree::MergeHash;
 use crate::constants::{TX_INPUT_BYTES, TX_OUTPUT_BYTES};
+use crate::utxo::UtxoId;
 use crate::Hash;
 
 pub use self::input::TransactionInput;
@@ -37,6 +39,31 @@ impl Transaction {
             inputs,
             outputs,
         }
+    }
+
+    pub fn sign(
+        utxo_ids: Vec<UtxoId>,
+        outputs: Vec<TransactionOutput>,
+        secret_key: &SecretKey,
+    ) -> Self {
+        let mut message = Vec::new();
+        for utxo_id in &utxo_ids {
+            message.extend(utxo_id.serialize());
+        }
+        for output in &outputs {
+            message.extend(output.serialize());
+        }
+        let mut hasher = Sha256::new();
+        hasher.input(message);
+        let hash = hasher.result();
+        let message = MessageToSign::from_slice(&hash).unwrap();
+        let secp = Secp256k1::new();
+        let sig = secp.sign(&message, &secret_key);
+        let inputs = utxo_ids
+            .iter()
+            .map(|id| TransactionInput::new(*id, sig))
+            .collect();
+        Transaction::new(inputs, outputs)
     }
 
     pub fn serialize(&self) -> Vec<u8> {
