@@ -208,19 +208,19 @@ pub mod input;input148,4202
 pub mod merkle_tree;merkle_tree149,4217
 pub mod output;output150,4238
 
-transaction/output.rs,737
-pub struct TransactionOutput(UtxoData);TransactionOutput7,99
-impl TransactionOutput {TransactionOutput9,140
-    pub fn new(amount: u32, public_key: PublicKey) -> Self {new10,165
-    pub fn serialize(&self) -> Vec<u8> {serialize14,281
-    pub fn deserialize<B>(bytes: B) -> Selfdeserialize18,356
-    pub fn utxo_data(&self) -> &UtxoData {utxo_data25,490
-    pub fn amount(&self) -> u32 {amount29,556
-    pub fn public_key(&self) -> &PublicKey {public_key33,621
-impl From<UtxoData> for TransactionOutput {TransactionOutput38,704
-    fn from(utxo_data: UtxoData) -> Self {from39,748
-impl fmt::Display for TransactionOutput {TransactionOutput44,824
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt45,866
+transaction/output.rs,738
+pub struct TransactionOutput(UtxoData);TransactionOutput7,114
+impl TransactionOutput {TransactionOutput9,155
+    pub fn new(amount: u32, public_key: PublicKey) -> Self {new10,180
+    pub fn serialize(&self) -> Vec<u8> {serialize14,296
+    pub fn deserialize<B>(bytes: B) -> Selfdeserialize18,371
+    pub fn utxo_data(&self) -> &UtxoData {utxo_data25,505
+    pub fn amount(&self) -> u32 {amount29,571
+    pub fn public_key(&self) -> &PublicKey {public_key33,636
+impl From<UtxoData> for TransactionOutput {TransactionOutput38,719
+    fn from(utxo_data: UtxoData) -> Self {from39,763
+impl fmt::Display for TransactionOutput {TransactionOutput44,839
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt45,881
 
 transaction/input.rs,729
 pub struct TransactionInput {TransactionInput9,178

@@ -3,7 +3,7 @@ use std::fmt;
 
 use crate::utxo::UtxoData;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TransactionOutput(UtxoData);
 
 impl TransactionOutput {
