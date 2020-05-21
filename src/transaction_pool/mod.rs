@@ -89,6 +89,8 @@ impl TransactionPool {
         }
     }
 
+    // TODO: remove dead code
+
     // pub fn undo(&mut self, block: &Block) {
     //     for transaction in block.transactions() {
     //         self.add(transaction.clone()).unwrap();
