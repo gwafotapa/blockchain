@@ -49,7 +49,7 @@ impl UtxoPool {
             .ok_or(UtxoPoolError::UnknownUtxo)
     }
 
-    pub fn contains(&self, utxo: Utxo) -> bool {
+    pub fn contains(&self, utxo: &Utxo) -> bool {
         self.utxos.contains_key(utxo.id())
     }
 

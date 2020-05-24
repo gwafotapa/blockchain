@@ -1,0 +1,51 @@
+
+transaction.rs,318
+pub mod common;common6,126
+fn test_transaction_input_ser_deser() {test_transaction_input_ser_deser11,188
+fn test_transaction_output_ser_deser() {test_transaction_output_ser_deser18,459
+fn test_transaction_ser_deser() {test_transaction_ser_deser25,738
+fn test_shares_utxo_with() {test_shares_utxo_with33,1042
+
+utxo_pool.rs,175
+// pub mod common;common10,307
+// fn test_utxo_pool_add_remove() {test_utxo_pool_add_remove13,338
+// fn test_utxo_pool_authenticate() {test_utxo_pool_authenticate25,826
+
+consensus.rs,64
+pub mod common;common11,226
+fn consensus() {consensus15,261
+
+utxo.rs,151
+pub mod common;common3,43
+fn test_utxo_id_ser_deser() {test_utxo_id_ser_deser8,105
+fn test_utxo_data_ser_deser() {test_utxo_data_ser_deser15,296
+
+transaction_pool.rs,248
+// pub mod common;common3,55
+// fn test_transaction_pool_add() {test_transaction_pool_add6,86
+// fn test_transaction_pool_remove() {test_transaction_pool_remove14,403
+// fn test_transaction_pool_verify() {test_transaction_pool_verify25,839
+
+common/mod.rs,1537
+static INIT: Once = Once::new();INIT13,326
+pub const VOUT_MAX: usize = 10;VOUT_MAX15,360
+pub const AMOUNT_MAX: u32 = 1000000;AMOUNT_MAX16,392
+pub const INPUTS_LEN_MAX: usize = 10;INPUTS_LEN_MAX17,429
+pub const OUTPUTS_LEN_MAX: usize = 10;OUTPUTS_LEN_MAX18,467
+pub const UTXO_POOL_SIZE_MAX: usize = 10;UTXO_POOL_SIZE_MAX19,506
+pub const KEYS: usize = 10;KEYS20,548
+pub fn log_setup() {log_setup22,577
+fn random_hash() -> Hash {random_hash28,661
+pub fn random_utxo_id(txid: Option<Hash>, vout: Option<usize>) -> UtxoId {random_utxo_id34,788
+pub fn random_utxo_data(amount: Option<u32>, public_key: Option<PublicKey>) -> UtxoData {random_utxo_data40,1025
+pub fn random_utxo_with(random_utxo_with46,1311
+pub fn random_utxo(id: Option<UtxoId>, data: Option<UtxoData>) -> Utxo {random_utxo57,1598
+pub fn random_public_key() -> PublicKey {random_public_key66,1852
+pub fn random_secret_key() -> SecretKey {random_secret_key74,2135
+pub fn random_transaction_input(txid: Option<Hash>, vout: Option<usize>) -> TransactionInput {random_transaction_input80,2316
+pub fn random_transaction_output(random_transaction_output88,2628
+pub fn random_transaction(random_transaction95,2816
+pub fn random_transaction_with(random_transaction_with118,3569
+// pub fn random_utxo_pool(public_keys: Option<Vec<PublicKey>>) -> UtxoPool {random_utxo_pool178,5623
+pub fn random_key() -> (PublicKey, SecretKey) {random_key187,5915
+// pub fn random_keys(keys: Option<usize>) -> Vec<(PublicKey, SecretKey)> {random_keys194,6139
