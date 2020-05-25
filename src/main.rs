@@ -1,4 +1,5 @@
 /* TODO:
+ * - implement fractional amounts
  * - clean and refactor
  * - deal with all the TODOs
  * - remove commented code

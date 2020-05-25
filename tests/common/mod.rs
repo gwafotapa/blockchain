@@ -1,4 +1,5 @@
 use std::cmp;
+use std::collections::HashSet;
 use std::sync::Once;
 
 use rand::Rng;
@@ -18,6 +19,7 @@ pub const INPUTS_LEN_MAX: usize = 10;
 pub const OUTPUTS_LEN_MAX: usize = 10;
 pub const UTXO_POOL_SIZE_MAX: usize = 10;
 pub const KEYS: usize = 10;
+pub const RECIPIENTS_MAX: usize = 10;
 
 pub fn log_setup() {
     INIT.call_once(|| {
@@ -108,10 +110,11 @@ pub fn random_transaction(
     } else {
         let sk = random_secret_key();
         let inputs_len = rng.gen_range(1, INPUTS_LEN_MAX);
-        let utxo_ids = (0..inputs_len)
-            .map(|_| random_utxo_id(None, None))
-            .collect();
-        Transaction::sign(utxo_ids, outputs, &sk)
+        let mut utxo_ids = HashSet::new();
+        while utxo_ids.len() != inputs_len {
+            utxo_ids.insert(random_utxo_id(None, None));
+        }
+        Transaction::sign(utxo_ids.into_iter().collect(), outputs, &sk)
     }
 }
 
@@ -119,12 +122,12 @@ pub fn random_transaction_with(
     sender: Option<SecretKey>,
     recipients: Option<Vec<PublicKey>>,
     inputs: Option<Vec<Utxo>>,
-    output_amounts: Option<Vec<u32>>,
+    amounts: Option<Vec<u32>>,
 ) -> Transaction {
-    if recipients.is_some() && output_amounts.is_some() {
+    if recipients.is_some() && amounts.is_some() {
         assert_eq!(
-            recipients.as_ref().unwrap().len(),
-            output_amounts.as_ref().unwrap().len()
+            recipients.as_ref().map(Vec::len),
+            amounts.as_ref().map(Vec::len)
         );
     }
 
@@ -134,37 +137,38 @@ pub fn random_transaction_with(
         utxos.iter().map(|utxo| *utxo.id()).collect()
     } else {
         let inputs_len = rng.gen_range(1, INPUTS_LEN_MAX);
-        (0..inputs_len)
-            .map(|_| random_utxo_id(None, None))
-            .collect()
+        let mut utxo_ids = HashSet::new();
+        while utxo_ids.len() != inputs_len {
+            utxo_ids.insert(random_utxo_id(None, None));
+        }
+        utxo_ids.into_iter().collect()
     };
-    let mut sum = if let Some(amounts) = output_amounts.as_ref() {
+    let mut sum = if let Some(amounts) = amounts.as_ref() {
         amounts.iter().sum()
     } else if let Some(utxos) = inputs {
         utxos.iter().map(|u| u.amount()).sum()
-    } else if let Some(recipients) = recipients.as_ref() {
-        rng.gen_range(
-            recipients.len() as u32,
-            recipients.len() as u32 * AMOUNT_MAX,
-        )
     } else {
-        rng.gen_range(1, AMOUNT_MAX)
+        let amounts_len = recipients
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_else(|| rng.gen_range(1, RECIPIENTS_MAX)) as u32;
+        rng.gen_range(amounts_len, amounts_len * (AMOUNT_MAX - 1) + 1)
     };
     let recipients = recipients.unwrap_or_else(|| {
-        let recipients_len = if let Some(amounts) = output_amounts.as_ref() {
-            amounts.len()
-        } else {
-            rng.gen_range(1, cmp::min(OUTPUTS_LEN_MAX, sum as usize))
-        };
+        let recipients_len = amounts
+            .as_ref()
+            .map(Vec::len)
+            .unwrap_or_else(|| rng.gen_range(1, cmp::min(OUTPUTS_LEN_MAX, (sum + 1) as usize)));
         (0..recipients_len).map(|_| random_public_key()).collect()
     });
-    let amounts = output_amounts.unwrap_or_else(|| {
+    let amounts = amounts.unwrap_or_else(|| {
         let mut amounts = Vec::with_capacity(recipients.len());
-        for i in (0..recipients.len() as u32).rev() {
-            let amount = rng.gen_range(1, sum - i);
+        for i in (0..recipients.len() as u32 - 1).rev() {
+            let amount = rng.gen_range(1, sum + 1 - i);
             amounts.push(amount);
             sum -= amount;
         }
+        amounts.push(sum);
         amounts
     });
     let outputs = amounts
@@ -182,6 +186,21 @@ pub fn random_transaction_with(
 //             .collect()
 //     });
 //     UtxoPool::new(public_keys)
+// }
+
+// pub fn random_utxo_pool(utxos: Option<Vec<Utxo>>, initial_utxos: Option<Vec<Utxo>>) -> UtxoPool {
+//     let utxos = utxos.unwrap_or_else(|| {
+//         let utxos_len = rng.gen_range(1, UTXO_POOL_SIZE_MAX);
+//         (0..utxos_len).map(|_| random_utxo(None, None)).collect()
+//     });
+//     let initial_utxos = utxos.unwrap_or_else(|| {
+//         let utxos_len = rng.gen_range(1, UTXO_POOL_SIZE_MAX);
+//         let tx0 = Hash::from([0u8; 32]);
+//         (0..utxos_len)
+//             .map(|i| random_utxo_with(tx0, i, None, None))
+//             .collect()
+//     });
+//     UtxoPool::from(utxos, initial_utxos)
 // }
 
 pub fn random_key() -> (PublicKey, SecretKey) {
