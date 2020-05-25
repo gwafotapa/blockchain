@@ -210,4 +210,24 @@ impl fmt::Display for UtxoPool {
     }
 }
 
+impl From<(HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)> for UtxoPool {
+    fn from(utxos: (HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)) -> Self {
+        Self {
+            utxos: utxos.0,
+            initial_utxos: utxos.1,
+        }
+    }
+}
+
+impl From<(HashSet<Utxo>, HashSet<Utxo>)> for UtxoPool {
+    fn from(utxos: (HashSet<Utxo>, HashSet<Utxo>)) -> Self {
+        let initial_utxos = utxos.1.iter().map(|u| (*u.id(), *u.data())).collect();
+        let utxos = utxos.0.iter().map(|u| (*u.id(), *u.data())).collect();
+        Self {
+            utxos,
+            initial_utxos,
+        }
+    }
+}
+
 pub mod error;

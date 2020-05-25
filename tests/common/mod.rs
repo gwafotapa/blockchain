@@ -121,7 +121,7 @@ pub fn random_transaction(
 pub fn random_transaction_with(
     sender: Option<SecretKey>,
     recipients: Option<Vec<PublicKey>>,
-    inputs: Option<Vec<Utxo>>,
+    inputs: Option<Vec<Utxo>>, // Should it be a HashSet ?
     amounts: Option<Vec<u32>>,
 ) -> Transaction {
     if recipients.is_some() && amounts.is_some() {
@@ -188,20 +188,24 @@ pub fn random_transaction_with(
 //     UtxoPool::new(public_keys)
 // }
 
-// pub fn random_utxo_pool(utxos: Option<Vec<Utxo>>, initial_utxos: Option<Vec<Utxo>>) -> UtxoPool {
-//     let utxos = utxos.unwrap_or_else(|| {
-//         let utxos_len = rng.gen_range(1, UTXO_POOL_SIZE_MAX);
-//         (0..utxos_len).map(|_| random_utxo(None, None)).collect()
-//     });
-//     let initial_utxos = utxos.unwrap_or_else(|| {
-//         let utxos_len = rng.gen_range(1, UTXO_POOL_SIZE_MAX);
-//         let tx0 = Hash::from([0u8; 32]);
-//         (0..utxos_len)
-//             .map(|i| random_utxo_with(tx0, i, None, None))
-//             .collect()
-//     });
-//     UtxoPool::from(utxos, initial_utxos)
-// }
+pub fn random_utxo_pool(
+    utxos: Option<HashSet<Utxo>>,
+    initial_utxos: Option<HashSet<Utxo>>,
+) -> UtxoPool {
+    let mut rng = rand::thread_rng();
+    let utxos = utxos.unwrap_or_else(|| {
+        let utxos_len = rng.gen_range(1, UTXO_POOL_SIZE_MAX);
+        (0..utxos_len).map(|_| random_utxo(None, None)).collect()
+    });
+    let initial_utxos = initial_utxos.unwrap_or_else(|| {
+        let utxos_len = rng.gen_range(1, UTXO_POOL_SIZE_MAX);
+        let tx0 = Hash::from([0u8; 32]);
+        (0..utxos_len)
+            .map(|i| random_utxo_with(Some(tx0), Some(i), None, None))
+            .collect()
+    });
+    UtxoPool::from((utxos, initial_utxos))
+}
 
 pub fn random_key() -> (PublicKey, SecretKey) {
     let secret_key = random_secret_key();
