@@ -1,5 +1,14 @@
+// TODO: test transaction processing
+// TODO: test transaction undoing
+// TODO: test transaction verification
+// TODO: test block processing
+// TODO: test block validation
+
 use rand::seq::IteratorRandom;
-// use rand::seq::SliceRandom;
+use rand::seq::SliceRandom;
+use rand::Rng;
+use secp256k1::{PublicKey, SecretKey};
+use std::collections::HashSet;
 
 use blockchain::utxo::Utxo;
 // use blockchain::utxo_pool::UtxoPool;
@@ -22,60 +31,37 @@ fn test_utxo_pool_add_remove() {
 }
 
 #[test]
-fn test_utxo_pool_authenticate() {
-    let mut rng = rand::thread_rng();
-    let keys = common::random_keys(None);
-    let (public_keys, secret_keys): (Vec<_>, Vec<_>) = keys.iter().copied().unzip();
-    let utxo_pool = common::random_utxo_pool(Some(public_keys));
-    let (utxo_id, utxo_data) = utxo_pool.utxos().iter().choose(&mut rng).unwrap();
-    let valid_pk = utxo_data.public_key();
-    let (_, valid_sk) = keys.iter().filter(|(pk, _)| pk == valid_pk).next().unwrap();
-    let transaction = Transaction::sign(
-        vec![*utxo_id],
-        vec![TransactionOutput::from(*utxo_data)],
-        valid_sk,
-    );
-    assert!(utxo_pool.authenticate(&transaction).is_ok());
-
-    // let mut invalid_sk;
-    // loop {
-    //     invalid_sk = common::random_invalid_sk();
-    //     if !invalid_sks.contains(&invalid_sk) {
-    //         break;
-    //     }
-    // }
-    // let transaction = Transaction::sign(
-    //     vec![*utxo_id],
-    //     vec![TransactionOutput::from(*utxo_data)],
-    //     &invalid_sk,
-    // );
-    // assert_eq!(
-    //     utxo_pool.authenticate(&transaction).unwrap_err(),
-    //     UtxoPoolError::TransactionHasInvalidSignature(IncorrectSignature)
-    // );
-
-    // let mut unknown_utxo;
-    // loop {
-    //     unknown_utxo_id = common::random_utxo_id(VOUT_MAX);
-
-    //     let unknown_utxo_data = UtxoData::new(
-    //     if !utxo_pool.contains(&unknown_utxo) {
-    //         break;
-    //     }
-    // }
-    // let transaction = Transaction::sign(
-    //     vec![*unknown_utxo.id()],
-    //     vec![TransactionOutput::from(*unknown_utxo.data())],
-    //     &valid_sk,
-    // );
-    // assert_eq!(
-    //     utxo_pool.authenticate(&transaction).unwrap_err(),
-    //     UtxoPoolError::TransactionHasUnknownUtxo
-    // );
-
-    // TODO: test transaction processing
-    // TODO: test transaction undoing
-    // TODO: test transaction verification
-    // TODO: test block processing
-    // TODO: test block validation
+fn test_utxo_pool_check_double_spending() {
+    let (pk, sk) = common::random_key();
+    let utxo = common::random_utxo_with(None, None, None, Some(pk));
+    let mut utxos = HashSet::new();
+    utxos.insert(utxo);
+    let utxo_pool = common::random_utxo_pool(Some(utxos), None);
+    let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
+    assert!(utxo_pool.check_double_spending(&tx).is_ok());
+    let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo, utxo]), None);
+    assert!(utxo_pool.check_double_spending(&tx).is_err());
 }
+
+#[test]
+fn test_utxo_pool_check_utxos_exist() {
+    let mut rng = rand::thread_rng();
+    let (pk, sk) = common::random_key();
+    let sk_utxos = rng.gen_range(1, common::UTXOS_PER_KEY_MAX);
+    let sk_utxos: Vec<_> = (0..sk_utxos)
+        .map(|_| common::random_utxo_with(None, None, None, Some(pk)))
+        .collect();
+    let utxo = sk_utxos.as_slice().choose(&mut rng).copied().unwrap();
+    let other_utxos = rng.gen_range(0, common::UTXOS_PER_KEY_MAX);
+    let other_utxos: Vec<_> = (0..other_utxos)
+        .map(|_| common::random_utxo(None, None))
+        .collect();
+    let utxos: HashSet<_> = sk_utxos.into_iter().chain(other_utxos).collect();
+    let mut utxo_pool = common::random_utxo_pool(Some(utxos), None);
+    utxo_pool.remove(&utxo).unwrap();
+    let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
+    assert!(utxo_pool.check_utxos_exist(&tx).is_err());
+}
+
+// #[test]
+// fn test_utxo_pool_check_signatures() {

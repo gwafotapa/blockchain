@@ -20,6 +20,7 @@ pub const OUTPUTS_LEN_MAX: usize = 10;
 pub const UTXO_POOL_SIZE_MAX: usize = 10;
 pub const KEYS: usize = 10;
 pub const RECIPIENTS_MAX: usize = 10;
+pub const UTXOS_PER_KEY_MAX: usize = 10;
 
 pub fn log_setup() {
     INIT.call_once(|| {
@@ -121,7 +122,7 @@ pub fn random_transaction(
 pub fn random_transaction_with(
     sender: Option<SecretKey>,
     recipients: Option<Vec<PublicKey>>,
-    inputs: Option<Vec<Utxo>>, // Should it be a HashSet ?
+    inputs: Option<Vec<Utxo>>,
     amounts: Option<Vec<u32>>,
 ) -> Transaction {
     if recipients.is_some() && amounts.is_some() {
