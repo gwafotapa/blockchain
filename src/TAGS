@@ -8,7 +8,7 @@ impl error::Error for UtxoPoolError {UtxoPoolError43,1391
 impl From<secp256k1::Error> for UtxoPoolError {UtxoPoolError57,1888
     fn from(err: secp256k1::Error) -> Self {from58,1936
 
-utxo_pool/mod.rs,1758
+utxo_pool/mod.rs,2572
 pub struct UtxoPool {UtxoPool15,422
 impl UtxoPool {UtxoPool20,531
     pub fn new(keys: Vec<PublicKey>) -> Self {new21,547
@@ -22,18 +22,26 @@ impl UtxoPool {UtxoPool20,531
     pub fn undo_t(&mut self, transaction: &Transaction, blockchain: &Blockchain, block: &Block) {undo_t88,2589
     pub fn undo(&mut self, block: &Block, blockchain: &Blockchain) {undo109,3515
     pub fn undo_all(&mut self, blocks: &[Block], blockchain: &Blockchain) {undo_all115,3708
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {verify121,3886
-    pub fn authenticate(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {authenticate129,4254
-    pub fn validate(&self, block: &Block) -> Result<(), UtxoPoolError> {validate152,5156
-    pub fn size(&self) -> usize {size173,5914
-    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos177,5980
-    pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {utxos181,6079
-impl Eq for UtxoPool {}UtxoPool186,6164
-impl PartialEq for UtxoPool {UtxoPool188,6189
-    fn eq(&self, other: &Self) -> bool {eq189,6219
-impl fmt::Display for UtxoPool {UtxoPool196,6504
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt197,6537
-pub mod error;error213,7014
+    // pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {verify121,3886
+    // pub fn authenticate(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {authenticate129,4275
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {verify152,5243
+    pub fn check_utxos_exist(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {check_utxos_exist158,5472
+    pub fn check_double_spending(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {check_double_spending167,5770
+    pub fn check_signatures(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {check_signatures175,6129
+    pub fn validate(&self, block: &Block) -> Result<(), UtxoPoolError> {validate196,6944
+    pub fn size(&self) -> usize {size221,7868
+    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos225,7934
+    pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {utxos229,8033
+impl Eq for UtxoPool {}UtxoPool234,8118
+impl PartialEq for UtxoPool {UtxoPool236,8143
+    fn eq(&self, other: &Self) -> bool {eq237,8173
+impl fmt::Display for UtxoPool {UtxoPool244,8458
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt245,8491
+impl From<(HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)> for UtxoPool {From261,8968
+    fn from(utxos: (HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)) -> Self {from262,9049
+impl From<(HashSet<Utxo>, HashSet<Utxo>)> for UtxoPool {From270,9232
+    fn from(utxos: (HashSet<Utxo>, HashSet<Utxo>)) -> Self {from271,9289
+pub mod error;error281,9590
 
 node/mod.rs,1492
 pub struct Node {Node20,529
@@ -183,7 +191,7 @@ impl fmt::Display for Wallet {Wallet209,6702
 pub mod error;error226,7180
 
 main.rs,24
-fn main() {main18,366
+fn main() {main19,400
 
 transaction/mod.rs,1264
 pub struct Transaction {Transaction18,468
