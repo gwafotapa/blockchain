@@ -2,8 +2,6 @@ use blockchain::utxo::{UtxoData, UtxoId};
 
 pub mod common;
 
-use common::{AMOUNT_MAX, VOUT_MAX};
-
 #[test]
 fn test_utxo_id_ser_deser() {
     let utxo_id = common::random_utxo_id(None, None);

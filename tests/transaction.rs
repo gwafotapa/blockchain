@@ -5,8 +5,6 @@ use blockchain::transaction::{Transaction, TransactionInput, TransactionOutput};
 
 pub mod common;
 
-use common::{AMOUNT_MAX, VOUT_MAX};
-
 #[test]
 fn test_transaction_input_ser_deser() {
     let transaction_input = common::random_transaction_input(None, None);
