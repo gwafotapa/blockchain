@@ -39,7 +39,8 @@ impl TransactionPool {
         }
     }
 
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {
+    // TODO: seems to always be followed by is.ok(). Should it return a bool instead of a result ?
+    pub fn compatibility_of(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {
         for pool_transaction in self.transactions() {
             for pool_input in pool_transaction.inputs() {
                 for input in transaction.inputs() {

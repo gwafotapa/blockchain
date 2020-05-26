@@ -72,10 +72,8 @@ impl Node {
     pub fn run(&mut self) {
         loop {
             if let Some(transaction) = self.wallet.initiate() {
-                if self.transaction_pool.verify(&transaction).is_ok()
-                    && !self
-                        .blockchain
-                        .contains_tx(transaction.id(), self.blockchain.top())
+                if self.transaction_pool.compatibility_of(&transaction).is_ok()
+                    && !self.blockchain.contains_tx(transaction.id(), None)
                 {
                     info!(
                         "Node #{} --- New transaction:\n{}\n",
@@ -116,10 +114,8 @@ impl Node {
     }
 
     pub fn process_t(&mut self, transaction: Transaction) {
-        if self.transaction_pool.verify(&transaction).is_ok()
-            && !self
-                .blockchain
-                .contains_tx(transaction.id(), self.blockchain.top())
+        if self.transaction_pool.compatibility_of(&transaction).is_ok()
+            && !self.blockchain.contains_tx(transaction.id(), None)
             && self.utxo_pool.verify(&transaction).is_ok()
         {
             info!(
@@ -131,6 +127,10 @@ impl Node {
         }
     }
 
+    // TODO: work on readability
+    // is method validate() of UtxoPool properly named ?
+    // a check from the blockchain is also needed afterwards!
+    // same thing for method verify() of UtxoPool
     pub fn process_b(&mut self, block: Block) {
         if !self.blockchain.contains(block.id()) {
             if let Some(parent) = self.blockchain.parent(&block) {
@@ -141,7 +141,7 @@ impl Node {
                 self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
                 self.utxo_pool.process_all(&new_blocks);
                 if self.utxo_pool.validate(&block).is_ok()
-                    && self.blockchain.verify_txids_of(&block, parent).is_ok()
+                    && self.blockchain.check_txids_of(&block).is_ok()
                 {
                     // TODO: name validate_transactions
                     // validating a block means:
@@ -169,9 +169,7 @@ impl Node {
                         self.transaction_pool.clear();
                         for mut block in old_blocks {
                             while let Some(transaction) = block.transactions_mut().pop() {
-                                if !self
-                                    .blockchain
-                                    .contains_tx(transaction.id(), self.blockchain.top())
+                                if !self.blockchain.contains_tx(transaction.id(), None)
                                     && self.utxo_pool.verify(&transaction).is_ok()
                                 {
                                     self.transaction_pool.add(transaction).unwrap();
@@ -238,8 +236,8 @@ impl Node {
             return;
         }
         if let Some((tx1, tx2)) = self.wallet.double_spend() {
-            if self.transaction_pool.verify(&tx1).is_ok()
-                && self.transaction_pool.verify(&tx2).is_ok()
+            if self.transaction_pool.compatibility_of(&tx1).is_ok()
+                && self.transaction_pool.compatibility_of(&tx2).is_ok()
             {
                 warn!(
                     "Node #{} --- Double spend --- New transactions:\n{}\n{}\n",

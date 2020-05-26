@@ -22,14 +22,14 @@ fn test_transaction_pool_remove() {
 }
 
 #[test]
-fn test_transaction_pool_verify() {
+fn test_transaction_pool_compatibility_of() {
     let mut transaction_pool = TransactionPool::new();
     let transaction = common::random_transaction(None, None);
-    assert!(transaction_pool.verify(&transaction).is_ok());
+    assert!(transaction_pool.compatibility_of(&transaction).is_ok());
 
     transaction_pool.add(transaction.clone()).unwrap();
-    assert!(transaction_pool.verify(&transaction).is_err());
+    assert!(transaction_pool.compatibility_of(&transaction).is_err());
 
     transaction_pool.remove(&transaction).unwrap();
-    assert!(transaction_pool.verify(&transaction).is_ok());
+    assert!(transaction_pool.compatibility_of(&transaction).is_ok());
 }

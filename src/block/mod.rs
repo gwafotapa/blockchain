@@ -1,4 +1,5 @@
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use std::convert::TryInto;
 use std::fmt;
 use std::iter;
@@ -85,6 +86,22 @@ impl Block {
         B: AsRef<[u8]>,
     {
         Self::from(bytes)
+    }
+
+    pub fn check_double_spending(&self) -> Result<(), BlockError> {
+        let mut input_count = 0;
+        let mut input_utxos = HashSet::new();
+        for transaction in self.transactions() {
+            input_count += transaction.inputs().len();
+            for input in transaction.inputs() {
+                input_utxos.insert(input.utxo_id());
+            }
+        }
+        if input_count == input_utxos.len() {
+            Ok(())
+        } else {
+            Err(BlockError::DoubleSpending)
+        }
     }
 
     pub fn contains(&self, txid: &Hash) -> bool {

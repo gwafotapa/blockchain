@@ -5,6 +5,7 @@ use std::fmt;
 pub enum BlockError {
     WrongTransactionCount,
     InvalidExponentOfTarget(u8),
+    DoubleSpending,
 }
 
 impl fmt::Display for BlockError {
@@ -18,6 +19,7 @@ impl fmt::Display for BlockError {
                 "Block: exponent {} of the target is not between 3 and 32 (included)",
                 exponent
             ),
+            Self::DoubleSpending => write!(f, "Block: double spending detected"),
         }
     }
 }
@@ -27,6 +29,7 @@ impl error::Error for BlockError {
         match self {
             Self::WrongTransactionCount => None,
             Self::InvalidExponentOfTarget(_) => None,
+            Self::DoubleSpending => None,
         }
     }
 }

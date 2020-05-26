@@ -2,7 +2,9 @@
 // TODO: test transaction undoing
 // TODO: test transaction verification: OK
 // TODO: test block processing
+// TODO: test block undoing
 // TODO: test block validation
+// TODO: make a module directory and split into files (check_transaction.rs, check_block.rs)
 
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;

@@ -1,6 +1,7 @@
 use merkle_cbt::merkle_tree::CBMT;
 use secp256k1::{Message as MessageToSign, Secp256k1, SecretKey};
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use std::convert::TryInto;
 use std::fmt;
 use std::hash::{Hash as HashTrait, Hasher};
@@ -118,6 +119,15 @@ impl Transaction {
         }
         false
     }
+
+    // pub fn check_double_spending(&self) -> Result<(), TransactionError> {
+    //     let input_utxos: HashSet<_> = self.inputs().iter().map(|i| *i.utxo_id()).collect();
+    //     if input_utxos.len() == self.inputs().len() {
+    //         Ok(())
+    //     } else {
+    //         Err(TransactionError::DoubleSpending)
+    //     }
+    // }
 
     pub fn bytes(&self) -> usize {
         1 + 3 * 8 + self.inputs.len() * TX_INPUT_BYTES + self.outputs.len() * TX_OUTPUT_BYTES
