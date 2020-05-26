@@ -2,9 +2,9 @@ use rand::seq::IteratorRandom;
 use std::collections::HashSet;
 use std::fmt;
 
-use self::error::TransactionPoolError;
 use crate::block::Block;
 use crate::constants::TXS_PER_BLOCK;
+use crate::error::transaction_pool::TransactionPoolError;
 use crate::transaction::Transaction;
 
 #[derive(Debug)]
@@ -137,5 +137,3 @@ impl PartialEq for TransactionPool {
             .is_none()
     }
 }
-
-pub mod error;

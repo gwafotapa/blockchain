@@ -6,8 +6,8 @@ use std::iter;
 
 use self::blockheader::target::Target;
 use self::blockheader::BlockHeader;
-use self::error::BlockError;
 use crate::constants::{GENESIS_BLOCK_HASH_PREV_BLOCK, HEADER_BYTES};
+use crate::error::block::BlockError;
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
 use crate::Hash;
@@ -193,4 +193,3 @@ impl fmt::Display for Block {
 }
 
 pub mod blockheader;
-pub mod error;

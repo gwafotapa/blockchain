@@ -11,7 +11,7 @@ use blockchain::utxo::Utxo;
 pub mod common;
 
 #[test]
-// #[ignore]
+#[ignore]
 fn consensus() {
     common::log_setup();
 

@@ -1,4 +1,4 @@
-use crate::block::error::BlockError;
+use crate::error::block::BlockError;
 use crate::Hash;
 
 #[derive(Clone, Copy, Debug)]

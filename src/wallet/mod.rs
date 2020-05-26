@@ -4,10 +4,10 @@ use secp256k1::{PublicKey, SecretKey};
 use std::collections::HashSet;
 use std::fmt;
 
-use self::error::WalletError;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::constants::{SPEND_PROBA, UTXO_HASH_INIT};
+use crate::error::wallet::WalletError;
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
 use crate::utxo::{Utxo, UtxoData, UtxoId};
 use crate::utxo_pool::UtxoPool;
@@ -222,5 +222,3 @@ impl fmt::Display for Wallet {
         write!(f, "}}\n")
     }
 }
-
-pub mod error;

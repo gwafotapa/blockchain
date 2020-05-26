@@ -2,8 +2,8 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 
-use self::error::BlockchainError;
 use crate::block::Block;
+use crate::error::blockchain::BlockchainError;
 use crate::utxo::{Utxo, UtxoId};
 use crate::Hash as BlockHash;
 use crate::Hash as TransactionId;
@@ -181,5 +181,3 @@ impl PartialEq for Blockchain {
         true
     }
 }
-
-pub mod error;

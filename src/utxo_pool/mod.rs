@@ -3,10 +3,10 @@ use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
-use self::error::UtxoPoolError;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::constants::{UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
+use crate::error::utxo_pool::UtxoPoolError;
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoData, UtxoId};
 use crate::Hash;
@@ -277,5 +277,3 @@ impl From<(HashSet<Utxo>, HashSet<Utxo>)> for UtxoPool {
         }
     }
 }
-
-pub mod error;
