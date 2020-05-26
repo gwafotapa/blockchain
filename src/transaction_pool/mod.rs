@@ -3,9 +3,11 @@ use std::collections::HashSet;
 use std::fmt;
 
 use crate::block::Block;
+use crate::blockchain::Blockchain;
 use crate::constants::TXS_PER_BLOCK;
 use crate::error::transaction_pool::TransactionPoolError;
 use crate::transaction::Transaction;
+use crate::utxo_pool::UtxoPool;
 
 #[derive(Debug)]
 pub struct TransactionPool {
@@ -104,8 +106,10 @@ impl TransactionPool {
     //     }
     // }
 
-    pub fn clear(&mut self) {
-        self.transactions.clear()
+    pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {
+        self.transactions.retain(|tx| {
+            !blockchain.contains_tx(tx.id(), None) && utxo_pool.check_utxos_exist(tx).is_ok()
+        });
     }
 
     pub fn transactions(&self) -> &HashSet<Transaction> {

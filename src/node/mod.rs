@@ -164,9 +164,9 @@ impl Node {
                         self.wallet.process_all(&new_blocks);
                         self.wallet.process(&block);
 
-                        // self.transaction_pool.undo_all(&old_blocks);
                         // TODO: Add a function ?
-                        self.transaction_pool.clear();
+                        self.transaction_pool
+                            .synchronize_with(&self.blockchain, &self.utxo_pool);
                         for mut block in old_blocks {
                             while let Some(transaction) = block.transactions_mut().pop() {
                                 if !self.blockchain.contains_tx(transaction.id(), None)
@@ -176,10 +176,6 @@ impl Node {
                                 }
                             }
                         }
-
-                        // self.transaction_pool.process_all(&new_blocks);
-                        // self.transaction_pool.process(&block);
-
                         self.miner.discard_block();
                     }
                     self.blockchain.push(block).unwrap();
