@@ -1,4 +1,7 @@
 /* TODO:
+ * - same ids do not mean blocks are equal...
+ * - same goes for transactions...
+ * - and what else ?
  * - implement fractional amounts
  * - clean and refactor
  * - deal with all the TODOs

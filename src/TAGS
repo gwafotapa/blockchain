@@ -33,34 +33,34 @@ impl From<(HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)> for UtxoPool {
 impl From<(HashSet<Utxo>, HashSet<Utxo>)> for UtxoPool {From270,9244
     fn from(utxos: (HashSet<Utxo>, HashSet<Utxo>)) -> Self {from271,9301
 
-node/mod.rs,1490
+node/mod.rs,1479
 pub struct Node {Node20,529
 impl Node {Node36,911
     pub fn new(new37,923
     pub fn run(&mut self) {run72,1886
     pub fn process_t(&mut self, transaction: Transaction) {process_t116,3735
     pub fn process_b(&mut self, block: Block) {process_b134,4498
-    pub fn propagate(&self, message: Message) {propagate190,7524
-    pub fn send(&self, message: &Message, neighbour: &Neighbour) {send197,7756
-    pub fn shut_down(&mut self) {shut_down202,7943
-    pub fn double_spend(&mut self) {double_spend228,8949
-    pub fn id(&self) -> usize {id253,9940
-    pub fn public_key(&self) -> &PublicKey {public_key257,9995
-    pub fn secret_key(&self) -> &SecretKey {secret_key261,10072
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender265,10149
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener269,10229
-    pub fn neighbours(&self) -> &Vec<Neighbour> {neighbours273,10315
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool277,10397
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool281,10471
-    pub fn wallet(&self) -> &Wallet {wallet285,10566
-    pub fn blockchain(&self) -> &Blockchain {blockchain289,10632
-impl Eq for Node {}Node294,10712
-impl PartialEq for Node {Node296,10733
-    fn eq(&self, other: &Node) -> bool {eq297,10759
-impl Hash for Node {Node302,10853
-    fn hash<H: Hasher>(&self, state: &mut H) {hash303,10874
-pub mod message;message308,10967
-pub enum Behaviour {Behaviour311,11010
+    pub fn propagate(&self, message: Message) {propagate176,6756
+    pub fn send(&self, message: &Message, neighbour: &Neighbour) {send183,6988
+    pub fn shut_down(&mut self) {shut_down188,7175
+    pub fn double_spend(&mut self) {double_spend214,8181
+    pub fn id(&self) -> usize {id239,9172
+    pub fn public_key(&self) -> &PublicKey {public_key243,9227
+    pub fn secret_key(&self) -> &SecretKey {secret_key247,9304
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender251,9381
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener255,9461
+    pub fn neighbours(&self) -> &Vec<Neighbour> {neighbours259,9547
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool263,9629
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool267,9703
+    pub fn wallet(&self) -> &Wallet {wallet271,9798
+    pub fn blockchain(&self) -> &Blockchain {blockchain275,9864
+impl Eq for Node {}Node280,9944
+impl PartialEq for Node {Node282,9965
+    fn eq(&self, other: &Node) -> bool {eq283,9991
+impl Hash for Node {Node288,10085
+    fn hash<H: Hasher>(&self, state: &mut H) {hash289,10106
+pub mod message;message294,10199
+pub enum Behaviour {Behaviour297,10242
 
 node/message.rs,346
 const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN6,86
@@ -242,7 +242,7 @@ impl Miner {Miner8,120
     pub fn discard_block(&mut self) {discard_block38,997
 
 main.rs,24
-fn main() {main19,400
+fn main() {main22,502
 
 transaction/mod.rs,1369
 pub struct Transaction {Transaction20,548
@@ -357,7 +357,7 @@ impl fmt::Display for Block {Block179,4795
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt180,4825
 pub mod blockheader;blockheader195,5259
 
-transaction_pool/mod.rs,1453
+transaction_pool/mod.rs,1428
 pub struct TransactionPool {TransactionPool13,319
 impl TransactionPool {TransactionPool17,391
     pub fn new() -> Self {new18,414
@@ -367,17 +367,17 @@ impl TransactionPool {TransactionPool17,391
     pub fn compatibility_of(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {compatibility_of45,1193
     pub fn select(&self) -> Option<Vec<Transaction>> {select58,1703
     pub fn process(&mut self, block: &Block) {process79,2479
-    pub fn process_all(&mut self, blocks: &[Block]) {process_all89,2818
-    // pub fn undo(&mut self, block: &Block) {undo97,2983
-    // pub fn undo_all(&mut self, blocks: &[Block]) {undo_all103,3161
-    pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {synchronize_with109,3317
-    pub fn transactions(&self) -> &HashSet<Transaction> {transactions115,3558
-    pub fn transactions_mut(&mut self) -> &mut HashSet<Transaction> {transactions_mut119,3650
-impl fmt::Display for TransactionPool {TransactionPool124,3760
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt125,3800
-impl Eq for TransactionPool {}TransactionPool134,4069
-impl PartialEq for TransactionPool {TransactionPool136,4101
-    fn eq(&self, other: &Self) -> bool {eq137,4138
+    pub fn process_all(&mut self, blocks: &[Block]) {process_all89,2812
+    // pub fn undo(&mut self, block: &Block) {undo97,2977
+    // pub fn undo_all(&mut self, blocks: &[Block]) {undo_all103,3155
+    pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {synchronize_with111,3475
+    pub fn undo_all(&mut self, blocks: Vec<Block>) {undo_all117,3716
+    pub fn transactions(&self) -> &HashSet<Transaction> {transactions125,3946
+impl fmt::Display for TransactionPool {TransactionPool130,4040
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt131,4080
+impl Eq for TransactionPool {}TransactionPool140,4349
+impl PartialEq for TransactionPool {TransactionPool142,4381
+    fn eq(&self, other: &Self) -> bool {eq143,4418
 
 lib.rs,392
 pub mod block;block5,90

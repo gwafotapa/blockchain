@@ -81,7 +81,7 @@ impl TransactionPool {
         //     self.remove(transaction).ok();
         // }
         for block_transaction in block.transactions() {
-            self.transactions_mut()
+            self.transactions
                 .retain(|tx| !tx.shares_utxo_with(block_transaction));
         }
     }
@@ -106,18 +106,24 @@ impl TransactionPool {
     //     }
     // }
 
+    // TODO? Technically there's no need to go back to the genesis block.
+    // Checking the blockchain back to the common parent (of old and new tops) is enough.
     pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {
         self.transactions.retain(|tx| {
             !blockchain.contains_tx(tx.id(), None) && utxo_pool.check_utxos_exist(tx).is_ok()
         });
     }
 
-    pub fn transactions(&self) -> &HashSet<Transaction> {
-        &self.transactions
+    pub fn undo_all(&mut self, blocks: Vec<Block>) {
+        for mut block in blocks {
+            for transaction in block.transactions_mut().pop() {
+                self.add(transaction).unwrap();
+            }
+        }
     }
 
-    pub fn transactions_mut(&mut self) -> &mut HashSet<Transaction> {
-        &mut self.transactions
+    pub fn transactions(&self) -> &HashSet<Transaction> {
+        &self.transactions
     }
 }
 
