@@ -71,6 +71,13 @@ impl<'a> Message<'a> {Message32,739
     pub fn serialize(&self) -> Vec<u8> {serialize33,762
     pub fn deserialize<T>(bytes: T) -> Selfdeserialize41,1024
 
+error/transaction.rs,326
+pub enum TransactionError {TransactionError5,48
+impl fmt::Display for TransactionError {TransactionError9,99
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt10,140
+impl error::Error for TransactionError {TransactionError17,319
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source18,360
+
 error/wallet.rs,298
 pub enum WalletError {WalletError5,48
 impl fmt::Display for WalletError {WalletError11,126
@@ -94,27 +101,30 @@ impl error::Error for UtxoPoolError {UtxoPoolError43,1391
 impl From<secp256k1::Error> for UtxoPoolError {UtxoPoolError57,1888
     fn from(err: secp256k1::Error) -> Self {from58,1936
 
-error/mod.rs,989
-pub enum Error {Error11,234
-impl fmt::Display for Error {Error19,407
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt20,437
-impl error::Error for Error {Error31,775
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source32,805
-impl From<BlockError> for Error {Error43,1158
-    fn from(err: BlockError) -> Self {from44,1192
-impl From<BlockchainError> for Error {Error49,1265
-    fn from(err: BlockchainError) -> Self {from50,1304
-impl From<TransactionPoolError> for Error {Error55,1387
-    fn from(err: TransactionPoolError) -> Self {from56,1431
-impl From<UtxoPoolError> for Error {Error61,1524
-    fn from(err: UtxoPoolError) -> Self {from62,1561
-impl From<WalletError> for Error {Error67,1640
-    fn from(err: WalletError) -> Self {from68,1675
-pub mod block;block73,1750
-pub mod blockchain;blockchain74,1765
-pub mod transaction_pool;transaction_pool75,1785
-pub mod utxo_pool;utxo_pool76,1811
-pub mod wallet;wallet77,1830
+error/mod.rs,1142
+pub enum Error {Error12,275
+impl fmt::Display for Error {Error21,483
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt22,513
+impl error::Error for Error {Error34,901
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {source35,931
+impl From<BlockError> for Error {Error47,1336
+    fn from(err: BlockError) -> Self {from48,1370
+impl From<BlockchainError> for Error {Error53,1443
+    fn from(err: BlockchainError) -> Self {from54,1482
+impl From<TransactionError> for Error {Error59,1565
+    fn from(err: TransactionError) -> Self {from60,1605
+impl From<TransactionPoolError> for Error {Error65,1690
+    fn from(err: TransactionPoolError) -> Self {from66,1734
+impl From<UtxoPoolError> for Error {Error71,1827
+    fn from(err: UtxoPoolError) -> Self {from72,1864
+impl From<WalletError> for Error {Error77,1943
+    fn from(err: WalletError) -> Self {from78,1978
+pub mod block;block83,2053
+pub mod blockchain;blockchain84,2068
+pub mod transaction;transaction85,2088
+pub mod transaction_pool;transaction_pool86,2109
+pub mod utxo_pool;utxo_pool87,2135
+pub mod wallet;wallet88,2154
 
 error/transaction_pool.rs,352
 pub enum TransactionPoolError {TransactionPoolError7,83
@@ -234,30 +244,30 @@ impl Miner {Miner8,120
 main.rs,24
 fn main() {main19,400
 
-transaction/mod.rs,1372
-pub struct Transaction {Transaction19,499
-impl Transaction {Transaction28,832
-    pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {new29,851
-    pub fn sign(sign45,1316
-    pub fn serialize(&self) -> Vec<u8> {serialize70,2115
-    pub fn deserialize<B>(bytes: B) -> (Self, usize)deserialize80,2546
-    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root106,3455
-    pub fn shares_utxo_with(&self, other: &Transaction) -> bool {shares_utxo_with112,3697
-    // pub fn check_double_spending(&self) -> Result<(), TransactionError> {check_double_spending123,4016
-    pub fn bytes(&self) -> usize {bytes132,4363
-    pub fn id(&self) -> &Hash {id136,4499
-    pub fn inputs(&self) -> &Vec<TransactionInput> {inputs140,4555
-    pub fn outputs(&self) -> &Vec<TransactionOutput> {outputs144,4636
-impl Eq for Transaction {}Transaction149,4722
-impl PartialEq for Transaction {Transaction151,4750
-    fn eq(&self, other: &Self) -> bool {eq152,4783
-impl fmt::Display for Transaction {Transaction157,4861
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt158,4897
-impl HashTrait for Transaction {Transaction182,5570
-    fn hash<H: Hasher>(&self, state: &mut H) {hash183,5603
-pub mod input;input188,5688
-pub mod merkle_tree;merkle_tree189,5703
-pub mod output;output190,5724
+transaction/mod.rs,1369
+pub struct Transaction {Transaction20,548
+impl Transaction {Transaction29,881
+    pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {new30,900
+    pub fn sign(sign46,1365
+    pub fn serialize(&self) -> Vec<u8> {serialize71,2164
+    pub fn deserialize<B>(bytes: B) -> (Self, usize)deserialize81,2595
+    pub fn hash_merkle_root(transactions: &Vec<Self>) -> Hash {hash_merkle_root107,3504
+    pub fn shares_utxo_with(&self, other: &Transaction) -> bool {shares_utxo_with113,3746
+    pub fn check_double_spending(&self) -> Result<(), TransactionError> {check_double_spending124,4065
+    pub fn bytes(&self) -> usize {bytes133,4388
+    pub fn id(&self) -> &Hash {id137,4524
+    pub fn inputs(&self) -> &Vec<TransactionInput> {inputs141,4580
+    pub fn outputs(&self) -> &Vec<TransactionOutput> {outputs145,4661
+impl Eq for Transaction {}Transaction150,4747
+impl PartialEq for Transaction {Transaction152,4775
+    fn eq(&self, other: &Self) -> bool {eq153,4808
+impl fmt::Display for Transaction {Transaction158,4886
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt159,4922
+impl HashTrait for Transaction {Transaction183,5595
+    fn hash<H: Hasher>(&self, state: &mut H) {hash184,5628
+pub mod input;input189,5713
+pub mod merkle_tree;merkle_tree190,5728
+pub mod output;output191,5749
 
 transaction/output.rs,738
 pub struct TransactionOutput(UtxoData);TransactionOutput7,114

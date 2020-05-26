@@ -9,6 +9,7 @@ use std::iter;
 
 use self::merkle_tree::MergeHash;
 use crate::constants::{TX_INPUT_BYTES, TX_OUTPUT_BYTES};
+use crate::error::transaction::TransactionError;
 use crate::utxo::UtxoId;
 use crate::Hash;
 
@@ -120,14 +121,14 @@ impl Transaction {
         false
     }
 
-    // pub fn check_double_spending(&self) -> Result<(), TransactionError> {
-    //     let input_utxos: HashSet<_> = self.inputs().iter().map(|i| *i.utxo_id()).collect();
-    //     if input_utxos.len() == self.inputs().len() {
-    //         Ok(())
-    //     } else {
-    //         Err(TransactionError::DoubleSpending)
-    //     }
-    // }
+    pub fn check_double_spending(&self) -> Result<(), TransactionError> {
+        let input_utxos: HashSet<_> = self.inputs().iter().map(|i| *i.utxo_id()).collect();
+        if input_utxos.len() == self.inputs().len() {
+            Ok(())
+        } else {
+            Err(TransactionError::DoubleSpending)
+        }
+    }
 
     pub fn bytes(&self) -> usize {
         1 + 3 * 8 + self.inputs.len() * TX_INPUT_BYTES + self.outputs.len() * TX_OUTPUT_BYTES
