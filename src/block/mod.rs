@@ -88,6 +88,14 @@ impl Block {
         Self::from(bytes)
     }
 
+    pub fn check_transaction_count_is_power_of_two(&self) -> Result<(), BlockError> {
+        if self.transaction_count().is_power_of_two() {
+            Ok(())
+        } else {
+            Err(BlockError::WrongTransactionCount)
+        }
+    }
+
     pub fn check_double_spending(&self) -> Result<(), BlockError> {
         let mut input_count = 0;
         let mut input_utxos = HashSet::new();

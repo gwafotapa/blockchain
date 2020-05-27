@@ -1,4 +1,5 @@
 /* TODO:
+ * - modify tests accordingly
  * - refactor (and rename?) function validate() of UtxoPool and check its use
  * - implement fractional amounts
  * - clean and refactor

@@ -115,10 +115,14 @@ impl Node {
         }
     }
 
+    // TODO: Should it (and process_b) return a result ?
+    // TODO: make a method verifying a transaction
     pub fn process_t(&mut self, transaction: Transaction) {
         if self.transaction_pool.compatibility_of(&transaction).is_ok()
             && !self.blockchain.contains_tx(transaction.id(), None)
-            && self.utxo_pool.verify(&transaction).is_ok()
+            && self.utxo_pool.check_utxos_exist_for(&transaction).is_ok()
+            && self.utxo_pool.authenticate(&transaction).is_ok()
+            && transaction.check_double_spending().is_ok()
         {
             info!(
                 "Node #{} --- Received new transaction:\n{}\n",
@@ -129,10 +133,6 @@ impl Node {
         }
     }
 
-    // TODO: work on readability
-    // is method validate() of UtxoPool properly named ?
-    // a check from the blockchain is also needed afterwards!
-    // same thing for method verify() of UtxoPool
     pub fn process_b(&mut self, block: Block) {
         if let Ok((blocks_to_undo, blocks_to_process)) = self.validate(&block) {
             info!("Node #{} --- Received new block:\n{}\n", self.id, block);
@@ -151,42 +151,35 @@ impl Node {
     }
 
     pub fn recalculate(&mut self, blocks_to_undo: Vec<Block>, blocks_to_process: Vec<Block>) {
-        // self.utxo_pool.undo_all(&blocks_to_undo, &self.blockchain);
-        // self.utxo_pool.process_all(&blocks_to_process);
         self.utxo_pool
             .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
-        // self.wallet
-        //     .undo_all(&blocks_to_undo, &self.blockchain, &self.utxo_pool);
-        // self.wallet.process_all(&blocks_to_process);
         self.wallet.recalculate(
             &blocks_to_undo,
             &blocks_to_process,
             &self.blockchain,
             &self.utxo_pool, // TODO: use self.utxo_pool.initial_utxos() instead
         );
-        // self.transaction_pool.undo_all(blocks_to_undo);
-        // self.transaction_pool
-        //     .synchronize_with(&self.blockchain, &self.utxo_pool);
         self.transaction_pool
             .recalculate(blocks_to_undo, &self.blockchain, &self.utxo_pool);
     }
 
     pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {
+        // TODO: make a function returning a result
         if self.blockchain.contains(block.id()) {
             return Err(BlockchainError::KnownBlock.into());
         }
-        self.blockchain.check_txids_of(&block)?;
-        if let Some(parent) = self.blockchain.parent(&block) {
+        // TODO: reorder ?
+        self.blockchain.check_txids_of(block)?;
+        block.check_transaction_count_is_power_of_two()?;
+        block.check_double_spending()?;
+        // TODO: make a function returning a result
+        if let Some(parent) = self.blockchain.parent(block) {
             let (blocks_to_undo, blocks_to_process) =
                 self.blockchain.path(self.blockchain.top(), parent);
-            // self.utxo_pool.undo_all(&blocks_to_undo, &self.blockchain);
-            // self.utxo_pool.process_all(&blocks_to_process);
             self.utxo_pool
                 .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
-            self.utxo_pool.validate(&block)?;
-            // self.utxo_pool
-            //     .undo_all(&blocks_to_process, &self.blockchain);
-            // self.utxo_pool.process_all(&blocks_to_undo);
+            self.utxo_pool.check_utxos_exist(block)?;
+            self.utxo_pool.check_signatures_of(block)?;
             self.utxo_pool
                 .recalculate(&blocks_to_process, &blocks_to_undo, &self.blockchain);
             Ok((blocks_to_undo, blocks_to_process))

@@ -110,7 +110,7 @@ impl TransactionPool {
     // Checking the blockchain back to the common parent (of old and new tops) is enough.
     pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {
         self.transactions.retain(|tx| {
-            !blockchain.contains_tx(tx.id(), None) && utxo_pool.check_utxos_exist(tx).is_ok()
+            !blockchain.contains_tx(tx.id(), None) && utxo_pool.check_utxos_exist_for(tx).is_ok()
         });
     }
 

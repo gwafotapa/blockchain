@@ -9,7 +9,7 @@ pub enum UtxoPoolError {
     TransactionHasUnknownUtxo,
     TransactionHasInvalidSignature(secp256k1::Error),
     WrongTransactionCount,
-    BlockHasDoubleSpending,
+    // BlockHasDoubleSpending,
 }
 
 impl fmt::Display for UtxoPoolError {
@@ -35,7 +35,7 @@ impl fmt::Display for UtxoPoolError {
                 f,
                 "Utxo pool: number of transactions in the block is not a power of 2"
             ),
-            Self::BlockHasDoubleSpending => write!(f, "Utxo pool: block has double-spending"),
+            // Self::BlockHasDoubleSpending => write!(f, "Utxo pool: block has double-spending"),
         }
     }
 }
@@ -49,7 +49,7 @@ impl error::Error for UtxoPoolError {
             Self::TransactionHasUnknownUtxo => None,
             Self::TransactionHasInvalidSignature(err) => err.source(),
             Self::WrongTransactionCount => None,
-            Self::BlockHasDoubleSpending => None,
+            // Self::BlockHasDoubleSpending => None,
         }
     }
 }

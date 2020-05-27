@@ -30,19 +30,20 @@ fn test_utxo_pool_add_remove() {
     assert!(utxo_pool.add(utxo).is_ok());
 }
 
-#[test]
-fn test_utxo_pool_check_double_spending() {
-    let (pk, sk) = common::random_key();
-    let utxo = common::random_utxo_with(None, None, None, Some(pk));
-    let mut utxos = HashSet::new();
-    utxos.insert(utxo);
-    let utxo_pool = common::random_utxo_pool(Some(utxos), None);
-    let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
-    assert!(utxo_pool.check_double_spending(&tx).is_ok());
+// TODO: move to file transaction.rs
+// #[test]
+// fn test_utxo_pool_check_double_spending() {
+//     let (pk, sk) = common::random_key();
+//     let utxo = common::random_utxo_with(None, None, None, Some(pk));
+//     let mut utxos = HashSet::new();
+//     utxos.insert(utxo);
+//     let utxo_pool = common::random_utxo_pool(Some(utxos), None);
+//     let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
+//     assert!(utxo_pool.check_double_spending(&tx).is_ok());
 
-    let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo, utxo]), None);
-    assert!(utxo_pool.check_double_spending(&tx).is_err());
-}
+//     let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo, utxo]), None);
+//     assert!(utxo_pool.check_double_spending(&tx).is_err());
+// }
 
 #[test]
 fn test_utxo_pool_check_utxos_exist() {
@@ -61,7 +62,7 @@ fn test_utxo_pool_check_utxos_exist() {
     let mut utxo_pool = common::random_utxo_pool(Some(utxos), None);
     utxo_pool.remove(&utxo).unwrap();
     let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
-    assert!(utxo_pool.check_utxos_exist(&tx).is_err());
+    assert!(utxo_pool.check_utxos_exist_for(&tx).is_err());
 }
 
 #[test]
@@ -93,7 +94,7 @@ fn test_utxo_pool_check_signatures() {
         .copied()
         .choose_multiple(&mut rng, tx_utxos_len);
     let tx = common::random_transaction_with(Some(sk1), None, Some(tx_utxos), None);
-    assert!(utxo_pool.check_signatures(&tx).is_ok());
+    assert!(utxo_pool.authenticate(&tx).is_ok());
 
     let tx_utxos_len = rng.gen_range(1, sk1_utxos_len + 1);
     let mut tx_utxos = sk1_utxos
@@ -102,5 +103,5 @@ fn test_utxo_pool_check_signatures() {
     let utxo = sk2_utxos.as_slice().choose(&mut rng).copied().unwrap();
     tx_utxos.push(utxo);
     let tx = common::random_transaction_with(Some(sk1), None, Some(tx_utxos), None);
-    assert!(utxo_pool.check_signatures(&tx).is_err());
+    assert!(utxo_pool.authenticate(&tx).is_err());
 }

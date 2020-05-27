@@ -159,13 +159,7 @@ impl UtxoPool {
         self.process_all(blocks_to_process);
     }
 
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
-        self.check_utxos_exist(transaction)?;
-        self.check_double_spending(transaction)?;
-        self.check_signatures(transaction)
-    }
-
-    pub fn check_utxos_exist(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
+    pub fn check_utxos_exist_for(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
         for input in transaction.inputs() {
             self.utxos
                 .get(input.utxo_id())
@@ -174,15 +168,15 @@ impl UtxoPool {
         Ok(())
     }
 
-    pub fn check_double_spending(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
-        let input_utxos: HashSet<_> = transaction.inputs().iter().map(|i| *i.utxo_id()).collect();
-        if input_utxos.len() != transaction.inputs().len() {
-            return Err(UtxoPoolError::TransactionHasDoubleSpending);
-        }
-        Ok(())
-    }
+    // pub fn check_double_spending(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
+    //     let input_utxos: HashSet<_> = transaction.inputs().iter().map(|i| *i.utxo_id()).collect();
+    //     if input_utxos.len() != transaction.inputs().len() {
+    //         return Err(UtxoPoolError::TransactionHasDoubleSpending);
+    //     }
+    //     Ok(())
+    // }
 
-    pub fn check_signatures(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
+    pub fn authenticate(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
         let mut message = Vec::new();
         for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
             message.extend(utxo_id.serialize());
@@ -203,27 +197,16 @@ impl UtxoPool {
         Ok(())
     }
 
-    pub fn validate(&self, block: &Block) -> Result<(), UtxoPoolError> {
-        if !block.transaction_count().is_power_of_two() {
-            return Err(UtxoPoolError::WrongTransactionCount);
+    pub fn check_utxos_exist(&self, block: &Block) -> Result<(), UtxoPoolError> {
+        for transaction in block.transactions() {
+            self.check_utxos_exist_for(transaction)?;
         }
+        Ok(())
+    }
 
-        // TODO: Add a function to check block double spending
-        let mut input_count = 0;
-        let mut input_utxos = HashSet::new();
+    pub fn check_signatures_of(&self, block: &Block) -> Result<(), UtxoPoolError> {
         for transaction in block.transactions() {
-            input_count += transaction.inputs().len();
-            for input in transaction.inputs() {
-                input_utxos.insert(input.utxo_id());
-            }
-        }
-        if input_utxos.len() != input_count {
-            return Err(UtxoPoolError::BlockHasDoubleSpending);
-        }
-        for transaction in block.transactions() {
-            // self.authenticate(transaction)?;
-            self.check_utxos_exist(transaction)?;
-            self.check_signatures(transaction)?;
+            self.authenticate(transaction)?;
         }
         Ok(())
     }
