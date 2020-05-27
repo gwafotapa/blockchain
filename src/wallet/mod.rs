@@ -1,7 +1,7 @@
 use rand::seq::IteratorRandom;
 use rand::Rng;
 use secp256k1::{PublicKey, SecretKey};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 use crate::block::Block;
@@ -10,7 +10,6 @@ use crate::constants::{SPEND_PROBA, UTXO_HASH_INIT};
 use crate::error::wallet::WalletError;
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
 use crate::utxo::{Utxo, UtxoData, UtxoId};
-use crate::utxo_pool::UtxoPool;
 use crate::Hash;
 
 pub struct Wallet {
@@ -155,7 +154,7 @@ impl Wallet {
         &mut self,
         transaction: &Transaction,
         blockchain: &Blockchain,
-        utxo_pool: &UtxoPool,
+        initial_utxos: &HashMap<UtxoId, UtxoData>,
     ) {
         for (vout, output) in transaction.outputs().iter().enumerate() {
             if output.public_key() != self.public_key() {
@@ -171,7 +170,7 @@ impl Wallet {
         for input in transaction.inputs() {
             if *input.txid() == Hash::from(UTXO_HASH_INIT) {
                 let utxo_id = UtxoId::new(*input.txid(), input.vout());
-                let utxo_data = utxo_pool.initial_utxos()[&utxo_id];
+                let utxo_data = initial_utxos[&utxo_id];
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 if utxo.public_key() == self.public_key() {
                     self.add(utxo).unwrap();
@@ -185,15 +184,25 @@ impl Wallet {
         }
     }
 
-    pub fn undo(&mut self, block: &Block, blockchain: &Blockchain, utxo_pool: &UtxoPool) {
+    pub fn undo(
+        &mut self,
+        block: &Block,
+        blockchain: &Blockchain,
+        initial_utxos: &HashMap<UtxoId, UtxoData>,
+    ) {
         for transaction in block.transactions() {
-            self.undo_t(transaction, blockchain, utxo_pool);
+            self.undo_t(transaction, blockchain, initial_utxos);
         }
     }
 
-    pub fn undo_all(&mut self, blocks: &[Block], blockchain: &Blockchain, utxo_pool: &UtxoPool) {
+    pub fn undo_all(
+        &mut self,
+        blocks: &[Block],
+        blockchain: &Blockchain,
+        initial_utxos: &HashMap<UtxoId, UtxoData>,
+    ) {
         for block in blocks.iter().rev() {
-            self.undo(block, blockchain, utxo_pool);
+            self.undo(block, blockchain, initial_utxos);
         }
     }
 
@@ -202,9 +211,9 @@ impl Wallet {
         blocks_to_undo: &Vec<Block>,
         blocks_to_process: &Vec<Block>,
         blockchain: &Blockchain,
-        utxo_pool: &UtxoPool,
+        initial_utxos: &HashMap<UtxoId, UtxoData>,
     ) {
-        self.undo_all(blocks_to_undo, blockchain, utxo_pool);
+        self.undo_all(blocks_to_undo, blockchain, initial_utxos);
         self.process_all(blocks_to_process);
     }
 

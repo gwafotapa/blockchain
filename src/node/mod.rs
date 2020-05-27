@@ -10,7 +10,6 @@ use std::sync::Arc;
 use self::message::Message;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
-use crate::error::blockchain::BlockchainError;
 use crate::error::Error;
 use crate::miner::Miner;
 use crate::network::{Neighbour, Synchronizer};
@@ -116,14 +115,13 @@ impl Node {
     }
 
     // TODO: Should it (and process_b) return a result ?
-    // TODO: make a method verifying a transaction
     pub fn process_t(&mut self, transaction: Transaction) {
-        if self.transaction_pool.compatibility_of(&transaction).is_ok()
-            && !self.blockchain.contains_tx(transaction.id(), None)
-            && self.utxo_pool.check_utxos_exist_for(&transaction).is_ok()
-            && self.utxo_pool.authenticate(&transaction).is_ok()
-            && transaction.check_double_spending().is_ok()
-        {
+        // if self.transaction_pool.compatibility_of(&transaction).is_ok()
+        //     && !self.blockchain.contains_tx(transaction.id(), None)
+        //     && self.utxo_pool.check_utxos_exist_for(&transaction).is_ok()
+        //     && self.utxo_pool.authenticate(&transaction).is_ok()
+        //     && transaction.check_double_spending().is_ok()
+        if self.verify(&transaction).is_ok() {
             info!(
                 "Node #{} --- Received new transaction:\n{}\n",
                 self.id, transaction
@@ -131,6 +129,15 @@ impl Node {
             self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
             self.transaction_pool.add(transaction).unwrap();
         }
+    }
+
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), Error> {
+        self.transaction_pool.compatibility_of(&transaction)?;
+        self.blockchain.check_txid_of(transaction)?;
+        self.utxo_pool.check_utxos_exist_for(&transaction)?;
+        self.utxo_pool.authenticate(&transaction)?;
+        transaction.check_double_spending()?;
+        Ok(())
     }
 
     pub fn process_b(&mut self, block: Block) {
@@ -150,42 +157,36 @@ impl Node {
         }
     }
 
+    pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {
+        self.blockchain.check_id_of(block)?;
+        self.blockchain.check_txids_of(block)?;
+        block.check_transaction_count_is_power_of_two()?;
+        block.check_double_spending()?;
+        let parent = self.blockchain.parent_of(block)?;
+        let (blocks_to_undo, blocks_to_process) =
+            self.blockchain.path(self.blockchain.top(), parent);
+        self.utxo_pool
+            .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
+        self.utxo_pool.check_utxos_exist(block)?;
+        self.utxo_pool.check_signatures_of(block)?;
+        self.utxo_pool
+            .recalculate(&blocks_to_process, &blocks_to_undo, &self.blockchain);
+        Ok((blocks_to_undo, blocks_to_process))
+    }
+
     pub fn recalculate(&mut self, blocks_to_undo: Vec<Block>, blocks_to_process: Vec<Block>) {
         self.utxo_pool
             .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
+        // TODO: should I simply synchronize the wallet with the utxo pool instead of recalculating it?
         self.wallet.recalculate(
             &blocks_to_undo,
             &blocks_to_process,
             &self.blockchain,
-            &self.utxo_pool, // TODO: use self.utxo_pool.initial_utxos() instead
+            // TODO: should initial_utxos be part of the blockchain instead of the utxo_pool ?
+            self.utxo_pool.initial_utxos(),
         );
         self.transaction_pool
             .recalculate(blocks_to_undo, &self.blockchain, &self.utxo_pool);
-    }
-
-    pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {
-        // TODO: make a function returning a result
-        if self.blockchain.contains(block.id()) {
-            return Err(BlockchainError::KnownBlock.into());
-        }
-        // TODO: reorder ?
-        self.blockchain.check_txids_of(block)?;
-        block.check_transaction_count_is_power_of_two()?;
-        block.check_double_spending()?;
-        // TODO: make a function returning a result
-        if let Some(parent) = self.blockchain.parent(block) {
-            let (blocks_to_undo, blocks_to_process) =
-                self.blockchain.path(self.blockchain.top(), parent);
-            self.utxo_pool
-                .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
-            self.utxo_pool.check_utxos_exist(block)?;
-            self.utxo_pool.check_signatures_of(block)?;
-            self.utxo_pool
-                .recalculate(&blocks_to_process, &blocks_to_undo, &self.blockchain);
-            Ok((blocks_to_undo, blocks_to_process))
-        } else {
-            Err(BlockchainError::OrphanBlock.into())
-        }
     }
 
     // pub fn process_b(&mut self, block: Block) {

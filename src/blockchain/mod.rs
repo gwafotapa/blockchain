@@ -4,6 +4,7 @@ use std::fmt;
 
 use crate::block::Block;
 use crate::error::blockchain::BlockchainError;
+use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoId};
 use crate::Hash as BlockHash;
 use crate::Hash as TransactionId;
@@ -27,7 +28,7 @@ impl Blockchain {
         if self.contains(block.id()) {
             return Err(BlockchainError::KnownBlock);
         }
-        if self.parent(&block).is_none() {
+        if self.get_parent_of(&block).is_none() {
             return Err(BlockchainError::OrphanBlock);
         }
         if block.height() > self.height() {
@@ -53,7 +54,7 @@ impl Blockchain {
         let mut blocks = VecDeque::new();
         while child != parent {
             blocks.push_front(child.clone());
-            child = self.parent(child).unwrap();
+            child = self.get_parent_of(child).unwrap();
         }
         Vec::from(blocks)
     }
@@ -62,6 +63,14 @@ impl Blockchain {
         self.chain
             .iter()
             .any(|(_hash, block)| block.id() == block_id)
+    }
+
+    pub fn check_id_of(&self, block: &Block) -> Result<(), BlockchainError> {
+        if self.contains(block.id()) {
+            Err(BlockchainError::KnownBlock)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn contains_tx(&self, txid: &TransactionId, top: Option<&Block>) -> bool {
@@ -73,12 +82,25 @@ impl Blockchain {
             if block.is_genesis() {
                 return false;
             }
-            block = self.parent(block).unwrap();
+            block = self.get_parent_of(block).unwrap();
         }
     }
 
-    pub fn parent(&self, block: &Block) -> Option<&Block> {
+    pub fn check_txid_of(&self, transaction: &Transaction) -> Result<(), BlockchainError> {
+        if self.contains_tx(transaction.id(), None) {
+            Err(BlockchainError::KnownTransactionId)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn get_parent_of(&self, block: &Block) -> Option<&Block> {
         self.chain.get(block.hash_prev_block())
+    }
+
+    pub fn parent_of(&self, block: &Block) -> Result<&Block, BlockchainError> {
+        self.get_parent_of(block)
+            .ok_or(BlockchainError::OrphanBlock)
     }
 
     pub fn common_parent<'a>(
@@ -90,17 +112,17 @@ impl Blockchain {
             return Some(block1);
         } else if block2.is_genesis() {
             return Some(block2);
-        } else if self.parent(block1).is_none() || self.parent(block2).is_none() {
+        } else if self.get_parent_of(block1).is_none() || self.get_parent_of(block2).is_none() {
             return None;
         }
 
         while block1 != block2 {
             match block1.height().cmp(&block2.height()) {
-                Ordering::Less => block2 = self.parent(block2).unwrap(),
-                Ordering::Greater => block1 = self.parent(block1).unwrap(),
+                Ordering::Less => block2 = self.get_parent_of(block2).unwrap(),
+                Ordering::Greater => block1 = self.get_parent_of(block1).unwrap(),
                 Ordering::Equal => {
-                    block1 = self.parent(block1).unwrap();
-                    block2 = self.parent(block2).unwrap();
+                    block1 = self.get_parent_of(block1).unwrap();
+                    block2 = self.get_parent_of(block2).unwrap();
                 }
             }
         }
@@ -112,13 +134,13 @@ impl Blockchain {
             if let Some(utxo) = block.get_utxo(utxo_id) {
                 return utxo;
             }
-            block = self.parent(block).unwrap();
+            block = self.get_parent_of(block).unwrap();
         }
     }
 
     pub fn check_txids_of(&self, block: &Block) -> Result<(), BlockchainError> {
         for transaction in block.transactions() {
-            if self.contains_tx(transaction.id(), self.parent(block)) {
+            if self.contains_tx(transaction.id(), self.get_parent_of(block)) {
                 return Err(BlockchainError::KnownTransactionId);
             }
         }

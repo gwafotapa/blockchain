@@ -5,10 +5,10 @@ use std::fmt;
 pub enum UtxoPoolError {
     KnownUtxo,
     UnknownUtxo,
-    TransactionHasDoubleSpending,
+    // TransactionHasDoubleSpending,
     TransactionHasUnknownUtxo,
     TransactionHasInvalidSignature(secp256k1::Error),
-    WrongTransactionCount,
+    // WrongTransactionCount,
     // BlockHasDoubleSpending,
 }
 
@@ -23,18 +23,18 @@ impl fmt::Display for UtxoPoolError {
                 f,
                 "Utxo pool: cannot remove utxo from the pool that does not have it"
             ),
-            Self::TransactionHasDoubleSpending => {
-                write!(f, "Utxo pool: transaction has double-spending")
-            }
+            // Self::TransactionHasDoubleSpending => {
+            //     write!(f, "Utxo pool: transaction has double-spending")
+            // }
             Self::TransactionHasUnknownUtxo => write!(f, "Utxo pool: transaction has unknown utxo"),
             Self::TransactionHasInvalidSignature(err) => {
                 write!(f, "Utxo pool: ")?;
                 err.fmt(f)
             }
-            Self::WrongTransactionCount => write!(
-                f,
-                "Utxo pool: number of transactions in the block is not a power of 2"
-            ),
+            // Self::WrongTransactionCount => write!(
+            //     f,
+            //     "Utxo pool: number of transactions in the block is not a power of 2"
+            // ),
             // Self::BlockHasDoubleSpending => write!(f, "Utxo pool: block has double-spending"),
         }
     }
@@ -45,10 +45,10 @@ impl error::Error for UtxoPoolError {
         match self {
             Self::KnownUtxo => None,
             Self::UnknownUtxo => None,
-            Self::TransactionHasDoubleSpending => None,
+            // Self::TransactionHasDoubleSpending => None,
             Self::TransactionHasUnknownUtxo => None,
             Self::TransactionHasInvalidSignature(err) => err.source(),
-            Self::WrongTransactionCount => None,
+            // Self::WrongTransactionCount => None,
             // Self::BlockHasDoubleSpending => None,
         }
     }
