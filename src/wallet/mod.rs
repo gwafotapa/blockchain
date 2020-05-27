@@ -197,6 +197,17 @@ impl Wallet {
         }
     }
 
+    pub fn recalculate(
+        &mut self,
+        blocks_to_undo: &Vec<Block>,
+        blocks_to_process: &Vec<Block>,
+        blockchain: &Blockchain,
+        utxo_pool: &UtxoPool,
+    ) {
+        self.undo_all(blocks_to_undo, blockchain, utxo_pool);
+        self.process_all(blocks_to_process);
+    }
+
     pub fn public_key(&self) -> &PublicKey {
         &self.public_key
     }

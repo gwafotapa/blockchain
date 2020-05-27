@@ -1,7 +1,5 @@
 /* TODO:
- * - same ids do not mean blocks are equal...
- * - same goes for transactions...
- * - and what else ?
+ * - refactor (and rename?) function validate() of UtxoPool and check its use
  * - implement fractional amounts
  * - clean and refactor
  * - deal with all the TODOs

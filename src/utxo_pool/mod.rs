@@ -149,6 +149,16 @@ impl UtxoPool {
     //     Ok(())
     // }
 
+    pub fn recalculate(
+        &mut self,
+        blocks_to_undo: &Vec<Block>,
+        blocks_to_process: &Vec<Block>,
+        blockchain: &Blockchain,
+    ) {
+        self.undo_all(blocks_to_undo, blockchain);
+        self.process_all(blocks_to_process);
+    }
+
     pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
         self.check_utxos_exist(transaction)?;
         self.check_double_spending(transaction)?;

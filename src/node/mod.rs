@@ -10,6 +10,8 @@ use std::sync::Arc;
 use self::message::Message;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
+use crate::error::blockchain::BlockchainError;
+use crate::error::Error;
 use crate::miner::Miner;
 use crate::network::{Neighbour, Synchronizer};
 use crate::transaction::Transaction;
@@ -132,46 +134,108 @@ impl Node {
     // a check from the blockchain is also needed afterwards!
     // same thing for method verify() of UtxoPool
     pub fn process_b(&mut self, block: Block) {
-        if let Some(parent) = self.blockchain.parent(&block) {
-            let (old_blocks, new_blocks) =
-                self.blockchain.block_delta(self.blockchain.top(), parent);
-            self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
-            self.utxo_pool.process_all(&new_blocks);
-
-            // TODO: block id checking should be as follows:
-            // 1 - check if the block itself is part of the chain and if so reject it
-            // 2 - check if the block id is in the chain and add the block if not. If it is:
-            //     - if the id is shared by an ancestor, reject the block
-            //     - otherwise the id-sharing block is part of another chain, so add the block
-            // This calls for an implementation change: equality of blocks is not equality of ids.
-            // Is this also true for transactions ? Something else ?
-            if !self.blockchain.contains(block.id())
-                && self.utxo_pool.validate(&block).is_ok()
-                && self.blockchain.check_txids_of(&block).is_ok()
-            {
-                info!("Node #{} --- Received new block:\n{}\n", self.id, block);
-                self.propagate(Message::Block(Cow::Borrowed(&block)));
-                if block.height() <= self.blockchain.height() {
-                    self.utxo_pool.undo_all(&new_blocks, &self.blockchain);
-                    self.utxo_pool.process_all(&old_blocks);
-                } else {
-                    self.utxo_pool.process(&block);
-                    self.wallet
-                        .undo_all(&old_blocks, &self.blockchain, &self.utxo_pool);
-                    self.wallet.process_all(&new_blocks);
-                    self.wallet.process(&block);
-                    self.transaction_pool.undo_all(old_blocks);
-                    self.transaction_pool
-                        .synchronize_with(&self.blockchain, &self.utxo_pool);
-                    self.miner.discard_block();
+        if let Ok((blocks_to_undo, blocks_to_process)) = self.validate(&block) {
+            info!("Node #{} --- Received new block:\n{}\n", self.id, block);
+            self.propagate(Message::Block(Cow::Borrowed(&block)));
+            if block.height() > self.blockchain.height() {
+                if block.hash_prev_block() != self.blockchain.top_hash() {
+                    self.recalculate(blocks_to_undo, blocks_to_process);
                 }
-                self.blockchain.push(block).unwrap();
-            } else {
-                self.utxo_pool.undo_all(&new_blocks, &self.blockchain);
-                self.utxo_pool.process_all(&old_blocks);
+                self.utxo_pool.process(&block);
+                self.wallet.process(&block);
+                self.transaction_pool.process(&block);
+                self.miner.discard_block();
             }
+            self.blockchain.push(block).unwrap();
         }
     }
+
+    pub fn recalculate(&mut self, blocks_to_undo: Vec<Block>, blocks_to_process: Vec<Block>) {
+        // self.utxo_pool.undo_all(&blocks_to_undo, &self.blockchain);
+        // self.utxo_pool.process_all(&blocks_to_process);
+        self.utxo_pool
+            .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
+        // self.wallet
+        //     .undo_all(&blocks_to_undo, &self.blockchain, &self.utxo_pool);
+        // self.wallet.process_all(&blocks_to_process);
+        self.wallet.recalculate(
+            &blocks_to_undo,
+            &blocks_to_process,
+            &self.blockchain,
+            &self.utxo_pool, // TODO: use self.utxo_pool.initial_utxos() instead
+        );
+        // self.transaction_pool.undo_all(blocks_to_undo);
+        // self.transaction_pool
+        //     .synchronize_with(&self.blockchain, &self.utxo_pool);
+        self.transaction_pool
+            .recalculate(blocks_to_undo, &self.blockchain, &self.utxo_pool);
+    }
+
+    pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {
+        if self.blockchain.contains(block.id()) {
+            return Err(BlockchainError::KnownBlock.into());
+        }
+        self.blockchain.check_txids_of(&block)?;
+        if let Some(parent) = self.blockchain.parent(&block) {
+            let (blocks_to_undo, blocks_to_process) =
+                self.blockchain.path(self.blockchain.top(), parent);
+            // self.utxo_pool.undo_all(&blocks_to_undo, &self.blockchain);
+            // self.utxo_pool.process_all(&blocks_to_process);
+            self.utxo_pool
+                .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
+            self.utxo_pool.validate(&block)?;
+            // self.utxo_pool
+            //     .undo_all(&blocks_to_process, &self.blockchain);
+            // self.utxo_pool.process_all(&blocks_to_undo);
+            self.utxo_pool
+                .recalculate(&blocks_to_process, &blocks_to_undo, &self.blockchain);
+            Ok((blocks_to_undo, blocks_to_process))
+        } else {
+            Err(BlockchainError::OrphanBlock.into())
+        }
+    }
+
+    // pub fn process_b(&mut self, block: Block) {
+    //     if let Some(parent) = self.blockchain.parent(&block) {
+    //         let (old_blocks, new_blocks) =
+    //             self.blockchain.path(self.blockchain.top(), parent);
+    //         self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
+    //         self.utxo_pool.process_all(&new_blocks);
+
+    //         // TODO: block id checking should be as follows:
+    //         // 1 - check if the block itself is part of the chain and if so reject it
+    //         // 2 - check if the block id is in the chain and add the block if not. If it is:
+    //         //     - if the id is shared by an ancestor, reject the block
+    //         //     - otherwise the id-sharing block is part of another chain, so add the block
+    //         // This calls for an implementation change: equality of blocks is not equality of ids.
+    //         // Is this also true for transactions ? Something else ?
+    //         if !self.blockchain.contains(block.id())
+    //             && self.utxo_pool.validate(&block).is_ok()
+    //             && self.blockchain.check_txids_of(&block).is_ok()
+    //         {
+    //             info!("Node #{} --- Received new block:\n{}\n", self.id, block);
+    //             self.propagate(Message::Block(Cow::Borrowed(&block)));
+    //             if block.height() <= self.blockchain.height() {
+    //                 self.utxo_pool.undo_all(&new_blocks, &self.blockchain);
+    //                 self.utxo_pool.process_all(&old_blocks);
+    //             } else {
+    //                 self.utxo_pool.process(&block);
+    //                 self.wallet
+    //                     .undo_all(&old_blocks, &self.blockchain, &self.utxo_pool);
+    //                 self.wallet.process_all(&new_blocks);
+    //                 self.wallet.process(&block);
+    //                 self.transaction_pool.undo_all(old_blocks);
+    //                 self.transaction_pool
+    //                     .synchronize_with(&self.blockchain, &self.utxo_pool);
+    //                 self.miner.discard_block();
+    //             }
+    //             self.blockchain.push(block).unwrap();
+    //         } else {
+    //             self.utxo_pool.undo_all(&new_blocks, &self.blockchain);
+    //             self.utxo_pool.process_all(&old_blocks);
+    //         }
+    //     }
+    // }
 
     pub fn propagate(&self, message: Message) {
         let bytes = Arc::new(message.serialize());

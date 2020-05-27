@@ -42,7 +42,7 @@ impl Blockchain {
     /// Computes the closest common parent A of the two given blocks B and C, then returns:
     /// - the list of blocks between B (included) and A (not included) in decreasing height.
     /// - the list of blocks between C (included) and A (not included) in decreasing height.
-    pub fn block_delta(&self, block1: &Block, block2: &Block) -> (Vec<Block>, Vec<Block>) {
+    pub fn path(&self, block1: &Block, block2: &Block) -> (Vec<Block>, Vec<Block>) {
         let parent = self.common_parent(block1, block2).unwrap();
         let list1 = self.range_of_blocks(block1, parent);
         let list2 = self.range_of_blocks(block2, parent);

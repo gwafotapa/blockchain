@@ -122,6 +122,16 @@ impl TransactionPool {
         }
     }
 
+    pub fn recalculate(
+        &mut self,
+        blocks_to_undo: Vec<Block>,
+        blockchain: &Blockchain,
+        utxo_pool: &UtxoPool,
+    ) {
+        self.undo_all(blocks_to_undo);
+        self.synchronize_with(blockchain, utxo_pool);
+    }
+
     pub fn transactions(&self) -> &HashSet<Transaction> {
         &self.transactions
     }
