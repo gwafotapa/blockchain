@@ -95,15 +95,8 @@ impl UtxoPool {
         }
 
         for input in transaction.inputs() {
-            if *input.txid() == Hash::from(UTXO_HASH_INIT) {
-                let utxo_id = UtxoId::new(*input.txid(), input.vout());
-                let utxo_data = blockchain.initial_utxos()[&utxo_id];
-                let utxo = Utxo::new(utxo_id, utxo_data);
-                self.add(utxo).unwrap();
-            } else {
-                let utxo = blockchain.get_utxo(input.utxo_id(), block);
-                self.add(utxo).unwrap();
-            }
+            let utxo = blockchain.get_utxo(input.utxo_id(), block);
+            self.add(utxo).unwrap();
         }
     }
 

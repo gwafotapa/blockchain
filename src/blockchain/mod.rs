@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt;
 
 use crate::block::Block;
+use crate::constants::UTXO_HASH_INIT;
 use crate::error::blockchain::BlockchainError;
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoData, UtxoId};
@@ -135,6 +136,10 @@ impl Blockchain {
     }
 
     pub fn get_utxo<'a>(&'a self, utxo_id: &UtxoId, mut block: &'a Block) -> Utxo {
+        if *utxo_id.txid() == TransactionId::from(UTXO_HASH_INIT) {
+            let utxo_data = self.initial_utxos[utxo_id];
+            return Utxo::new(*utxo_id, utxo_data);
+        }
         loop {
             if let Some(utxo) = block.get_utxo(utxo_id) {
                 return utxo;

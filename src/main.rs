@@ -1,10 +1,9 @@
 /* TODO:
- * - move initial_utxos to type Blockchain
  * - implement fractional amounts (modify where appropriate, dont forget tests)
  * - clean and refactor
  * - deal with all the TODOs
  * - remove commented code
- * - ensure the network is a connected space (grapht trait ?)
+ * - ensure the network is a connected space (graph trait ?)
  * - make a test returning network connected components
  * - write/complete tests
  * - add enemy nodes
