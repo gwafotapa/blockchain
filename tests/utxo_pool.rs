@@ -19,7 +19,7 @@ use blockchain::utxo::Utxo;
 pub mod common;
 
 #[test]
-fn test_utxo_pool_add_remove() {
+fn utxo_pool_add_remove() {
     let mut rng = rand::thread_rng();
     let mut utxo_pool = common::random_utxo_pool(None, None);
     let (utxo_id, utxo_data) = utxo_pool.utxos().iter().choose(&mut rng).unwrap();
@@ -30,23 +30,8 @@ fn test_utxo_pool_add_remove() {
     assert!(utxo_pool.add(utxo).is_ok());
 }
 
-// TODO: move to file transaction.rs
-// #[test]
-// fn test_utxo_pool_check_double_spending() {
-//     let (pk, sk) = common::random_key();
-//     let utxo = common::random_utxo_with(None, None, None, Some(pk));
-//     let mut utxos = HashSet::new();
-//     utxos.insert(utxo);
-//     let utxo_pool = common::random_utxo_pool(Some(utxos), None);
-//     let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
-//     assert!(utxo_pool.check_double_spending(&tx).is_ok());
-
-//     let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo, utxo]), None);
-//     assert!(utxo_pool.check_double_spending(&tx).is_err());
-// }
-
 #[test]
-fn test_utxo_pool_check_utxos_exist() {
+fn utxo_pool_check_utxos_exist() {
     let mut rng = rand::thread_rng();
     let (pk, sk) = common::random_key();
     let sk_utxos_len = rng.gen_range(1, common::UTXOS_PER_KEY_MAX);
@@ -66,7 +51,7 @@ fn test_utxo_pool_check_utxos_exist() {
 }
 
 #[test]
-fn test_utxo_pool_check_signatures() {
+fn utxo_pool_check_signatures() {
     let mut rng = rand::thread_rng();
     let (pk1, sk1) = common::random_key();
     let (mut pk2, mut sk2);

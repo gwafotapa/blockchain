@@ -1,11 +1,11 @@
 /* TODO:
- * - modify tests accordingly
- * - refactor (and rename?) function validate() of UtxoPool and check its use
- * - implement fractional amounts
+ * - move initial_utxos to type Blockchain
+ * - implement fractional amounts (modify where appropriate, dont forget tests)
  * - clean and refactor
  * - deal with all the TODOs
  * - remove commented code
- * - ensure the network is a connected space
+ * - ensure the network is a connected space (grapht trait ?)
+ * - make a test returning network connected components
  * - write/complete tests
  * - add enemy nodes
  * - pub uses

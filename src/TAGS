@@ -251,7 +251,7 @@ impl Miner {Miner8,120
     pub fn discard_block(&mut self) {discard_block38,997
 
 main.rs,24
-fn main() {main21,508
+fn main() {main20,473
 
 transaction/mod.rs,1369
 pub struct Transaction {Transaction20,548

@@ -49,7 +49,11 @@ fn consensus() {
                 continue;
             }
             assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
-            assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
+
+            // This assertion is not verified:
+            // During a fork, if a transaction is rejected, the only way to get it back
+            // is via a new block. So if network shuts down before, tx pool differ.
+            // assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
         }
         if consensus {
             let mut wallet_utxos_count = 0;

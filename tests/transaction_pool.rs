@@ -3,7 +3,7 @@ use blockchain::transaction_pool::TransactionPool;
 pub mod common;
 
 #[test]
-fn test_transaction_pool_add() {
+fn transaction_pool_add() {
     let mut transaction_pool = TransactionPool::new();
     let transaction = common::random_transaction(None, None);
     assert!(transaction_pool.add(transaction.clone()).is_ok());
@@ -11,7 +11,7 @@ fn test_transaction_pool_add() {
 }
 
 #[test]
-fn test_transaction_pool_remove() {
+fn transaction_pool_remove() {
     let mut transaction_pool = TransactionPool::new();
     let transaction = common::random_transaction(None, None);
     assert!(transaction_pool.remove(&transaction).is_err());
@@ -22,7 +22,7 @@ fn test_transaction_pool_remove() {
 }
 
 #[test]
-fn test_transaction_pool_compatibility_of() {
+fn transaction_pool_compatibility_of() {
     let mut transaction_pool = TransactionPool::new();
     let transaction = common::random_transaction(None, None);
     assert!(transaction_pool.compatibility_of(&transaction).is_ok());
