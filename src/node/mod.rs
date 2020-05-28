@@ -47,6 +47,7 @@ impl Node {
         integrity: Behaviour,
     ) -> Self {
         let utxo_pool = UtxoPool::initialize(network_public_keys.clone());
+        let blockchain = Blockchain::new(utxo_pool.utxos().clone());
         let wallet = Wallet::new(
             public_key,
             secret_key,
@@ -60,7 +61,7 @@ impl Node {
             sender,
             listener,
             neighbours,
-            blockchain: Blockchain::new(utxo_pool.utxos().clone()),
+            blockchain,
             utxo_pool,
             transaction_pool: TransactionPool::new(),
             wallet,
@@ -74,34 +75,39 @@ impl Node {
         loop {
             if let Some(transaction) = self.wallet.initiate() {
                 if self.transaction_pool.compatibility_of(&transaction).is_ok()
-                    && !self.blockchain.contains_tx(transaction.id(), None)
+                // && !self.blockchain.contains_tx(transaction.id(), None)
+                    && self.blockchain.check_txid_of(&transaction).is_ok()
                 {
-                    info!(
-                        "Node #{} --- New transaction:\n{}\n",
-                        self.id(),
-                        transaction
-                    );
-                    self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-                    self.transaction_pool.add(transaction).unwrap();
+                    self.process_t(transaction);
                 }
             }
             if let Some(block) = self
                 .miner
                 .mine(self.blockchain.top(), &self.transaction_pool)
             {
-                if !self.blockchain.contains(block.id()) {
-                    info!("Node #{} --- New block:\n{}\n", self.id, block);
-                    self.propagate(Message::Block(Cow::Borrowed(&block)));
-                    self.utxo_pool.process(&block);
-                    self.wallet.process(&block);
-                    self.transaction_pool.process(&block);
-                    self.blockchain.push(block).unwrap();
+                // if !self.blockchain.contains(block.id()) {
+                if self.blockchain.check_id_of(&block).is_ok() {
+                    // info!("Node #{} --- New block:\n{}\n", self.id, block);
+                    // self.propagate(Message::Block(Cow::Borrowed(&block)));
+                    // self.utxo_pool.process(&block);
+                    // self.wallet.process(&block);
+                    // self.transaction_pool.process(&block);
+                    // self.blockchain.push(block).unwrap();
+                    self.process_b(block, vec![], vec![]);
                 }
             }
             if let Ok(bytes) = self.listener.try_recv() {
                 match Message::deserialize(bytes.deref()) {
-                    Message::Transaction(transaction) => self.process_t(transaction.into_owned()),
-                    Message::Block(block) => self.process_b(block.into_owned()),
+                    Message::Transaction(transaction) => {
+                        if self.verify(&transaction).is_ok() {
+                            self.process_t(transaction.into_owned())
+                        }
+                    }
+                    Message::Block(block) => {
+                        if let Ok((blocks_to_undo, blocks_to_process)) = self.validate(&block) {
+                            self.process_b(block.into_owned(), blocks_to_undo, blocks_to_process)
+                        }
+                    }
                     Message::ShutDown => {
                         self.shut_down();
                         return;
@@ -121,14 +127,12 @@ impl Node {
         //     && self.utxo_pool.check_utxos_exist_for(&transaction).is_ok()
         //     && self.utxo_pool.authenticate(&transaction).is_ok()
         //     && transaction.check_double_spending().is_ok()
-        if self.verify(&transaction).is_ok() {
-            info!(
-                "Node #{} --- Received new transaction:\n{}\n",
-                self.id, transaction
-            );
-            self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
-            self.transaction_pool.add(transaction).unwrap();
-        }
+        info!(
+            "Node #{} --- Received new transaction:\n{}\n",
+            self.id, transaction
+        );
+        self.propagate(Message::Transaction(Cow::Borrowed(&transaction)));
+        self.transaction_pool.add(transaction).unwrap();
     }
 
     pub fn verify(&self, transaction: &Transaction) -> Result<(), Error> {
@@ -140,21 +144,24 @@ impl Node {
         Ok(())
     }
 
-    pub fn process_b(&mut self, block: Block) {
-        if let Ok((blocks_to_undo, blocks_to_process)) = self.validate(&block) {
-            info!("Node #{} --- Received new block:\n{}\n", self.id, block);
-            self.propagate(Message::Block(Cow::Borrowed(&block)));
-            if block.height() > self.blockchain.height() {
-                if block.hash_prev_block() != self.blockchain.top_hash() {
-                    self.recalculate(blocks_to_undo, blocks_to_process);
-                }
-                self.utxo_pool.process(&block);
-                self.wallet.process(&block);
-                self.transaction_pool.process(&block);
-                self.miner.discard_block();
+    pub fn process_b(
+        &mut self,
+        block: Block,
+        blocks_to_undo: Vec<Block>,
+        blocks_to_process: Vec<Block>,
+    ) {
+        info!("Node #{} --- Received new block:\n{}\n", self.id, block);
+        self.propagate(Message::Block(Cow::Borrowed(&block)));
+        if block.height() > self.blockchain.height() {
+            if block.hash_prev_block() != self.blockchain.top_hash() {
+                self.recalculate(blocks_to_undo, blocks_to_process);
             }
-            self.blockchain.push(block).unwrap();
+            self.utxo_pool.process(&block);
+            self.wallet.process(&block);
+            self.transaction_pool.process(&block);
+            self.miner.discard_block();
         }
+        self.blockchain.push(block).unwrap();
     }
 
     pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {
@@ -249,8 +256,16 @@ impl Node {
             let mut state = state.lock().unwrap();
             while let Ok(bytes) = self.listener.try_recv() {
                 match Message::deserialize(bytes.deref()) {
-                    Message::Transaction(transaction) => self.process_t(transaction.into_owned()),
-                    Message::Block(block) => self.process_b(block.into_owned()),
+                    Message::Transaction(transaction) => {
+                        if self.verify(&transaction).is_ok() {
+                            self.process_t(transaction.into_owned())
+                        }
+                    }
+                    Message::Block(block) => {
+                        if let Ok((blocks_to_undo, blocks_to_process)) = self.validate(&block) {
+                            self.process_b(block.into_owned(), blocks_to_undo, blocks_to_process)
+                        }
+                    }
                     Message::ShutDown => panic!("Unexpected shut down message"),
                 }
                 for neighbour in self.neighbours.iter().map(|n| n.id()) {
