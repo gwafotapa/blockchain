@@ -5,7 +5,7 @@ use std::fmt;
 use crate::block::Block;
 use crate::error::blockchain::BlockchainError;
 use crate::transaction::Transaction;
-use crate::utxo::{Utxo, UtxoId};
+use crate::utxo::{Utxo, UtxoData, UtxoId};
 use crate::Hash as BlockHash;
 use crate::Hash as TransactionId;
 
@@ -13,15 +13,20 @@ use crate::Hash as TransactionId;
 pub struct Blockchain {
     chain: HashMap<BlockHash, Block>,
     top_hash: BlockHash,
+    initial_utxos: HashMap<UtxoId, UtxoData>,
 }
 
 impl Blockchain {
-    pub fn new() -> Self {
+    pub fn new(initial_utxos: HashMap<UtxoId, UtxoData>) -> Self {
         let genesis = Block::genesis();
         let top_hash = genesis.hash();
         let mut chain = HashMap::new();
         chain.insert(top_hash, genesis);
-        Self { chain, top_hash }
+        Self {
+            chain,
+            top_hash,
+            initial_utxos,
+        }
     }
 
     pub fn push(&mut self, block: Block) -> Result<(), BlockchainError> {
@@ -165,6 +170,10 @@ impl Blockchain {
 
     pub fn top_hash(&self) -> &BlockHash {
         &self.top_hash
+    }
+
+    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {
+        &self.initial_utxos
     }
 }
 

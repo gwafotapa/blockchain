@@ -21,7 +21,7 @@ pub mod common;
 #[test]
 fn utxo_pool_add_remove() {
     let mut rng = rand::thread_rng();
-    let mut utxo_pool = common::random_utxo_pool(None, None);
+    let mut utxo_pool = common::random_utxo_pool(None);
     let (utxo_id, utxo_data) = utxo_pool.utxos().iter().choose(&mut rng).unwrap();
     let utxo = Utxo::new(*utxo_id, *utxo_data);
     assert!(utxo_pool.add(utxo.clone()).is_err()); // TODO: Check error type
@@ -44,7 +44,7 @@ fn utxo_pool_check_utxos_exist() {
         .map(|_| common::random_utxo(None, None))
         .collect();
     let utxos: HashSet<_> = sk_utxos.into_iter().chain(other_utxos).collect();
-    let mut utxo_pool = common::random_utxo_pool(Some(utxos), None);
+    let mut utxo_pool = common::random_utxo_pool(Some(utxos));
     utxo_pool.remove(&utxo).unwrap();
     let tx = common::random_transaction_with(Some(sk), None, Some(vec![utxo]), None);
     assert!(utxo_pool.check_utxos_exist_for(&tx).is_err());
@@ -72,7 +72,7 @@ fn utxo_pool_check_signatures() {
         .map(|_| common::random_utxo_with(None, None, None, Some(pk2)))
         .collect();
     let utxos: HashSet<_> = sk1_utxos.iter().chain(sk2_utxos.iter()).copied().collect();
-    let utxo_pool = common::random_utxo_pool(Some(utxos), None);
+    let utxo_pool = common::random_utxo_pool(Some(utxos));
     let tx_utxos_len = rng.gen_range(1, sk1_utxos_len + 1);
     let tx_utxos = sk1_utxos
         .iter()

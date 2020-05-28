@@ -14,12 +14,17 @@ use crate::Hash;
 #[derive(Clone, Debug)]
 pub struct UtxoPool {
     utxos: HashMap<UtxoId, UtxoData>,
-    initial_utxos: HashMap<UtxoId, UtxoData>,
 }
 
 impl UtxoPool {
-    pub fn new(keys: Vec<PublicKey>) -> Self {
-        let utxos: HashMap<UtxoId, UtxoData> = keys
+    pub fn new() -> Self {
+        Self {
+            utxos: HashMap::new(),
+        }
+    }
+
+    pub fn initialize(public_keys: Vec<PublicKey>) -> Self {
+        let utxos: HashMap<UtxoId, UtxoData> = public_keys
             .into_iter()
             .enumerate()
             .map(|(n, pk)| {
@@ -29,11 +34,7 @@ impl UtxoPool {
                 )
             })
             .collect();
-        let initial_utxos = utxos.clone();
-        Self {
-            utxos,
-            initial_utxos,
-        }
+        Self { utxos }
     }
 
     pub fn add(&mut self, utxo: Utxo) -> Result<(), UtxoPoolError> {
@@ -96,7 +97,7 @@ impl UtxoPool {
         for input in transaction.inputs() {
             if *input.txid() == Hash::from(UTXO_HASH_INIT) {
                 let utxo_id = UtxoId::new(*input.txid(), input.vout());
-                let utxo_data = self.initial_utxos[&utxo_id];
+                let utxo_data = blockchain.initial_utxos()[&utxo_id];
                 let utxo = Utxo::new(utxo_id, utxo_data);
                 self.add(utxo).unwrap();
             } else {
@@ -215,10 +216,6 @@ impl UtxoPool {
         self.utxos.len()
     }
 
-    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {
-        &self.initial_utxos
-    }
-
     pub fn utxos(&self) -> &HashMap<UtxoId, UtxoData> {
         &self.utxos
     }
@@ -251,22 +248,10 @@ impl fmt::Display for UtxoPool {
     }
 }
 
-impl From<(HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)> for UtxoPool {
-    fn from(utxos: (HashMap<UtxoId, UtxoData>, HashMap<UtxoId, UtxoData>)) -> Self {
+impl From<HashSet<Utxo>> for UtxoPool {
+    fn from(utxos: HashSet<Utxo>) -> Self {
         Self {
-            utxos: utxos.0,
-            initial_utxos: utxos.1,
-        }
-    }
-}
-
-impl From<(HashSet<Utxo>, HashSet<Utxo>)> for UtxoPool {
-    fn from(utxos: (HashSet<Utxo>, HashSet<Utxo>)) -> Self {
-        let initial_utxos = utxos.1.iter().map(|u| (*u.id(), *u.data())).collect();
-        let utxos = utxos.0.iter().map(|u| (*u.id(), *u.data())).collect();
-        Self {
-            utxos,
-            initial_utxos,
+            utxos: utxos.iter().map(|u| (*u.id(), *u.data())).collect(),
         }
     }
 }

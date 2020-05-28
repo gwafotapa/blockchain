@@ -46,7 +46,7 @@ impl Node {
         synchronizer: Synchronizer,
         integrity: Behaviour,
     ) -> Self {
-        let utxo_pool = UtxoPool::new(network_public_keys.clone());
+        let utxo_pool = UtxoPool::initialize(network_public_keys.clone());
         let wallet = Wallet::new(
             public_key,
             secret_key,
@@ -60,7 +60,7 @@ impl Node {
             sender,
             listener,
             neighbours,
-            blockchain: Blockchain::new(),
+            blockchain: Blockchain::new(utxo_pool.utxos().clone()),
             utxo_pool,
             transaction_pool: TransactionPool::new(),
             wallet,
@@ -178,13 +178,8 @@ impl Node {
         self.utxo_pool
             .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
         // TODO: should I simply synchronize the wallet with the utxo pool instead of recalculating it?
-        self.wallet.recalculate(
-            &blocks_to_undo,
-            &blocks_to_process,
-            &self.blockchain,
-            // TODO: should initial_utxos be part of the blockchain instead of the utxo_pool ?
-            self.utxo_pool.initial_utxos(),
-        );
+        self.wallet
+            .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
         self.transaction_pool
             .recalculate(blocks_to_undo, &self.blockchain, &self.utxo_pool);
     }
