@@ -12,8 +12,11 @@ use rand::Rng;
 // use secp256k1::{PublicKey, SecretKey};
 use std::collections::HashSet;
 
+use blockchain::blockchain::Blockchain;
+use blockchain::constants::UTXO_HASH_INIT;
 use blockchain::utxo::Utxo;
-// use blockchain::utxo_pool::UtxoPool;
+use blockchain::utxo_pool::UtxoPool;
+use blockchain::Hash;
 // use blockchain::transaction::{Transaction, TransactionOutput};
 
 pub mod common;
@@ -51,7 +54,7 @@ fn utxo_pool_check_utxos_exist() {
 }
 
 #[test]
-fn utxo_pool_check_signatures() {
+fn utxo_pool_authenticate() {
     let mut rng = rand::thread_rng();
     let (pk1, sk1) = common::random_key();
     let (mut pk2, mut sk2);
@@ -89,4 +92,32 @@ fn utxo_pool_check_signatures() {
     tx_utxos.push(utxo);
     let tx = common::random_transaction_with(Some(sk1), None, Some(tx_utxos), None);
     assert!(utxo_pool.authenticate(&tx).is_err());
+}
+
+#[test]
+fn utxo_pool_process_undo_tx() {
+    let mut rng = rand::thread_rng();
+    let pool_size = rng.gen_range(1, common::UTXO_POOL_SIZE_MAX);
+    let utxos: HashSet<_> = (0..pool_size)
+        .map(|i| common::random_utxo_with(Some(Hash::from(UTXO_HASH_INIT)), Some(i), None, None))
+        .collect();
+    let mut utxo_pool = UtxoPool::from(utxos.clone());
+    let blockchain = Blockchain::new(utxos.iter().map(|u| (*u.id(), *u.data())).collect());
+    let tx_utxos_len = rng.gen_range(1, pool_size + 1);
+    let tx_utxos = utxos
+        .iter()
+        .copied()
+        .choose_multiple(&mut rng, tx_utxos_len);
+    let tx = common::random_transaction_with(None, None, Some(tx_utxos.clone()), None);
+    let utxo_pool_cl = utxo_pool.clone();
+    utxo_pool.process_t(&tx);
+    assert_eq!(
+        utxo_pool.size() + tx.inputs().len(),
+        utxo_pool_cl.size() + tx.outputs().len()
+    );
+    for utxo in tx_utxos {
+        assert!(!utxo_pool.contains(&utxo));
+    }
+    utxo_pool.undo_t(&tx, &blockchain, blockchain.top());
+    assert_eq!(utxo_pool, utxo_pool_cl);
 }
