@@ -186,7 +186,7 @@ impl Synchronizer {Synchronizer8,129
     pub fn barrier(&self) -> &Arc<Barrier> {barrier13,266
     pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {state17,340
 
-network/mod.rs,896
+network/mod.rs,1062
 pub struct Network {Network21,538
 impl Network {Network27,676
     pub fn with_capacity(n: usize) -> Self {with_capacity28,691
@@ -194,16 +194,23 @@ impl Network {Network27,676
     pub fn random(honest: usize, malicious: usize) -> Self {random41,1032
     pub fn run(&mut self) {run101,3254
     pub fn broadcast(&self, message: Message) {broadcast116,3696
-    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut123,3904
-fn random_graph(vertices: usize) -> Graph {random_graph128,4017
-// impl Drop for Network {Network164,5137
-//     fn drop(&mut self) {drop165,5164
-impl fmt::Debug for Network {Network183,5797
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt184,5827
-pub mod neighbour;neighbour201,6300
-pub mod synchronizer;synchronizer202,6319
-mod test {test205,6355
-    fn test_random_graph() {test_random_graph209,6397
+    pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {consensus123,3904
+    // pub fn shut_down(&mut self) {shut_down156,4954
+    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut161,5085
+fn random_graph(vertices: usize) -> Graph {random_graph166,5198
+// impl Drop for Network {Network202,6318
+//     fn drop(&mut self) {drop203,6345
+impl fmt::Debug for Network {Network221,6978
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt222,7008
+pub mod graph;graph239,7481
+pub mod neighbour;neighbour240,7496
+pub mod synchronizer;synchronizer241,7515
+mod test {test244,7551
+    fn test_random_graph() {test_random_graph248,7593
+
+network/graph.rs,172
+pub fn random_graph(nodes: usize) -> UnGraph<u32, ()> {random_graph7,138
+pub fn random_connected_graph(nodes: usize) -> UnGraph<u32, ()> {random_connected_graph39,1114
 
 constants.rs,862
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];GENESIS_BLOCK_HASH_PREV_BLOCK1,0
@@ -250,7 +257,7 @@ impl Miner {Miner8,120
     pub fn discard_block(&mut self) {discard_block38,997
 
 main.rs,24
-fn main() {main20,518
+fn main() {main19,438
 
 transaction/mod.rs,1369
 pub struct Transaction {Transaction20,548

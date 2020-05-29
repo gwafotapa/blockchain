@@ -120,6 +120,44 @@ impl Network {
         }
     }
 
+    pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {
+        let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
+        for node in &self.nodes {
+            let node = node.as_ref().unwrap();
+            // let mut component = None;
+            // let mut cc_iter_mut = cc.iter_mut();
+            // while let Some(c) = cc_iter_mut.next() {
+            //     if node.blockchain() == c[0].blockchain() {
+            //         component = Some(c);
+            //         break;
+            //     }
+            // }
+            // if let Some(c) = component {
+            //     c.push(&node);
+            // } else {
+            //     cc.push(vec![&node]);
+            // }
+            if let Some(c) = cc
+                .iter_mut()
+                .find(|c| c[0].blockchain() == node.blockchain())
+            {
+                c.push(&node);
+            } else {
+                cc.push(vec![&node]);
+            }
+        }
+        if cc.len() == 1 {
+            Ok(())
+        } else {
+            Err(cc)
+        }
+    }
+
+    // pub fn shut_down(&mut self) {
+    //     while let Some(thread) = self.threads.pop() {
+    //         self.nodes.
+    // }
+
     pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {
         self.threads.as_mut()
     }
@@ -198,6 +236,7 @@ impl fmt::Debug for Network {
     }
 }
 
+pub mod graph;
 pub mod neighbour;
 pub mod synchronizer;
 
