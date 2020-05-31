@@ -1,9 +1,8 @@
 /* TODO:
+ * - ensure the network is a connected space (graph trait ?)
  * - clean and refactor
  * - deal with all the TODOs
  * - remove commented code
- * - ensure the network is a connected space (graph trait ?)
- * - make a test returning network connected components
  * - write/complete tests
  * - add enemy nodes
  * - pub uses

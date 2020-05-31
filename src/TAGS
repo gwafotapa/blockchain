@@ -186,33 +186,33 @@ impl Synchronizer {Synchronizer8,129
     pub fn barrier(&self) -> &Arc<Barrier> {barrier13,266
     pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {state17,340
 
-network/mod.rs,1604
-pub struct Network {Network21,538
-impl Network {Network27,676
-    pub fn with_capacity(n: usize) -> Self {with_capacity28,691
-    pub fn add(&mut self, node: Node) {add36,898
-    pub fn random(honest: usize, malicious: usize) -> Self {random41,1032
-    pub fn run(&mut self) {run101,3254
-    pub fn broadcast(&self, message: Message) {broadcast119,3795
-    // pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {consensus126,4003
-    // pub fn consensus<F>(&self, f: F) -> Result<(), Vec<Vec<&Node>>>consensus146,4626
-    // fn blockchain_equality(node1: &Node, node2: &Node) -> bool {blockchain_equality166,5238
-    // fn utxo_pool_equality(node1: &Node, node2: &Node) -> bool {utxo_pool_equality170,5368
-    // pub fn utxo_pool_consensus(&self) -> Result<(), Vec<Vec<&Node>>> {utxo_pool_consensus174,5495
-    pub fn shut_down(&mut self) {shut_down191,6071
-    pub fn nodes(&self) -> &Vec<Option<Node>> {nodes197,6244
-    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut201,6319
-fn random_graph(vertices: usize) -> Graph {random_graph206,6432
-pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>partition242,7552
-// impl Drop for Network {Network257,7941
-//     fn drop(&mut self) {drop258,7968
-impl fmt::Debug for Network {Network276,8601
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt277,8631
-pub mod graph;graph294,9104
-pub mod neighbour;neighbour295,9119
-pub mod synchronizer;synchronizer296,9138
-mod test {test299,9174
-    fn test_random_graph() {test_random_graph303,9216
+network/mod.rs,1644
+pub struct Network {Network22,572
+impl Network {Network28,710
+    pub fn with_capacity(n: usize) -> Self {with_capacity29,725
+    pub fn add(&mut self, node: Node) {add37,932
+    pub fn random(honest: usize, malicious: usize) -> Self {random42,1066
+    pub fn run(&mut self) {run102,3298
+    pub fn broadcast(&self, message: Message) {broadcast120,3839
+    // pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {consensus127,4047
+    // pub fn consensus<F>(&self, f: F) -> Result<(), Vec<Vec<&Node>>>consensus147,4670
+    // fn blockchain_equality(node1: &Node, node2: &Node) -> bool {blockchain_equality167,5282
+    // fn utxo_pool_equality(node1: &Node, node2: &Node) -> bool {utxo_pool_equality171,5412
+    // pub fn utxo_pool_consensus(&self) -> Result<(), Vec<Vec<&Node>>> {utxo_pool_consensus175,5539
+    pub fn shut_down(&mut self) {shut_down192,6115
+    pub fn nodes(&self) -> &Vec<Option<Node>> {nodes198,6288
+    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut202,6363
+fn random_connected_graph(vertices: usize) -> Graph {random_connected_graph207,6476
+pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>partition251,8017
+// impl Drop for Network {Network266,8406
+//     fn drop(&mut self) {drop267,8433
+impl fmt::Debug for Network {Network285,9066
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt286,9096
+pub mod graph;graph304,9599
+pub mod neighbour;neighbour305,9614
+pub mod synchronizer;synchronizer306,9633
+mod test {test309,9669
+    fn test_random_connected_graph() {test_random_connected_graph313,9711
 
 network/graph.rs,172
 pub fn random_graph(nodes: usize) -> UnGraph<u32, ()> {random_graph7,138
@@ -263,7 +263,7 @@ impl Miner {Miner8,120
     pub fn discard_block(&mut self) {discard_block38,997
 
 main.rs,24
-fn main() {main19,438
+fn main() {main18,382
 
 transaction/mod.rs,1369
 pub struct Transaction {Transaction20,548
