@@ -99,8 +99,11 @@ impl Network {
     }
 
     pub fn run(&mut self) {
-        for node in &mut self.nodes {
-            let mut node = node.take().unwrap();
+        // for node in &mut self.nodes {
+        //     let mut node = node.take().unwrap();
+        while let Some(node) = self.nodes.pop() {
+            let mut node = node.unwrap();
+
             let builder = thread::Builder::new().name(node.id().to_string());
             self.threads.push(Some(
                 builder
@@ -120,43 +123,80 @@ impl Network {
         }
     }
 
-    pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {
-        let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
-        for node in &self.nodes {
-            let node = node.as_ref().unwrap();
-            // let mut component = None;
-            // let mut cc_iter_mut = cc.iter_mut();
-            // while let Some(c) = cc_iter_mut.next() {
-            //     if node.blockchain() == c[0].blockchain() {
-            //         component = Some(c);
-            //         break;
-            //     }
-            // }
-            // if let Some(c) = component {
-            //     c.push(&node);
-            // } else {
-            //     cc.push(vec![&node]);
-            // }
-            if let Some(c) = cc
-                .iter_mut()
-                .find(|c| c[0].blockchain() == node.blockchain())
-            {
-                c.push(&node);
-            } else {
-                cc.push(vec![&node]);
-            }
-        }
-        if cc.len() == 1 {
-            Ok(())
-        } else {
-            Err(cc)
+    // pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {
+    //     let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
+    //     for node in &self.nodes {
+    //         let node = node.as_ref().unwrap();
+    //         if let Some(c) = cc
+    //             .iter_mut()
+    //             .find(|c| c[0].blockchain() == node.blockchain())
+    //         {
+    //             c.push(&node);
+    //         } else {
+    //             cc.push(vec![&node]);
+    //         }
+    //     }
+    //     if cc.len() == 1 {
+    //         Ok(())
+    //     } else {
+    //         Err(cc)
+    //     }
+    // }
+
+    // pub fn consensus<F>(&self, f: F) -> Result<(), Vec<Vec<&Node>>>
+    // where
+    //     F: Fn(&Node, &Node) -> bool,
+    // {
+    //     let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
+    //     for node in &self.nodes {
+    //         let node = node.as_ref().unwrap();
+    //         if let Some(c) = cc.iter_mut().find(|c| f(c[0], node)) {
+    //             c.push(&node);
+    //         } else {
+    //             cc.push(vec![&node]);
+    //         }
+    //     }
+    //     if cc.len() == 1 {
+    //         Ok(())
+    //     } else {
+    //         Err(cc)
+    //     }
+    // }
+
+    // fn blockchain_equality(node1: &Node, node2: &Node) -> bool {
+    //     node1.blockchain() == node2.blockchain()
+    // }
+
+    // fn utxo_pool_equality(node1: &Node, node2: &Node) -> bool {
+    //     node1.utxo_pool() == node2.utxo_pool()
+    // }
+
+    // pub fn utxo_pool_consensus(&self) -> Result<(), Vec<Vec<&Node>>> {
+    //     let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
+    //     for node in &self.nodes {
+    //         let node = node.as_ref().unwrap();
+    //         if let Some(c) = cc.iter_mut().find(|c| c[0].utxo_pool() == node.utxo_pool()) {
+    //             c.push(&node);
+    //         } else {
+    //             cc.push(vec![&node]);
+    //         }
+    //     }
+    //     if cc.len() == 1 {
+    //         Ok(())
+    //     } else {
+    //         Err(cc)
+    //     }
+    // }
+
+    pub fn shut_down(&mut self) {
+        while let Some(thread) = self.threads.pop() {
+            self.nodes.push(Some(thread.unwrap().join().unwrap()));
         }
     }
 
-    // pub fn shut_down(&mut self) {
-    //     while let Some(thread) = self.threads.pop() {
-    //         self.nodes.
-    // }
+    pub fn nodes(&self) -> &Vec<Option<Node>> {
+        &self.nodes
+    }
 
     pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {
         self.threads.as_mut()
@@ -197,6 +237,21 @@ fn random_graph(vertices: usize) -> Graph {
         graph.get_mut(&neighbour).unwrap().insert(last);
     }
     graph
+}
+
+pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>
+where
+    F: Fn(&Node, &Node) -> bool,
+{
+    let mut sets: Vec<Vec<&Node>> = vec![]; // consensus components
+    for node in nodes {
+        if let Some(set) = sets.iter_mut().find(|set| f(set[0], node)) {
+            set.push(node);
+        } else {
+            sets.push(vec![node]);
+        }
+    }
+    sets
 }
 
 // impl Drop for Network {

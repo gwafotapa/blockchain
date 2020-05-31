@@ -186,27 +186,33 @@ impl Synchronizer {Synchronizer8,129
     pub fn barrier(&self) -> &Arc<Barrier> {barrier13,266
     pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {state17,340
 
-network/mod.rs,1062
+network/mod.rs,1604
 pub struct Network {Network21,538
 impl Network {Network27,676
     pub fn with_capacity(n: usize) -> Self {with_capacity28,691
     pub fn add(&mut self, node: Node) {add36,898
     pub fn random(honest: usize, malicious: usize) -> Self {random41,1032
     pub fn run(&mut self) {run101,3254
-    pub fn broadcast(&self, message: Message) {broadcast116,3696
-    pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {consensus123,3904
-    // pub fn shut_down(&mut self) {shut_down156,4954
-    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut161,5085
-fn random_graph(vertices: usize) -> Graph {random_graph166,5198
-// impl Drop for Network {Network202,6318
-//     fn drop(&mut self) {drop203,6345
-impl fmt::Debug for Network {Network221,6978
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt222,7008
-pub mod graph;graph239,7481
-pub mod neighbour;neighbour240,7496
-pub mod synchronizer;synchronizer241,7515
-mod test {test244,7551
-    fn test_random_graph() {test_random_graph248,7593
+    pub fn broadcast(&self, message: Message) {broadcast119,3795
+    // pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {consensus126,4003
+    // pub fn consensus<F>(&self, f: F) -> Result<(), Vec<Vec<&Node>>>consensus146,4626
+    // fn blockchain_equality(node1: &Node, node2: &Node) -> bool {blockchain_equality166,5238
+    // fn utxo_pool_equality(node1: &Node, node2: &Node) -> bool {utxo_pool_equality170,5368
+    // pub fn utxo_pool_consensus(&self) -> Result<(), Vec<Vec<&Node>>> {utxo_pool_consensus174,5495
+    pub fn shut_down(&mut self) {shut_down191,6071
+    pub fn nodes(&self) -> &Vec<Option<Node>> {nodes197,6244
+    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut201,6319
+fn random_graph(vertices: usize) -> Graph {random_graph206,6432
+pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>partition242,7552
+// impl Drop for Network {Network257,7941
+//     fn drop(&mut self) {drop258,7968
+impl fmt::Debug for Network {Network276,8601
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt277,8631
+pub mod graph;graph294,9104
+pub mod neighbour;neighbour295,9119
+pub mod synchronizer;synchronizer296,9138
+mod test {test299,9174
+    fn test_random_graph() {test_random_graph303,9216
 
 network/graph.rs,172
 pub fn random_graph(nodes: usize) -> UnGraph<u32, ()> {random_graph7,138
