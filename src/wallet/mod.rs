@@ -6,7 +6,7 @@ use std::fmt;
 
 use crate::block::Block;
 use crate::blockchain::Blockchain;
-use crate::constants::{SPEND_PROBA, UTXO_HASH_INIT};
+use crate::constants::{DOUBLE_SPEND_PROBA, SPEND_PROBA, UTXO_HASH_INIT};
 use crate::error::wallet::WalletError;
 use crate::transaction::{Transaction, TransactionInput, TransactionOutput};
 use crate::utxo::{Utxo, UtxoData, UtxoId};
@@ -102,7 +102,7 @@ impl Wallet {
             return None;
         }
         let mut rng = rand::thread_rng();
-        match rng.gen_bool(SPEND_PROBA) {
+        match rng.gen_bool(DOUBLE_SPEND_PROBA) {
             false => None,
             true => {
                 let utxo = self.utxos().iter().choose(&mut rng).unwrap();

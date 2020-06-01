@@ -1,11 +1,11 @@
 /* TODO:
- * - ensure the network is a connected space (graph trait ?)
- * - clean and refactor
+ * - implement Display trait for Node and use it in consensus tests
+ * - refactor consensus tests
  * - deal with all the TODOs
  * - remove commented code
- * - write/complete tests
- * - add enemy nodes
- * - pub uses
+ * - clean and refactor
+ * - write more tests ?
+ * - pub uses ?
  */
 use log::info;
 use std::thread;

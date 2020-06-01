@@ -6,6 +6,7 @@ use std::time::Duration;
 use blockchain::constants::NODES;
 use blockchain::network::{self, Network};
 use blockchain::node::message::Message;
+use blockchain::node::Behaviour;
 use blockchain::node::Node;
 use blockchain::utxo::Utxo;
 
@@ -13,14 +14,14 @@ pub mod common;
 
 #[test]
 // #[ignore]
-fn consensus() {
+fn consensus_after_double_spend() {
     common::log_setup();
 
-    let mut network = Network::random(NODES, 0);
+    let mut network = Network::random(NODES, 1);
     info!("Network:\n{:?}", network);
 
     network.run();
-    thread::sleep(Duration::from_secs(5));
+    thread::sleep(Duration::from_secs(1));
 
     info!("Network shutting down");
     network.broadcast(Message::ShutDown);
@@ -30,6 +31,7 @@ fn consensus() {
         .nodes()
         .iter()
         .map(|o| o.as_ref().unwrap())
+        .filter(|n| n.integrity() == Behaviour::Honest)
         .collect();
 
     for i in 0..nodes.len() {
@@ -44,10 +46,8 @@ fn consensus() {
         );
     }
 
-    let mut wallet_utxos_count = 0;
     for i in 0..nodes.len() {
         let wallet: HashSet<Utxo> = nodes[i].wallet().utxos().iter().copied().collect();
-        wallet_utxos_count += wallet.len();
         let utxo_pool: HashSet<Utxo> = nodes[i]
             .utxo_pool()
             .utxos()
@@ -67,7 +67,6 @@ fn consensus() {
     if sets.len() == 1 {
         let sets = network::partition(&nodes, |n1, n2| n1.utxo_pool() == n2.utxo_pool());
         assert!(sets.len() == 1);
-        assert_eq!(nodes[0].utxo_pool().utxos().len(), wallet_utxos_count);
     } else {
         for set in &sets {
             let subsets = network::partition(set, |n1, n2| n1.utxo_pool() == n2.utxo_pool());

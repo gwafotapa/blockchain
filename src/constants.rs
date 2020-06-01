@@ -1,3 +1,4 @@
+pub const DOUBLE_SPEND_PROBA: f64 = 1.0 / 1.0;
 pub const GENESIS_BLOCK_HASH_PREV_BLOCK: [u8; 32] = [0u8; 32];
 pub const HEADER_BYTES: usize = 32 + 32 + 4 + 4;
 pub const NODES: usize = 4;

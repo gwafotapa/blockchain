@@ -288,17 +288,25 @@ impl Node {
         if let Some((tx1, tx2)) = self.wallet.double_spend() {
             if self.transaction_pool.compatibility_of(&tx1).is_ok()
                 && self.transaction_pool.compatibility_of(&tx2).is_ok()
+                && self.blockchain.check_txid_of(&tx1).is_ok()
+                && self.blockchain.check_txid_of(&tx2).is_ok()
             {
+                let neighbour1 = neighbours.next().unwrap();
+                let neighbour2 = neighbours.next().unwrap();
                 warn!(
-                    "Node #{} --- Double spend --- New transactions:\n{}\n{}\n",
+                    "Node #{} --- Double spend --- New transactions:\n\
+                     Sends to: {}\n{}\n\
+                     Sends to: {}\n{}\n",
                     self.id(),
+                    neighbour1.id(),
                     tx1,
+                    neighbour2.id(),
                     tx2
                 );
                 let msg1 = Message::Transaction(Cow::Borrowed(&tx1));
                 let msg2 = Message::Transaction(Cow::Borrowed(&tx2));
-                self.send(&msg1, neighbours.next().unwrap());
-                self.send(&msg2, neighbours.next().unwrap());
+                self.send(&msg1, neighbour1);
+                self.send(&msg2, neighbour2);
                 self.transaction_pool.add(tx1).unwrap();
             }
         }
@@ -343,6 +351,10 @@ impl Node {
     pub fn blockchain(&self) -> &Blockchain {
         &self.blockchain
     }
+
+    pub fn integrity(&self) -> Behaviour {
+        self.integrity
+    }
 }
 
 impl Eq for Node {}
@@ -361,7 +373,7 @@ impl Hash for Node {
 
 pub mod message;
 
-#[derive(Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Behaviour {
     Honest,
     Malicious,
