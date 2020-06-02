@@ -1,5 +1,5 @@
 /* TODO:
- * - implement Display trait for Node and use it in consensus tests
+ * - implement trait Into<HashSet<Utxo>> for type UtxoPool
  * - refactor consensus tests
  * - deal with all the TODOs
  * - remove commented code

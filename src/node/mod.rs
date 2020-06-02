@@ -8,6 +8,7 @@ use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Arc;
 
+use self::behaviour::Behaviour;
 use self::message::Message;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
@@ -394,23 +395,5 @@ impl fmt::Display for Node {
     }
 }
 
+pub mod behaviour;
 pub mod message;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Behaviour {
-    Honest,
-    Malicious,
-}
-
-impl fmt::Display for Behaviour {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Behaviour::Honest => "honest",
-                Behaviour::Malicious => "malicious",
-            }
-        )
-    }
-}

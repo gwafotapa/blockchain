@@ -9,8 +9,9 @@ use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc, Barrier, Mutex};
 use std::thread::{self, JoinHandle};
 
+use crate::node::behaviour::Behaviour;
 use crate::node::message::Message;
-use crate::node::{Behaviour, Node};
+use crate::node::Node;
 
 pub use self::neighbour::Neighbour;
 pub use self::synchronizer::Synchronizer;
