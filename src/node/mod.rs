@@ -2,6 +2,7 @@ use log::{info, warn};
 use rand::seq::SliceRandom;
 use secp256k1::{PublicKey, SecretKey};
 use std::borrow::Cow;
+use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
 use std::sync::mpsc::{Receiver, Sender};
@@ -371,10 +372,45 @@ impl Hash for Node {
     }
 }
 
+impl fmt::Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "******* Node {} *******\n\
+             \n\
+             Public key: {}\n\
+             Integrity: {}\n\
+             \n\
+             {}\n{}\n{}\n{}\n\
+             **************\n",
+            self.id(),
+            self.public_key(),
+            self.integrity(),
+            self.blockchain(),
+            self.transaction_pool(),
+            self.utxo_pool(),
+            self.wallet()
+        )
+    }
+}
+
 pub mod message;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Behaviour {
     Honest,
     Malicious,
+}
+
+impl fmt::Display for Behaviour {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Behaviour::Honest => "honest",
+                Behaviour::Malicious => "malicious",
+            }
+        )
+    }
 }

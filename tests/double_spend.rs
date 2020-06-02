@@ -35,15 +35,7 @@ fn consensus_after_double_spend() {
         .collect();
 
     for i in 0..nodes.len() {
-        info!(
-            "Node {} shut down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
-            nodes[i].id(),
-            nodes[i].public_key(),
-            nodes[i].blockchain(),
-            nodes[i].transaction_pool(),
-            nodes[i].utxo_pool(),
-            nodes[i].wallet()
-        );
+        info!("{}", nodes[i]);
     }
 
     for i in 0..nodes.len() {

@@ -32,39 +32,43 @@ impl fmt::Display for UtxoPool {UtxoPool227,7573
 impl From<HashSet<Utxo>> for UtxoPool {From244,8083
     fn from(utxos: HashSet<Utxo>) -> Self {from245,8123
 
-src/node/mod.rs,1917
-pub struct Node {Node21,554
-impl Node {Node37,936
-    pub fn new(new38,948
-    pub fn run(&mut self) {run74,1968
-    pub fn process_t(&mut self, transaction: Transaction) {process_t124,4151
-    pub fn verify(&self, transaction: &Transaction) -> Result<(), Error> {verify138,4822
-    pub fn process_b(process_b147,5194
-    pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {validate167,5924
-    pub fn recalculate(&mut self, blocks_to_undo: Vec<Block>, blocks_to_process: Vec<Block>) {recalculate184,6742
-    // pub fn process_b(&mut self, block: Block) {process_b194,7260
-    pub fn propagate(&self, message: Message) {propagate236,9631
-    pub fn send(&self, message: &Message, neighbour: &Neighbour) {send243,9863
-    pub fn shut_down(&mut self) {shut_down248,10050
-    pub fn double_spend(&mut self) {double_spend282,11405
-    pub fn id(&self) -> usize {id315,12760
-    pub fn public_key(&self) -> &PublicKey {public_key319,12815
-    pub fn secret_key(&self) -> &SecretKey {secret_key323,12892
-    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender327,12969
-    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener331,13049
-    pub fn neighbours(&self) -> &Vec<Neighbour> {neighbours335,13135
-    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool339,13217
-    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool343,13291
-    pub fn wallet(&self) -> &Wallet {wallet347,13386
-    pub fn blockchain(&self) -> &Blockchain {blockchain351,13452
-    pub fn integrity(&self) -> Behaviour {integrity355,13530
-impl Eq for Node {}Node360,13605
-impl PartialEq for Node {Node362,13626
-    fn eq(&self, other: &Node) -> bool {eq363,13652
-impl Hash for Node {Node368,13746
-    fn hash<H: Hasher>(&self, state: &mut H) {hash369,13767
-pub mod message;message374,13860
-pub enum Behaviour {Behaviour377,13923
+src/node/mod.rs,2161
+pub struct Node {Node22,568
+impl Node {Node38,950
+    pub fn new(new39,962
+    pub fn run(&mut self) {run75,1982
+    pub fn process_t(&mut self, transaction: Transaction) {process_t125,4165
+    pub fn verify(&self, transaction: &Transaction) -> Result<(), Error> {verify139,4836
+    pub fn process_b(process_b148,5208
+    pub fn validate(&mut self, block: &Block) -> Result<(Vec<Block>, Vec<Block>), Error> {validate168,5938
+    pub fn recalculate(&mut self, blocks_to_undo: Vec<Block>, blocks_to_process: Vec<Block>) {recalculate185,6756
+    // pub fn process_b(&mut self, block: Block) {process_b195,7274
+    pub fn propagate(&self, message: Message) {propagate237,9645
+    pub fn send(&self, message: &Message, neighbour: &Neighbour) {send244,9877
+    pub fn shut_down(&mut self) {shut_down249,10064
+    pub fn double_spend(&mut self) {double_spend283,11419
+    pub fn id(&self) -> usize {id316,12774
+    pub fn public_key(&self) -> &PublicKey {public_key320,12829
+    pub fn secret_key(&self) -> &SecretKey {secret_key324,12906
+    pub fn sender(&self) -> &Sender<Arc<Vec<u8>>> {sender328,12983
+    pub fn listener(&self) -> &Receiver<Arc<Vec<u8>>> {listener332,13063
+    pub fn neighbours(&self) -> &Vec<Neighbour> {neighbours336,13149
+    pub fn utxo_pool(&self) -> &UtxoPool {utxo_pool340,13231
+    pub fn transaction_pool(&self) -> &TransactionPool {transaction_pool344,13305
+    pub fn wallet(&self) -> &Wallet {wallet348,13400
+    pub fn blockchain(&self) -> &Blockchain {blockchain352,13466
+    pub fn integrity(&self) -> Behaviour {integrity356,13544
+impl Eq for Node {}Node361,13619
+impl PartialEq for Node {Node363,13640
+    fn eq(&self, other: &Node) -> bool {eq364,13666
+impl Hash for Node {Node369,13760
+    fn hash<H: Hasher>(&self, state: &mut H) {hash370,13781
+impl fmt::Display for Node {Node375,13874
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt376,13903
+pub mod message;message397,14418
+pub enum Behaviour {Behaviour400,14481
+impl fmt::Display for Behaviour {Behaviour405,14532
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt406,14566
 
 src/node/message.rs,346
 const SHUT_DOWN: &[u8] = b"Shut down";SHUT_DOWN6,86
@@ -465,6 +469,39 @@ impl fmt::Display for Utxo {Utxo60,967
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt61,996
 pub mod data;data73,1299
 pub mod id;id74,1313
+
+target/debug/build/typenum-574c0e2f2632c7fd/out/consts.rs,32
+pub mod consts {consts54,1353
+
+target/debug/build/typenum-574c0e2f2632c7fd/out/op.rs,808
+fn main() {main19,413
+# fn main() {main41,1097
+# fn main() {main52,1256
+# fn main() {main63,1414
+# fn main() {main74,1572
+# fn main() {main85,1731
+# fn main() {main96,1893
+# fn main() {main107,2058
+# fn main() {main118,2218
+# fn main() {main129,2376
+# fn main() {main140,2533
+# fn main() {main151,2691
+# fn main() {main162,2860
+# fn main() {main173,3029
+# fn main() {main184,3198
+# fn main() {main195,3363
+# fn main() {main206,3527
+# fn main() {main217,3699
+# fn main() {main228,3868
+# fn main() {main239,4030
+# fn main() {main250,4194
+# fn main() {main261,4356
+# fn main() {main272,4517
+# fn main() {main283,4685
+# fn main() {main294,4853
+# fn main() {main305,5019
+macro_rules! op {op312,5097
+    macro_rules! __op_internal__ {__op_internal__318,5212
 
 tests/transaction.rs,383
 pub mod common;common6,126
