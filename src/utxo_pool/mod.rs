@@ -248,3 +248,12 @@ impl From<HashSet<Utxo>> for UtxoPool {
         }
     }
 }
+
+impl Into<HashSet<Utxo>> for &UtxoPool {
+    fn into(self) -> HashSet<Utxo> {
+        self.utxos
+            .iter()
+            .map(|(id, data)| Utxo::new(*id, *data))
+            .collect()
+    }
+}

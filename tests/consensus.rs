@@ -34,27 +34,13 @@ fn consensus() {
 
     for i in 0..nodes.len() {
         info!("{}", nodes[i]);
-        // info!(
-        //     "Node {} shut down\nPublic key: {}\n\n{}\n{}\n{}\n{}\n",
-        //     nodes[i].id(),
-        //     nodes[i].public_key(),
-        //     nodes[i].blockchain(),
-        //     nodes[i].transaction_pool(),
-        //     nodes[i].utxo_pool(),
-        //     nodes[i].wallet()
-        // );
     }
 
     let mut wallet_utxos_count = 0;
     for i in 0..nodes.len() {
         let wallet: HashSet<Utxo> = nodes[i].wallet().utxos().iter().copied().collect();
         wallet_utxos_count += wallet.len();
-        let utxo_pool: HashSet<Utxo> = nodes[i]
-            .utxo_pool()
-            .utxos()
-            .iter()
-            .map(|(id, data)| Utxo::new(*id, *data))
-            .collect();
+        let utxo_pool: HashSet<Utxo> = nodes[i].utxo_pool().into();
         assert!(wallet.is_subset(&utxo_pool));
     }
 

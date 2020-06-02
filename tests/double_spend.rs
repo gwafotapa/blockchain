@@ -5,8 +5,8 @@ use std::time::Duration;
 
 use blockchain::constants::NODES;
 use blockchain::network::{self, Network};
+use blockchain::node::behaviour::Behaviour;
 use blockchain::node::message::Message;
-use blockchain::node::Behaviour;
 use blockchain::node::Node;
 use blockchain::utxo::Utxo;
 
@@ -40,12 +40,7 @@ fn consensus_after_double_spend() {
 
     for i in 0..nodes.len() {
         let wallet: HashSet<Utxo> = nodes[i].wallet().utxos().iter().copied().collect();
-        let utxo_pool: HashSet<Utxo> = nodes[i]
-            .utxo_pool()
-            .utxos()
-            .iter()
-            .map(|(id, data)| Utxo::new(*id, *data))
-            .collect();
+        let utxo_pool: HashSet<Utxo> = nodes[i].utxo_pool().into();
         assert!(wallet.is_subset(&utxo_pool));
     }
 

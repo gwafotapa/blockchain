@@ -1,5 +1,5 @@
 
-src/utxo_pool/mod.rs,2366
+src/utxo_pool/mod.rs,2472
 pub struct UtxoPool {UtxoPool15,434
 impl UtxoPool {UtxoPool19,497
     pub fn new() -> Self {new20,513
@@ -31,6 +31,8 @@ impl fmt::Display for UtxoPool {UtxoPool227,7573
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt228,7606
 impl From<HashSet<Utxo>> for UtxoPool {From244,8083
     fn from(utxos: HashSet<Utxo>) -> Self {from245,8123
+impl Into<HashSet<Utxo>> for &UtxoPool {Into252,8274
+    fn into(self) -> HashSet<Utxo> {into253,8315
 
 src/node/behaviour.rs,156
 pub enum Behaviour {Behaviour4,60
@@ -565,5 +567,5 @@ pub fn random_key() -> (PublicKey, SecretKey) {random_key201,6494
 // pub fn random_keys(keys: Option<usize>) -> Vec<(PublicKey, SecretKey)> {random_keys208,6718
 
 tests/double_spend.rs,102
-pub mod common;common13,295
-fn consensus_after_double_spend() {consensus_after_double_spend17,333
+pub mod common;common13,306
+fn consensus_after_double_spend() {consensus_after_double_spend17,344

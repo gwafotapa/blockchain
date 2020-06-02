@@ -1,5 +1,4 @@
 /* TODO:
- * - implement trait Into<HashSet<Utxo>> for type UtxoPool
  * - refactor consensus tests
  * - deal with all the TODOs
  * - remove commented code
