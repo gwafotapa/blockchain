@@ -196,7 +196,7 @@ impl Synchronizer {Synchronizer8,129
     pub fn barrier(&self) -> &Arc<Barrier> {barrier13,266
     pub fn state(&self) -> Arc<Mutex<Vec<bool>>> {state17,340
 
-src/network/mod.rs,1644
+src/network/mod.rs,1801
 pub struct Network {Network23,598
 impl Network {Network29,736
     pub fn with_capacity(n: usize) -> Self {with_capacity30,751
@@ -211,18 +211,20 @@ impl Network {Network29,736
     // pub fn utxo_pool_consensus(&self) -> Result<(), Vec<Vec<&Node>>> {utxo_pool_consensus176,5565
     pub fn shut_down(&mut self) {shut_down193,6141
     pub fn nodes(&self) -> &Vec<Option<Node>> {nodes199,6314
-    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut203,6389
-fn random_connected_graph(vertices: usize) -> Graph {random_connected_graph208,6502
-pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>partition252,8043
-// impl Drop for Network {Network267,8432
-//     fn drop(&mut self) {drop268,8459
-impl fmt::Debug for Network {Network286,9092
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt287,9122
-pub mod graph;graph306,9676
-pub mod neighbour;neighbour307,9691
-pub mod synchronizer;synchronizer308,9710
-mod test {test311,9746
-    fn test_random_connected_graph() {test_random_connected_graph315,9788
+    pub fn nodes_as_ref(&self) -> Vec<&Node> {nodes_as_ref203,6389
+    pub fn honest_nodes_as_ref(&self) -> Vec<&Node> {honest_nodes_as_ref207,6506
+    pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {threads_mut214,6716
+fn random_connected_graph(vertices: usize) -> Graph {random_connected_graph219,6829
+pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>partition263,8370
+// impl Drop for Network {Network278,8759
+//     fn drop(&mut self) {drop279,8786
+impl fmt::Debug for Network {Network297,9419
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt298,9449
+pub mod graph;graph317,10003
+pub mod neighbour;neighbour318,10018
+pub mod synchronizer;synchronizer319,10037
+mod test {test322,10073
+    fn test_random_connected_graph() {test_random_connected_graph326,10115
 
 src/network/graph.rs,172
 pub fn random_graph(nodes: usize) -> UnGraph<u32, ()> {random_graph7,138
@@ -273,9 +275,8 @@ impl Miner {Miner8,120
     pub fn mine_from(&mut self, top: &Block, transaction_pool: &TransactionPool) {mine_from27,619
     pub fn discard_block(&mut self) {discard_block38,997
 
-src/main.rs,92
- * - implement trait Into<HashSet<Utxo>> for type UtxoPoolInto2,9
-fn main() {main18,389
+src/main.rs,24
+fn main() {main17,330
 
 src/transaction/mod.rs,1369
 pub struct Transaction {Transaction20,548
@@ -476,39 +477,6 @@ impl fmt::Display for Utxo {Utxo60,967
 pub mod data;data73,1299
 pub mod id;id74,1313
 
-target/debug/build/typenum-574c0e2f2632c7fd/out/consts.rs,32
-pub mod consts {consts54,1353
-
-target/debug/build/typenum-574c0e2f2632c7fd/out/op.rs,808
-fn main() {main19,413
-# fn main() {main41,1097
-# fn main() {main52,1256
-# fn main() {main63,1414
-# fn main() {main74,1572
-# fn main() {main85,1731
-# fn main() {main96,1893
-# fn main() {main107,2058
-# fn main() {main118,2218
-# fn main() {main129,2376
-# fn main() {main140,2533
-# fn main() {main151,2691
-# fn main() {main162,2860
-# fn main() {main173,3029
-# fn main() {main184,3198
-# fn main() {main195,3363
-# fn main() {main206,3527
-# fn main() {main217,3699
-# fn main() {main228,3868
-# fn main() {main239,4030
-# fn main() {main250,4194
-# fn main() {main261,4356
-# fn main() {main272,4517
-# fn main() {main283,4685
-# fn main() {main294,4853
-# fn main() {main305,5019
-macro_rules! op {op312,5097
-    macro_rules! __op_internal__ {__op_internal__318,5212
-
 tests/transaction.rs,383
 pub mod common;common6,126
 fn transaction_input_ser_deser() {transaction_input_ser_deser9,151
@@ -524,9 +492,10 @@ fn utxo_pool_check_utxos_exist() {utxo_pool_check_utxos_exist37,1184
 fn utxo_pool_authenticate() {utxo_pool_authenticate57,2102
 fn utxo_pool_process_undo_tx() {utxo_pool_process_undo_tx98,3688
 
-tests/consensus.rs,64
-pub mod common;common12,262
-fn consensus() {consensus16,300
+tests/consensus.rs,137
+pub mod common;common11,234
+fn consensus() {consensus15,272
+fn consensus_after_double_spend() {consensus_after_double_spend63,1686
 
 tests/utxo.rs,130
 pub mod common;common3,43
@@ -565,7 +534,3 @@ pub fn random_transaction_with(random_transaction_with122,3744
 pub fn random_utxo_pool(utxos: Option<HashSet<Utxo>>) -> UtxoPool {random_utxo_pool192,6181
 pub fn random_key() -> (PublicKey, SecretKey) {random_key201,6494
 // pub fn random_keys(keys: Option<usize>) -> Vec<(PublicKey, SecretKey)> {random_keys208,6718
-
-tests/double_spend.rs,102
-pub mod common;common13,306
-fn consensus_after_double_spend() {consensus_after_double_spend17,344

@@ -200,6 +200,17 @@ impl Network {
         &self.nodes
     }
 
+    pub fn nodes_as_ref(&self) -> Vec<&Node> {
+        self.nodes.iter().filter_map(|o| o.as_ref()).collect()
+    }
+
+    pub fn honest_nodes_as_ref(&self) -> Vec<&Node> {
+        self.nodes
+            .iter()
+            .filter_map(|o| o.as_ref().filter(|n| n.integrity() == Behaviour::Honest))
+            .collect()
+    }
+
     pub fn threads_mut(&mut self) -> &mut Vec<Option<JoinHandle<Node>>> {
         self.threads.as_mut()
     }
