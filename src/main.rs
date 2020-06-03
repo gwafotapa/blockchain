@@ -1,5 +1,4 @@
 /* TODO:
- * - refactor consensus tests
  * - deal with all the TODOs
  * - remove commented code
  * - clean and refactor

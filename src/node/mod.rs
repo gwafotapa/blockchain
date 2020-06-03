@@ -122,7 +122,6 @@ impl Node {
         }
     }
 
-    // TODO: Should it (and process_b) return a result ?
     pub fn process_t(&mut self, transaction: Transaction) {
         // if self.transaction_pool.compatibility_of(&transaction).is_ok()
         //     && !self.blockchain.contains_tx(transaction.id(), None)
@@ -186,7 +185,6 @@ impl Node {
     pub fn recalculate(&mut self, blocks_to_undo: Vec<Block>, blocks_to_process: Vec<Block>) {
         self.utxo_pool
             .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
-        // TODO: should I simply synchronize the wallet with the utxo pool instead of recalculating it?
         self.wallet
             .recalculate(&blocks_to_undo, &blocks_to_process, &self.blockchain);
         self.transaction_pool
@@ -200,13 +198,6 @@ impl Node {
     //         self.utxo_pool.undo_all(&old_blocks, &self.blockchain);
     //         self.utxo_pool.process_all(&new_blocks);
 
-    //         // TODO: block id checking should be as follows:
-    //         // 1 - check if the block itself is part of the chain and if so reject it
-    //         // 2 - check if the block id is in the chain and add the block if not. If it is:
-    //         //     - if the id is shared by an ancestor, reject the block
-    //         //     - otherwise the id-sharing block is part of another chain, so add the block
-    //         // This calls for an implementation change: equality of blocks is not equality of ids.
-    //         // Is this also true for transactions ? Something else ?
     //         if !self.blockchain.contains(block.id())
     //             && self.utxo_pool.validate(&block).is_ok()
     //             && self.blockchain.check_txids_of(&block).is_ok()

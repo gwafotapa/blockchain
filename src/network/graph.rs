@@ -1,78 +1,66 @@
-use petgraph::algo;
-use petgraph::graph::{NodeIndex, UnGraph};
 use rand::seq::IteratorRandom;
-use rand::seq::SliceRandom;
 use rand::Rng;
+use std::collections::{HashMap, HashSet};
+use std::ops::Index;
 
-pub fn random_graph(nodes: usize) -> UnGraph<u32, ()> {
-    assert!(nodes > 0, "Empty graph");
-    let mut graph = UnGraph::with_capacity(nodes, nodes * (nodes - 1));
-    for node in 0..nodes as u32 {
-        graph.add_node(node);
-    }
-    if nodes == 1 {
-        return graph;
+type Vertex = usize;
+type Neighborhood = HashSet<Vertex>;
+
+#[derive(Debug)]
+pub struct Graph(HashMap<Vertex, Neighborhood>);
+
+impl Graph {
+    pub fn with_capacity(capacity: usize) -> Self {
+        Graph(HashMap::with_capacity(capacity))
     }
 
-    let mut rng = rand::thread_rng();
-    for i in 0..nodes - 1 {
-        let node = NodeIndex::new(i);
-        let neighbors = rng.gen_range(1, nodes);
-        let current_neighbors = graph.neighbors(node).count();
-        if current_neighbors >= neighbors {
-            continue;
+    pub fn size(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn random_connected(vertices: usize) -> Graph {
+        assert!(vertices > 0, "Graph has no vertices");
+        let mut graph = Graph::with_capacity(vertices);
+        for vertex in 0..vertices {
+            graph.insert(vertex, HashSet::new());
+        }
+        if vertices == 1 {
+            return graph;
         }
 
-        for j in (i + 1..nodes).choose_multiple(&mut rng, neighbors - current_neighbors) {
-            graph.add_edge(node, NodeIndex::new(j), ());
+        let mut rng = rand::thread_rng();
+        for vertex in 1..vertices {
+            let neighbours_len = rng.gen_range(1, vertex + 1);
+            let neighbours = (0..vertex).choose_multiple(&mut rng, neighbours_len);
+            for neighbour in neighbours {
+                graph.get_mut(&vertex).unwrap().insert(neighbour);
+                graph.get_mut(&neighbour).unwrap().insert(vertex);
+            }
         }
+        graph
     }
 
-    let last = nodes - 1;
-    if graph.neighbors(NodeIndex::new(last)).next().is_none() {
-        let neighbor = rng.gen_range(0, last);
-        graph.add_edge(NodeIndex::new(last), NodeIndex::new(neighbor), ());
+    pub fn insert(&mut self, k: Vertex, v: Neighborhood) -> Option<Neighborhood> {
+        self.0.insert(k, v)
     }
-    graph
+
+    pub fn get_mut(&mut self, k: &Vertex) -> Option<&mut Neighborhood> {
+        self.0.get_mut(k)
+    }
+
+    pub fn as_ref(&self) -> &HashMap<Vertex, Neighborhood> {
+        &self.0
+    }
+
+    pub fn as_mut(&mut self) -> &mut HashMap<Vertex, Neighborhood> {
+        &mut self.0
+    }
 }
 
-pub fn random_connected_graph(nodes: usize) -> UnGraph<u32, ()> {
-    assert!(nodes > 0, "Empty graph");
-    let mut graph = UnGraph::with_capacity(nodes, nodes * (nodes - 1));
-    for node in 0..nodes as u32 {
-        graph.add_node(node);
-    }
-    if nodes == 1 {
-        return graph;
-    }
+impl Index<Vertex> for Graph {
+    type Output = Neighborhood;
 
-    let mut rng = rand::thread_rng();
-    for i in 0..nodes - 1 {
-        let node = NodeIndex::new(i);
-        let neighbors = rng.gen_range(1, nodes);
-        let current_neighbors = graph.neighbors(node).count();
-        if current_neighbors >= neighbors {
-            continue;
-        }
-
-        for j in (i + 1..nodes).choose_multiple(&mut rng, neighbors - current_neighbors) {
-            graph.add_edge(node, NodeIndex::new(j), ());
-        }
+    fn index(&self, index: Vertex) -> &Self::Output {
+        &self.0[&index]
     }
-
-    let last = nodes - 1;
-    if graph.neighbors(NodeIndex::new(last)).next().is_none() {
-        let neighbor = rng.gen_range(0, last);
-        graph.add_edge(NodeIndex::new(last), NodeIndex::new(neighbor), ());
-    }
-
-    let mut cc = algo::tarjan_scc(&graph);
-    while cc.len() != 1 {
-        let cc1 = cc.pop().unwrap();
-        let cc2 = cc[0..(cc.len() - 1)].choose(&mut rng).unwrap();
-        let n1 = cc1.choose(&mut rng).unwrap();
-        let n2 = cc2.choose(&mut rng).unwrap();
-        graph.add_edge(*n1, *n2, ());
-    }
-    graph
 }

@@ -1,24 +1,17 @@
-use rand::seq::IteratorRandom;
-// use rand::seq::SliceRandom;
-use rand::Rng;
 use rand_core::RngCore;
 use secp256k1::{PublicKey, Secp256k1, SecretKey};
-use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::sync::mpsc::Sender;
 use std::sync::{mpsc, Arc, Barrier, Mutex};
 use std::thread::{self, JoinHandle};
 
+use self::graph::Graph;
 use crate::node::behaviour::Behaviour;
 use crate::node::message::Message;
 use crate::node::Node;
 
 pub use self::neighbour::Neighbour;
 pub use self::synchronizer::Synchronizer;
-
-type Vertex = usize;
-type Neighborhood = HashSet<Vertex>;
-type Graph = HashMap<Vertex, Neighborhood>;
 
 pub struct Network {
     nodes: Vec<Option<Node>>,
@@ -63,7 +56,7 @@ impl Network {
             listeners.push(listener);
         }
 
-        let graph = random_connected_graph(nodes);
+        let graph = Graph::random_connected(nodes);
         let mut network = Network::with_capacity(nodes);
         let barrier = Arc::new(Barrier::new(nodes));
         let state = Arc::new(Mutex::new(vec![true; nodes]));
@@ -72,7 +65,7 @@ impl Network {
             let secret_key = secret_keys[id];
             let sender = senders[id].clone();
             let listener = listeners.pop().unwrap();
-            let neighbours = graph[&id]
+            let neighbours = graph[id]
                 .iter()
                 .map(|&x| Neighbour::new(x, public_keys[x], senders[x].clone()))
                 .collect();
@@ -216,50 +209,6 @@ impl Network {
     }
 }
 
-fn random_connected_graph(vertices: usize) -> Graph {
-    assert!(vertices > 0, "Graph has no vertices");
-    let mut graph = Graph::with_capacity(vertices);
-    for vertex in 0..vertices {
-        graph.insert(vertex, HashSet::new());
-    }
-    if vertices == 1 {
-        return graph;
-    }
-
-    let mut rng = rand::thread_rng();
-    // let candidates: Vec<_> = (0..vertices).collect();
-    // for vertex in 0..vertices - 1 {
-    //     let neighbours = rng.gen_range(1, vertices + 1);
-    //     let current_neighbours = graph[&vertex].len();
-    //     if current_neighbours >= neighbours {
-    //         continue;
-    //     }
-
-    //     for neighbour in
-    //         candidates[vertex + 1..].choose_multiple(&mut rng, neighbours - current_neighbours)
-    //     {
-    //         graph.get_mut(&vertex).unwrap().insert(*neighbour);
-    //         graph.get_mut(neighbour).unwrap().insert(vertex);
-    //     }
-    // }
-
-    // let last = vertices - 1;
-    // if graph[&last].is_empty() {
-    //     let neighbour = rng.gen_range(0, last);
-    //     graph.get_mut(&last).unwrap().insert(neighbour);
-    //     graph.get_mut(&neighbour).unwrap().insert(last);
-    // }
-    for vertex in 1..vertices {
-        let neighbours_len = rng.gen_range(1, vertex + 1);
-        let neighbours = (0..vertex).choose_multiple(&mut rng, neighbours_len);
-        for neighbour in neighbours {
-            graph.get_mut(&vertex).unwrap().insert(neighbour);
-            graph.get_mut(&neighbour).unwrap().insert(vertex);
-        }
-    }
-    graph
-}
-
 pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>
 where
     F: Fn(&Node, &Node) -> bool,
@@ -313,7 +262,6 @@ impl fmt::Debug for Network {
     }
 }
 
-// TODO: remove this module ?
 pub mod graph;
 pub mod neighbour;
 pub mod synchronizer;
@@ -325,13 +273,13 @@ mod test {
     #[test]
     fn test_random_connected_graph() {
         let vertices = 10;
-        let graph = random_connected_graph(vertices);
+        let graph = Graph::random_connected(vertices);
         println!("{:?}", graph);
-        assert_eq!(graph.len(), vertices);
-        for (vertex, neighborhood) in &graph {
+        assert_eq!(graph.size(), vertices);
+        for (vertex, neighborhood) in graph.as_ref() {
             assert!(!neighborhood.is_empty());
             assert!(!neighborhood.contains(vertex));
-            for neighbour in neighborhood {
+            for &neighbour in neighborhood {
                 assert!(graph[neighbour].contains(vertex));
             }
         }
