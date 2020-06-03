@@ -23,9 +23,6 @@ pub struct Transaction {
     outputs: Vec<TransactionOutput>,
 }
 
-// TODO: Check transaction has at least 1 input and 1 output ? (and add a unitary test)
-// Also check the sum of the inputs amount equals the sum of the outputs amount.
-// And that all inputs share a common public key.
 impl Transaction {
     pub fn new(inputs: Vec<TransactionInput>, outputs: Vec<TransactionOutput>) -> Self {
         let mut hasher = Sha256::new();
@@ -119,6 +116,16 @@ impl Transaction {
             }
         }
         false
+    }
+
+    pub fn has_inputs_and_outputs(&self) -> Result<(), TransactionError> {
+        if self.inputs.is_empty() {
+            Err(TransactionError::NoInputs)
+        } else if self.outputs.is_empty() {
+            Err(TransactionError::NoOutputs)
+        } else {
+            Ok(())
+        }
     }
 
     pub fn check_double_spending(&self) -> Result<(), TransactionError> {

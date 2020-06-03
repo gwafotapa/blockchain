@@ -137,11 +137,13 @@ impl Node {
     }
 
     pub fn verify(&self, transaction: &Transaction) -> Result<(), Error> {
+        transaction.has_inputs_and_outputs()?;
+        transaction.check_double_spending()?;
         self.transaction_pool.compatibility_of(&transaction)?;
         self.blockchain.check_txid_of(transaction)?;
         self.utxo_pool.check_utxos_exist_for(&transaction)?;
+        self.utxo_pool.check_balance_of(transaction)?;
         self.utxo_pool.authenticate(&transaction)?;
-        transaction.check_double_spending()?;
         Ok(())
     }
 

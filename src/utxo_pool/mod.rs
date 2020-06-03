@@ -6,6 +6,7 @@ use std::fmt;
 use crate::block::Block;
 use crate::blockchain::Blockchain;
 use crate::constants::{UTXO_AMOUNT_INIT, UTXO_HASH_INIT};
+use crate::error::transaction::TransactionError;
 use crate::error::utxo_pool::UtxoPoolError;
 use crate::transaction::Transaction;
 use crate::utxo::{Utxo, UtxoData, UtxoId};
@@ -160,6 +161,25 @@ impl UtxoPool {
                 .ok_or(UtxoPoolError::TransactionHasUnknownUtxo)?;
         }
         Ok(())
+    }
+
+    /// Checks that inputs total amount matches outputs total amount.
+    ///
+    /// # Panics
+    ///
+    /// Panics if an input has unknown utxo.
+    pub fn check_balance_of(&self, transaction: &Transaction) -> Result<(), TransactionError> {
+        let inputs_sum: u32 = transaction
+            .inputs()
+            .iter()
+            .map(|i| self.utxos[i.utxo_id()].amount())
+            .sum();
+        let outputs_sum = transaction.outputs().iter().map(|o| o.amount()).sum();
+        if inputs_sum == outputs_sum {
+            Ok(())
+        } else {
+            Err(TransactionError::WrongBalance)
+        }
     }
 
     // pub fn check_double_spending(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
