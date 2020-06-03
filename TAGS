@@ -154,7 +154,7 @@ impl fmt::Display for BlockError {BlockError11,153
 impl error::Error for BlockError {BlockError27,716
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {source28,751
 
-src/blockchain/mod.rs,1939
+src/blockchain/mod.rs,1936
 pub struct Blockchain {Blockchain14,363
 impl Blockchain {Blockchain20,499
     pub fn new(initial_utxos: HashMap<UtxoId, UtxoData>) -> Self {new21,517
@@ -163,24 +163,25 @@ impl Blockchain {Blockchain20,499
     fn range_of_blocks<'a>(&'a self, mut child: &'a Block, parent: &'a Block) -> Vec<Block> {range_of_blocks59,1961
     pub fn contains(&self, block_id: BlockHash) -> bool {contains68,2274
     pub fn check_id_of(&self, block: &Block) -> Result<(), BlockchainError> {check_id_of74,2436
-    pub fn contains_tx(&self, txid: &TransactionId, top: Option<&Block>) -> bool {contains_tx82,2651
-    pub fn check_txid_of(&self, transaction: &Transaction) -> Result<(), BlockchainError> {check_txid_of95,3042
-    pub fn get_parent_of(&self, block: &Block) -> Option<&Block> {get_parent_of103,3294
-    pub fn parent_of(&self, block: &Block) -> Result<&Block, BlockchainError> {parent_of107,3416
-    pub fn common_parent<'a>(common_parent112,3586
-    pub fn get_utxo<'a>(&'a self, utxo_id: &UtxoId, mut block: &'a Block) -> Utxo {get_utxo138,4490
-    pub fn check_txids_of(&self, block: &Block) -> Result<(), BlockchainError> {check_txids_of151,4949
-    pub fn top(&self) -> &Block {top160,5270
-    pub fn height(&self) -> usize {height164,5347
-    pub fn len(&self) -> usize {len168,5418
-    pub fn chain(&self) -> &HashMap<BlockHash, Block> {chain172,5484
-    pub fn top_hash(&self) -> &BlockHash {top_hash176,5567
-    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos180,5640
-impl fmt::Display for Blockchain {Blockchain185,5741
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt186,5776
-impl Eq for Blockchain {}Blockchain208,6399
-impl PartialEq for Blockchain {Blockchain210,6426
-    fn eq(&self, other: &Self) -> bool {eq211,6458
+    pub fn contains_tx(contains_tx82,2651
+    pub fn check_txid_of(&self, transaction: &Transaction) -> Result<(), BlockchainError> {check_txid_of101,3161
+    pub fn get_parent_of(&self, block: &Block) -> Option<&Block> {get_parent_of109,3419
+    pub fn parent_of(&self, block: &Block) -> Result<&Block, BlockchainError> {parent_of113,3541
+    pub fn common_parent<'a>(common_parent118,3711
+    pub fn get_utxo<'a>(&'a self, utxo_id: &UtxoId, mut block: &'a Block) -> Utxo {get_utxo144,4615
+    pub fn check_txids_of(&self, block: &Block) -> Result<(), BlockchainError> {check_txids_of157,5074
+    pub fn top(&self) -> &Block {top166,5401
+    pub fn genesis(&self) -> &Block {genesis170,5478
+    pub fn height(&self) -> usize {height178,5682
+    pub fn len(&self) -> usize {len182,5753
+    pub fn chain(&self) -> &HashMap<BlockHash, Block> {chain186,5819
+    pub fn top_hash(&self) -> &BlockHash {top_hash190,5902
+    pub fn initial_utxos(&self) -> &HashMap<UtxoId, UtxoData> {initial_utxos194,5975
+impl fmt::Display for Blockchain {Blockchain199,6076
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt200,6111
+impl Eq for Blockchain {}Blockchain222,6734
+impl PartialEq for Blockchain {Blockchain224,6761
+    fn eq(&self, other: &Self) -> bool {eq225,6793
 
 src/network/neighbour.rs,343
 pub struct Neighbour {Neighbour5,76
@@ -402,28 +403,26 @@ impl fmt::Display for Block {Block187,5041
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt188,5071
 pub mod blockheader;blockheader203,5505
 
-src/transaction_pool/mod.rs,1473
+src/transaction_pool/mod.rs,1280
 pub struct TransactionPool {TransactionPool13,319
 impl TransactionPool {TransactionPool17,391
     pub fn new() -> Self {new18,414
     pub fn size(&self) -> usize {size24,515
     pub fn add(&mut self, transaction: Transaction) -> Result<(), TransactionPoolError> {add28,588
     pub fn remove(&mut self, transaction: &Transaction) -> Result<(), TransactionPoolError> {remove36,838
-    pub fn compatibility_of(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {compatibility_of45,1193
-    pub fn select(&self) -> Option<Vec<Transaction>> {select58,1703
-    pub fn process(&mut self, block: &Block) {process79,2479
-    pub fn process_all(&mut self, blocks: &[Block]) {process_all89,2812
-    // pub fn undo(&mut self, block: &Block) {undo97,2977
-    // pub fn undo_all(&mut self, blocks: &[Block]) {undo_all103,3155
-    pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {synchronize_with111,3475
-    pub fn undo_all(&mut self, blocks: Vec<Block>) {undo_all117,3720
-    pub fn recalculate(recalculate125,3950
-    pub fn transactions(&self) -> &HashSet<Transaction> {transactions135,4200
-impl fmt::Display for TransactionPool {TransactionPool140,4294
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt141,4334
-impl Eq for TransactionPool {}TransactionPool150,4603
-impl PartialEq for TransactionPool {TransactionPool152,4635
-    fn eq(&self, other: &Self) -> bool {eq153,4672
+    pub fn compatibility_of(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {compatibility_of44,1094
+    pub fn select(&self) -> Option<Vec<Transaction>> {select57,1604
+    pub fn process(&mut self, block: &Block) {process72,2060
+    pub fn process_all(&mut self, blocks: &[Block]) {process_all79,2281
+    pub fn synchronize_with(synchronize_with87,2579
+    pub fn undo_all(&mut self, blocks: Vec<Block>) {undo_all99,2919
+    pub fn recalculate(recalculate107,3149
+    pub fn transactions(&self) -> &HashSet<Transaction> {transactions121,3545
+impl fmt::Display for TransactionPool {TransactionPool126,3639
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {fmt127,3679
+impl Eq for TransactionPool {}TransactionPool136,3948
+impl PartialEq for TransactionPool {TransactionPool138,3980
+    fn eq(&self, other: &Self) -> bool {eq139,4017
 
 src/lib.rs,392
 pub mod block;block5,90

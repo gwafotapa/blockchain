@@ -79,13 +79,19 @@ impl Blockchain {
         }
     }
 
-    pub fn contains_tx(&self, txid: &TransactionId, top: Option<&Block>) -> bool {
-        let mut block = top.unwrap_or_else(|| self.top());
+    pub fn contains_tx(
+        &self,
+        txid: &TransactionId,
+        start: Option<&Block>,
+        end: Option<&Block>,
+    ) -> bool {
+        let start = start.unwrap_or_else(|| self.genesis());
+        let mut block = end.unwrap_or_else(|| self.top());
         loop {
             if block.contains(txid) {
                 return true;
             }
-            if block.is_genesis() {
+            if block == start {
                 return false;
             }
             block = self.get_parent_of(block).unwrap();
@@ -93,7 +99,7 @@ impl Blockchain {
     }
 
     pub fn check_txid_of(&self, transaction: &Transaction) -> Result<(), BlockchainError> {
-        if self.contains_tx(transaction.id(), None) {
+        if self.contains_tx(transaction.id(), None, None) {
             Err(BlockchainError::KnownTransactionId)
         } else {
             Ok(())
@@ -150,7 +156,7 @@ impl Blockchain {
 
     pub fn check_txids_of(&self, block: &Block) -> Result<(), BlockchainError> {
         for transaction in block.transactions() {
-            if self.contains_tx(transaction.id(), self.get_parent_of(block)) {
+            if self.contains_tx(transaction.id(), None, self.get_parent_of(block)) {
                 return Err(BlockchainError::KnownTransactionId);
             }
         }
@@ -159,6 +165,14 @@ impl Blockchain {
 
     pub fn top(&self) -> &Block {
         &self.chain[&self.top_hash]
+    }
+
+    pub fn genesis(&self) -> &Block {
+        self.chain
+            .iter()
+            .filter_map(|(_, b)| if b.is_genesis() { Some(b) } else { None })
+            .next()
+            .unwrap()
     }
 
     pub fn height(&self) -> usize {

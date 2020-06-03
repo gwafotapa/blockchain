@@ -41,7 +41,6 @@ impl TransactionPool {
         }
     }
 
-    // TODO: seems to always be followed by is.ok(). Should it return a bool instead of a result ?
     pub fn compatibility_of(&self, transaction: &Transaction) -> Result<(), TransactionPoolError> {
         for pool_transaction in self.transactions() {
             for pool_input in pool_transaction.inputs() {
@@ -69,17 +68,8 @@ impl TransactionPool {
         )
     }
 
-    // TODO: redo documentation
-    /// Remove the block transactions from the pool
-    ///
-    /// When a fork occurs, valid received transactions may be deemed invalid if they concern
-    /// the other chain. For this reason, there may be no transaction to remove from the pool
-    /// when adopting the new chain in the event we lose the race. Hence the ok() call instead
-    /// of unwrap().
+    /// Removes the block transactions (that are in the pool) from the pool
     pub fn process(&mut self, block: &Block) {
-        // for transaction in block.transactions() {
-        //     self.remove(transaction).ok();
-        // }
         for block_transaction in block.transactions() {
             self.transactions
                 .retain(|tx| !tx.shares_utxo_with(block_transaction));
@@ -92,25 +82,17 @@ impl TransactionPool {
         }
     }
 
-    // TODO: remove dead code
-
-    // pub fn undo(&mut self, block: &Block) {
-    //     for transaction in block.transactions() {
-    //         self.add(transaction.clone()).unwrap();
-    //     }
-    // }
-
-    // pub fn undo_all(&mut self, blocks: &[Block]) {
-    //     for block in blocks.iter().rev() {
-    //         self.undo(block);
-    //     }
-    // }
-
     // TODO? Technically there's no need to go back to the genesis block.
     // Checking the blockchain back to the common parent (of old and new tops) is enough.
-    pub fn synchronize_with(&mut self, blockchain: &Blockchain, utxo_pool: &UtxoPool) {
+    pub fn synchronize_with(
+        &mut self,
+        blockchain: &Blockchain,
+        utxo_pool: &UtxoPool,
+        fork_block: Option<&Block>,
+    ) {
         self.transactions.retain(|tx| {
-            !blockchain.contains_tx(tx.id(), None) && utxo_pool.check_utxos_exist_for(tx).is_ok()
+            !blockchain.contains_tx(tx.id(), fork_block, None)
+                && utxo_pool.check_utxos_exist_for(tx).is_ok()
         });
     }
 
@@ -128,8 +110,12 @@ impl TransactionPool {
         blockchain: &Blockchain,
         utxo_pool: &UtxoPool,
     ) {
+        let fork_block = blocks_to_undo
+            .get(0)
+            .map(|b| blockchain.get_parent_of(b))
+            .flatten();
         self.undo_all(blocks_to_undo);
-        self.synchronize_with(blockchain, utxo_pool);
+        self.synchronize_with(blockchain, utxo_pool, fork_block);
     }
 
     pub fn transactions(&self) -> &HashSet<Transaction> {
