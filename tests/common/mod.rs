@@ -180,15 +180,6 @@ pub fn random_transaction_with(
     Transaction::sign(input_utxo_ids, outputs, &secret_key)
 }
 
-// pub fn random_utxo_pool(public_keys: Option<Vec<PublicKey>>) -> UtxoPool {
-//     let public_keys = public_keys.unwrap_or_else(|| {
-//         (0..UTXO_POOL_SIZE_MAX)
-//             .map(|_| random_public_key())
-//             .collect()
-//     });
-//     UtxoPool::new(public_keys)
-// }
-
 pub fn random_utxo_pool(utxos: Option<HashSet<Utxo>>) -> UtxoPool {
     let mut rng = rand::thread_rng();
     let utxos = utxos.unwrap_or_else(|| {
@@ -204,7 +195,3 @@ pub fn random_key() -> (PublicKey, SecretKey) {
     let public_key = PublicKey::from_secret_key(&secp, &secret_key);
     (public_key, secret_key)
 }
-
-// pub fn random_keys(keys: Option<usize>) -> Vec<(PublicKey, SecretKey)> {
-//     (0..keys.unwrap_or(KEYS)).map(|_| random_key()).collect()
-// }

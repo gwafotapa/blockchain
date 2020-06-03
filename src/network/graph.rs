@@ -64,3 +64,23 @@ impl Index<Vertex> for Graph {
         &self.0[&index]
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn random_connected_graph() {
+        let vertices = 10;
+        let graph = Graph::random_connected(vertices);
+        println!("{:?}", graph);
+        assert_eq!(graph.size(), vertices);
+        for (vertex, neighborhood) in graph.as_ref() {
+            assert!(!neighborhood.is_empty());
+            assert!(!neighborhood.contains(vertex));
+            for &neighbour in neighborhood {
+                assert!(graph[neighbour].contains(vertex));
+            }
+        }
+    }
+}

@@ -1,15 +1,6 @@
-// TODO: test transaction processing
-// TODO: test transaction undoing
-// TODO: test transaction verification: OK
-// TODO: test block processing
-// TODO: test block undoing
-// TODO: test block validation
-// TODO: make a module directory and split into files (check_transaction.rs, check_block.rs)
-
 use rand::seq::IteratorRandom;
 use rand::seq::SliceRandom;
 use rand::Rng;
-// use secp256k1::{PublicKey, SecretKey};
 use std::collections::HashSet;
 
 use blockchain::blockchain::Blockchain;
@@ -17,7 +8,6 @@ use blockchain::constants::UTXO_HASH_INIT;
 use blockchain::utxo::Utxo;
 use blockchain::utxo_pool::UtxoPool;
 use blockchain::Hash;
-// use blockchain::transaction::{Transaction, TransactionOutput};
 
 pub mod common;
 
@@ -27,7 +17,7 @@ fn utxo_pool_add_remove() {
     let mut utxo_pool = common::random_utxo_pool(None);
     let (utxo_id, utxo_data) = utxo_pool.utxos().iter().choose(&mut rng).unwrap();
     let utxo = Utxo::new(*utxo_id, *utxo_data);
-    assert!(utxo_pool.add(utxo.clone()).is_err()); // TODO: Check error type
+    assert!(utxo_pool.add(utxo.clone()).is_err());
     assert!(utxo_pool.remove(&utxo).is_ok());
     assert!(utxo_pool.remove(&utxo).is_err());
     assert!(utxo_pool.add(utxo).is_ok());

@@ -113,37 +113,6 @@ impl UtxoPool {
         }
     }
 
-    // pub fn verify(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
-    //     let input_utxos: HashSet<_> = transaction.inputs().iter().map(|i| *i.utxo_id()).collect();
-    //     if input_utxos.len() != transaction.inputs().len() {
-    //         return Err(UtxoPoolError::TransactionHasDoubleSpending);
-    //     }
-    //     self.authenticate(transaction)
-    // }
-
-    // pub fn authenticate(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
-    //     let mut message = Vec::new();
-    //     for utxo_id in transaction.inputs().iter().map(|i| i.utxo_id()) {
-    //         message.extend(utxo_id.serialize());
-    //     }
-    //     for output in transaction.outputs() {
-    //         message.extend(output.serialize());
-    //     }
-    //     let mut hasher = Sha256::new();
-    //     hasher.input(message);
-    //     let hash = hasher.result();
-    //     let message = MessageToSign::from_slice(&hash).unwrap();
-    //     let secp = Secp256k1::new();
-    //     for input in transaction.inputs() {
-    //         if let Some(utxo_data) = self.utxos.get(input.utxo_id()) {
-    //             secp.verify(&message, input.sig(), utxo_data.public_key())?;
-    //         } else {
-    //             return Err(UtxoPoolError::TransactionHasUnknownUtxo);
-    //         }
-    //     }
-    //     Ok(())
-    // }
-
     pub fn recalculate(
         &mut self,
         blocks_to_undo: &Vec<Block>,
@@ -181,14 +150,6 @@ impl UtxoPool {
             Err(TransactionError::WrongBalance)
         }
     }
-
-    // pub fn check_double_spending(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
-    //     let input_utxos: HashSet<_> = transaction.inputs().iter().map(|i| *i.utxo_id()).collect();
-    //     if input_utxos.len() != transaction.inputs().len() {
-    //         return Err(UtxoPoolError::TransactionHasDoubleSpending);
-    //     }
-    //     Ok(())
-    // }
 
     pub fn authenticate(&self, transaction: &Transaction) -> Result<(), UtxoPoolError> {
         let mut message = Vec::new();

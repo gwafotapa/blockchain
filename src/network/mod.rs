@@ -94,8 +94,6 @@ impl Network {
     }
 
     pub fn run(&mut self) {
-        // for node in &mut self.nodes {
-        //     let mut node = node.take().unwrap();
         while let Some(node) = self.nodes.pop() {
             let mut node = node.unwrap();
 
@@ -117,71 +115,6 @@ impl Network {
             sender.send(Arc::clone(&bytes)).unwrap();
         }
     }
-
-    // pub fn consensus(&self) -> Result<(), Vec<Vec<&Node>>> {
-    //     let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
-    //     for node in &self.nodes {
-    //         let node = node.as_ref().unwrap();
-    //         if let Some(c) = cc
-    //             .iter_mut()
-    //             .find(|c| c[0].blockchain() == node.blockchain())
-    //         {
-    //             c.push(&node);
-    //         } else {
-    //             cc.push(vec![&node]);
-    //         }
-    //     }
-    //     if cc.len() == 1 {
-    //         Ok(())
-    //     } else {
-    //         Err(cc)
-    //     }
-    // }
-
-    // pub fn consensus<F>(&self, f: F) -> Result<(), Vec<Vec<&Node>>>
-    // where
-    //     F: Fn(&Node, &Node) -> bool,
-    // {
-    //     let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
-    //     for node in &self.nodes {
-    //         let node = node.as_ref().unwrap();
-    //         if let Some(c) = cc.iter_mut().find(|c| f(c[0], node)) {
-    //             c.push(&node);
-    //         } else {
-    //             cc.push(vec![&node]);
-    //         }
-    //     }
-    //     if cc.len() == 1 {
-    //         Ok(())
-    //     } else {
-    //         Err(cc)
-    //     }
-    // }
-
-    // fn blockchain_equality(node1: &Node, node2: &Node) -> bool {
-    //     node1.blockchain() == node2.blockchain()
-    // }
-
-    // fn utxo_pool_equality(node1: &Node, node2: &Node) -> bool {
-    //     node1.utxo_pool() == node2.utxo_pool()
-    // }
-
-    // pub fn utxo_pool_consensus(&self) -> Result<(), Vec<Vec<&Node>>> {
-    //     let mut cc: Vec<Vec<&Node>> = vec![]; // consensus components
-    //     for node in &self.nodes {
-    //         let node = node.as_ref().unwrap();
-    //         if let Some(c) = cc.iter_mut().find(|c| c[0].utxo_pool() == node.utxo_pool()) {
-    //             c.push(&node);
-    //         } else {
-    //             cc.push(vec![&node]);
-    //         }
-    //     }
-    //     if cc.len() == 1 {
-    //         Ok(())
-    //     } else {
-    //         Err(cc)
-    //     }
-    // }
 
     pub fn shut_down(&mut self) {
         while let Some(thread) = self.threads.pop() {
@@ -213,7 +146,7 @@ pub fn partition<'a, F>(nodes: &Vec<&'a Node>, f: F) -> Vec<Vec<&'a Node>>
 where
     F: Fn(&Node, &Node) -> bool,
 {
-    let mut sets: Vec<Vec<&Node>> = vec![]; // consensus components
+    let mut sets: Vec<Vec<&Node>> = vec![];
     for node in nodes {
         if let Some(set) = sets.iter_mut().find(|set| f(set[0], node)) {
             set.push(node);
@@ -223,25 +156,6 @@ where
     }
     sets
 }
-
-// impl Drop for Network {
-//     fn drop(&mut self) {
-//         info!("Network shutting down");
-//         self.broadcast(Message::ShutDown);
-//         let mut nodes = Vec::new();
-//         for option in &mut self.threads {
-//             if let Some(thread) = option.take() {
-//                 nodes.push(thread.join().unwrap());
-//             }
-//         }
-//         if nodes.len() > 0 {
-//             for i in 0..nodes.len() - 1 {
-//                 assert_eq!(nodes[i].utxo_pool(), nodes[i + 1].utxo_pool());
-//                 assert_eq!(nodes[i].transaction_pool(), nodes[i + 1].transaction_pool());
-//             }
-//         }
-//     }
-// }
 
 impl fmt::Debug for Network {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -265,23 +179,3 @@ impl fmt::Debug for Network {
 pub mod graph;
 pub mod neighbour;
 pub mod synchronizer;
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_random_connected_graph() {
-        let vertices = 10;
-        let graph = Graph::random_connected(vertices);
-        println!("{:?}", graph);
-        assert_eq!(graph.size(), vertices);
-        for (vertex, neighborhood) in graph.as_ref() {
-            assert!(!neighborhood.is_empty());
-            assert!(!neighborhood.contains(vertex));
-            for &neighbour in neighborhood {
-                assert!(graph[neighbour].contains(vertex));
-            }
-        }
-    }
-}

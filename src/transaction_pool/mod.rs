@@ -82,8 +82,6 @@ impl TransactionPool {
         }
     }
 
-    // TODO? Technically there's no need to go back to the genesis block.
-    // Checking the blockchain back to the common parent (of old and new tops) is enough.
     pub fn synchronize_with(
         &mut self,
         blockchain: &Blockchain,
